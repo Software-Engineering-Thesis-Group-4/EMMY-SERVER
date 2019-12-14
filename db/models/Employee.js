@@ -1,0 +1,37 @@
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+
+// LATEST LOG SCHEMA ---------------------
+const LatestLogSchema = Schema({
+   reference: {
+      type: Schema.Types.ObjectId,
+      ref: 'EmployeeLog'
+   },
+   date: Date,
+});
+
+// EMPLOYEE SCHEMA -----------------------
+const EmployeeSchema = Schema({
+   employeeId      : String,
+   firstName       : String,
+   lastName        : String,
+   email           : String,
+   isMale          : Boolean,
+   payrollGroup    : Number,    // 1=full-time, 0=part-time
+   department      : String,
+   jobTitle        : String,
+   profileImagePath: String,
+   fingerprintId   : Number,
+   latestLog       : {
+      type   : LatestLogSchema,
+      default: null,
+   }
+});
+
+
+const Employee = mongoose.model('Employee', EmployeeSchema);
+
+module.exports = {
+   EmployeeSchema,
+   Employee
+}
