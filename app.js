@@ -33,10 +33,10 @@ db.createConnection(process.env.DB_NAME);
 // IMPORT ROUTES ----------------------------------------------------------------------------------
 const { employeeRoute, employeeLogsRoute, authRoute, indexRoute } = require('./routes')(io);
 
-app.use('/', indexRoute);									// localhost:3000/
-app.use('/auth', authRoute);								// localhost:3000/auth/
-app.use('/api/employees', employeeRoute);				// localhost:3000/api/employees/
-app.use('/api/employeelogs', employeeLogsRoute);	// localhost:3000/api/employeelogs/
+app.use('/', indexRoute); // localhost:3000/
+app.use('/auth', authRoute); // localhost:3000/auth/
+app.use('/api/employees', employeeRoute); // localhost:3000/api/employees/
+app.use('/api/employeelogs', employeeLogsRoute);// localhost:3000/api/employeelogs/
 
 
 
