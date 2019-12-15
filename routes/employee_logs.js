@@ -13,7 +13,11 @@ module.exports = (io) => {
    Get all employeeslogs 
    -----------------------------------------------------------*/
    router.get('/', (req, res) => {
-      return res.send('GET /api/employeelogs');
+      EmployeeLog.find({}, (err, logs) => {
+         if(err) return res.status(500).send('Server error. could not retrieve employee logs.');
+         
+         return res.status(200).send(logs);
+      })
    });
    
    

@@ -49,14 +49,16 @@ module.exports = (io) => {
             break;
       }
 
+      console.log(employee.department);
+
       const new_employee = new Employee({
          employeeId    : employee.employee_id,
          firstName     : employee.firstname,
          lastName      : employee.lastname,
          email         : employee.email,
-         payrollGroup  : payroll_group,
-         deparment     : employee.department,
          isMale        : _isMale,
+         payrollGroup  : payroll_group,
+         department    : employee.department,
          jobTitle      : employee.job_title,
          fingerprintId : employee.fingerprint_id,
       });
