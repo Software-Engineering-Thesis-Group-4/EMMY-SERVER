@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "opencyp": "npx cypress open"
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",
@@ -21,6 +22,7 @@
     "socket.io": "^2.3.0"
   },
   "devDependencies": {
+    "cypress": "^3.8.0",
     "dotenv": "^8.2.0",
     "nodemon": "^2.0.2"
   }
