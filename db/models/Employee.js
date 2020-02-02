@@ -17,10 +17,10 @@ const EmployeeSchema = Schema({
    lastName        : String,
    email           : String,
    isMale          : Boolean,
-   payrollGroup    : Number,    // 1=full-time, 0=part-time
+   employmentStatus: Number,    // 1=full-time, 0=part-time
    department      : String,
    jobTitle        : String,
-   profileImagePath: String,
+   photo           : String,
    fingerprintId   : Number,
    latestLog       : {
       type   : LatestLogSchema,
