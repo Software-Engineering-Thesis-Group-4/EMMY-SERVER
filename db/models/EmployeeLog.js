@@ -2,17 +2,23 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const EmployeeLogSchema = Schema({
-   in: Date,
-   out: Date,
-   // emotionIn: Number,
-   // emotionOut: Number,
-   date: {
-      type: Date,
-      default: Date.now
-   },
    employee: {
       type: Schema.Types.ObjectId,
       ref: 'Employee',
+   },
+   in: Date,
+   out: Date,
+   emotionIn: {
+      type: Number,
+      default: 0
+   },
+   emotionOut: {
+      type: Number,
+      default: 0
+   },
+   dateCreated: {
+      type: Date,
+      default: Date.now
    },
 });
 

@@ -5,7 +5,7 @@ const router = express.Router();
 const { Employee } = require('../db/models/Employee');
 const { EmployeeLog } = require('../db/models/EmployeeLog');
 
-module.exports = (io) => {  
+module.exports = (io) => {
    /*-----------------------------------------------------------
    -> GET /api/employeeslogs
    
@@ -13,14 +13,16 @@ module.exports = (io) => {
    Get all employeeslogs 
    -----------------------------------------------------------*/
    router.get('/', (req, res) => {
-      EmployeeLog.find({}, (err, logs) => {
-         if(err) return res.status(500).send('Server error. could not retrieve employee logs.');
-         
-         return res.status(200).send(logs);
-      })
+      EmployeeLog
+         .find({})
+         .populate('employee')
+         .exec((err, logs) => {
+            if (err) return res.status(500).send('Server error. could not retrieve employee logs.');
+            return res.status(200).send(logs);
+         })
    });
-   
-   
+
+
    /*-----------------------------------------------------------
    -> POST /api/employeeslogs
    
@@ -30,37 +32,37 @@ module.exports = (io) => {
    router.post('/', (req, res) => {
       const { enrollNumber, timestamp, attendanceState } = req.body;
       const now = new Date();
-      
+
       let attState;
-      switch(attendanceState) {
+      switch (attendanceState) {
          case 0:
-               attState = "check-in";
+            attState = "check-in";
             break;
          case 1:
-               attState = "check-out";
+            attState = "check-out";
             break;
          case 4:
-               attState = "overtime-in";
+            attState = "overtime-in";
             break;
          case 5:
-               attState = "overtime-out";
+            attState = "overtime-out";
             break;
-      }      
-      
+      }
+
       Employee.findOne({ fingerprintId: enrollNumber }, (err, employee) => {
-         if(err)return res.status(500).send('Server error. Unable to retrieve employee');
-         if(!employee) return res.status(404).send("Employee not found.");                  
-         
-         if(!employee.latestLog) {
+         if (err) return res.status(500).send('Server error. Unable to retrieve employee');
+         if (!employee) return res.status(404).send("Employee not found.");
+
+         if (!employee.latestLog) {
 
             /*
                - create a new Employee Log and save it;
                - then set it as the "latest log" of an employee.
             */
             let newLog = new EmployeeLog({ in: now, out: null, date: now, employee: employee._id });
-            
+
             newLog.save((err) => {
-               if(err) return res.status(500).send('Server error. Unable to record new log.')
+               if (err) return res.status(500).send('Server error. Unable to record new log.')
 
                Employee.findByIdAndUpdate(employee._id, {
                   $set: {
@@ -70,13 +72,13 @@ module.exports = (io) => {
                      }
                   }
                }, (err) => {
-                  if(err) return res.status(500).send(`Server error. Unable to update employee[${ employee.firstName }] latest log`);
+                  if (err) return res.status(500).send(`Server error. Unable to update employee[${employee.firstName}] latest log`);
                   io.sockets.emit('employeeLog', employee);
-                  return res.status(200).send(`${ employee.firstName } ${ employee.lastName } clocked-in!`);
+                  return res.status(200).send(`${employee.firstName} ${employee.lastName} clocked-in!`);
                });
-               
-            });            
-         
+
+            });
+
          } else {
             /* 
                - else... if the employee has an existing employee log, check if it exists in the log records;
@@ -87,34 +89,34 @@ module.exports = (io) => {
             const latestLogDate = employee.latestLog.date;
             EmployeeLog.findById(employee.latestLog.reference, (err, doc) => {
 
-               if(!doc) {
+               if (!doc) {
                   Employee.findByIdAndUpdate(employee._id, {
                      $set: {
                         latestLog: null
                      }
                   }, (err) => {
-                     if(err) return res.status(500).send(`Unable to unset latestLog of ${ employee.firstName } ${ employee.lastName }`);
+                     if (err) return res.status(500).send(`Unable to unset latestLog of ${employee.firstName} ${employee.lastName}`);
                   });
 
                   return res.status(200).send(`Log not found.`);
                }
-               
-               if(doc.out) {
-                  if(latestLogDate.getUTCDate() >= now.getUTCDate()) {
-                     return res.status(200).send('Cannot have multiple logs on a single day.');  
-                     
+
+               if (doc.out) {
+                  if (latestLogDate.getUTCDate() >= now.getUTCDate()) {
+                     return res.status(200).send('Cannot have multiple logs on a single day.');
+
                   } else {
-                     
+
                      let newLog = new EmployeeLog({
                         in: now,
                         out: null,
                         date: now,
                         employee: employee._id
                      });
-                     
+
                      newLog.save((err) => {
-                        if(err) return res.status(500).send('Unable to save new log record.')
-                        
+                        if (err) return res.status(500).send('Unable to save new log record.')
+
                         Employee.findByIdAndUpdate(employee._id, {
                            $set: {
                               latestLog: {
@@ -123,23 +125,23 @@ module.exports = (io) => {
                               }
                            }
                         }, (err) => {
-                           if(err) return res.status(500).send(`Unable to update latest log employee: ${ employee.firstName }`);
+                           if (err) return res.status(500).send(`Unable to update latest log employee: ${employee.firstName}`);
                            io.sockets.emit('employeeLog', employee);
-                           return res.status(200).send(`${ employee.firstName } ${ employee.lastName } clocked-in!`);
+                           return res.status(200).send(`${employee.firstName} ${employee.lastName} clocked-in!`);
                         });
                      });
                   }
-                  
-                  
+
+
                } else {
-                  if(latestLogDate.getUTCDate() < now.getUTCDate()) {
+                  if (latestLogDate.getUTCDate() < now.getUTCDate()) {
                      Employee.findByIdAndUpdate(employee.id, {
                         $set: {
                            latestLog: null
                         }
-                     },(err) => {
-                        if(err) return res.status(500).send('Server error. There was a problem updating employee record.');
-                        return res.status(200).send(`${ employee.firstName } ${ employee.lastName } did not clock-out on: ${ latestLogDate }`);
+                     }, (err) => {
+                        if (err) return res.status(500).send('Server error. There was a problem updating employee record.');
+                        return res.status(200).send(`${employee.firstName} ${employee.lastName} did not clock-out on: ${latestLogDate}`);
                      })
                   } else {
                      EmployeeLog.findByIdAndUpdate(employee.latestLog.reference, {
@@ -147,17 +149,17 @@ module.exports = (io) => {
                            out: now
                         }
                      }, (err) => {
-                        if(err) return res.status(500).send('Server error. Unable to update register clock-out.');
+                        if (err) return res.status(500).send('Server error. Unable to update register clock-out.');
                         io.sockets.emit('employeeLog', employee);
-                        return res.status(200).send(`${ employee.firstName } ${ employee.lastName } clocked out!`);
+                        return res.status(200).send(`${employee.firstName} ${employee.lastName} clocked out!`);
                      });
                   }
-                  
+
                }
             });
 
          } // !employee.latestLog ----- end
-         
+
       });
    });
 
@@ -176,6 +178,6 @@ module.exports = (io) => {
 
       res.sendStatus(200);
    })
-   
+
    return router;
 }

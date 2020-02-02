@@ -4,7 +4,6 @@ const path = require('path');
 
 // import models
 const { Employee } = require('../db/models/Employee');
-const { EmployeeLog } = require('../db/models/EmployeeLog');
 
 module.exports = (io) => {
    
@@ -34,33 +33,18 @@ module.exports = (io) => {
       let employee      = req.body;
       let _isMale       = (req.body.gender === 'M' ? true : false);
       
-      let payroll_group;
-
-      switch (employee.payroll_group) {
-         case 'full-time':            
-            payroll_group = 1;
-            break;
-         
-         case 'part-time':
-            payroll_group = 0;
-            break;
-      
-         default:
-            break;
-      }
-
-      console.log(employee.department);
+      let employmentStatus = employee.employment_status;
 
       const new_employee = new Employee({
-         employeeId    : employee.employee_id,
-         firstName     : employee.firstname,
-         lastName      : employee.lastname,
-         email         : employee.email,
-         isMale        : _isMale,
-         payrollGroup  : payroll_group,
-         department    : employee.department,
-         jobTitle      : employee.job_title,
-         fingerprintId : employee.fingerprint_id,
+         employeeId      : employee.employee_id,
+         firstName       : employee.firstname,
+         lastName        : employee.lastname,
+         email           : employee.email,
+         isMale          : _isMale,
+         employmentStatus: employmentStatus,
+         department      : employee.department,
+         jobTitle        : employee.job_title,
+         fingerprintId   : employee.fingerprint_id,
       });
 
       
