@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const Emailer   = require('../utility/mailer');
 
 module.exports = (io) => {
 
@@ -20,6 +21,12 @@ module.exports = (io) => {
       // generate link for password reset
       // localhost:$PORT/changepass/$username/$token
       // redirect to confirmed password reset request
+
+      Emailer.sendMail()
+      .then(() => console.log("succesfully sent email"))
+      .catch(err => console.err(err));
+
+      res.sendStatus(200);
 
    })
 
