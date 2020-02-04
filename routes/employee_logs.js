@@ -18,7 +18,8 @@ module.exports = (io) => {
          .populate('employee')
          .exec((err, logs) => {
             if (err) return res.status(500).send('Server error. could not retrieve employee logs.');
-            return res.status(200).send(logs);
+            // return res.status(200).send(logs);
+            return io.sockets.emit('LOAD_ALL_LOGS', logs);
          })
    });
 
@@ -33,21 +34,21 @@ module.exports = (io) => {
       const { enrollNumber, timestamp, attendanceState } = req.body;
       const now = new Date();
 
-      let attState;
-      switch (attendanceState) {
-         case 0:
-            attState = "check-in";
-            break;
-         case 1:
-            attState = "check-out";
-            break;
-         case 4:
-            attState = "overtime-in";
-            break;
-         case 5:
-            attState = "overtime-out";
-            break;
-      }
+      // let attState;
+      // switch (attendanceState) {
+      //    case 0:
+      //       attState = "check-in";
+      //       break;
+      //    case 1:
+      //       attState = "check-out";
+      //       break;
+      //    case 4:
+      //       attState = "overtime-in";
+      //       break;
+      //    case 5:
+      //       attState = "overtime-out";
+      //       break;
+      // }
 
       Employee.findOne({ fingerprintId: enrollNumber }, (err, employee) => {
          if (err) return res.status(500).send('Server error. Unable to retrieve employee');
@@ -59,7 +60,13 @@ module.exports = (io) => {
                - create a new Employee Log and save it;
                - then set it as the "latest log" of an employee.
             */
-            let newLog = new EmployeeLog({ in: now, out: null, date: now, employee: employee._id });
+            let newLog = new EmployeeLog({
+               in: now, 
+               out: null, 
+               date: now, 
+               employee: employee._id,
+               employeeId: employee.employeeId
+            });
 
             newLog.save((err) => {
                if (err) return res.status(500).send('Server error. Unable to record new log.')
@@ -73,7 +80,7 @@ module.exports = (io) => {
                   }
                }, (err) => {
                   if (err) return res.status(500).send(`Server error. Unable to update employee[${employee.firstName}] latest log`);
-                  io.sockets.emit('employeeLog', employee);
+                  io.sockets.emit('employeeLog', { employee, status: "in" });
                   return res.status(200).send(`${employee.firstName} ${employee.lastName} clocked-in!`);
                });
 
@@ -111,7 +118,8 @@ module.exports = (io) => {
                         in: now,
                         out: null,
                         date: now,
-                        employee: employee._id
+                        employee: employee._id,
+                        employeeId: employee.employeeId
                      });
 
                      newLog.save((err) => {
@@ -126,7 +134,7 @@ module.exports = (io) => {
                            }
                         }, (err) => {
                            if (err) return res.status(500).send(`Unable to update latest log employee: ${employee.firstName}`);
-                           io.sockets.emit('employeeLog', employee);
+                           io.sockets.emit('employeeLog', {employee, status: "in"});
                            return res.status(200).send(`${employee.firstName} ${employee.lastName} clocked-in!`);
                         });
                      });
@@ -150,7 +158,7 @@ module.exports = (io) => {
                         }
                      }, (err) => {
                         if (err) return res.status(500).send('Server error. Unable to update register clock-out.');
-                        io.sockets.emit('employeeLog', employee);
+                        io.sockets.emit('employeeLog', {employee, status: "out"});
                         return res.status(200).send(`${employee.firstName} ${employee.lastName} clocked out!`);
                      });
                   }
@@ -171,12 +179,66 @@ module.exports = (io) => {
    endpoint for getting the employee emotion input
    -----------------------------------------------------------*/
    router.post('/update_emotion', (req, res) => {
-      const { emotion, employeeId } = req.body;
+      const { emotion, employeeId, status } = req.body;
+      console.log(emotion)
+      console.log(employeeId)
+      console.log(status)
 
-      console.log('emotion: ' + emotion);
-      console.log('employeeId: ' + employeeId);
+      if(status == "in") {
+         EmployeeLog.findOneAndUpdate({ employeeId }, {
+            $set: {
+               emotionIn: emotion
+            }
+         }, err => {
+            if(err) return res.send(500);
+            else io.sockets.emit('clearEmotions');
+            return res.send(200);
+         })
+      } else {
+         EmployeeLog.findOneAndUpdate({ employeeId }, {
+            $set: {
+               emotionOut: emotion
+            }
+         }, err => {
+            if(err) return res.send(500);
+            else io.sockets.emit('clearEmotions');
+            return res.send(200);
+         })
+      }
 
-      res.sendStatus(200);
+      // Employee.find({ employeeId }, (err, employee) => {
+      //    if (err) return res.send(404);
+
+      //    EmployeeLog
+      //       .find({ employee: employee._id })
+      //       .populate('employee')
+      //       .exec((err, employeeLog) => {
+      //          if (err) return res.send(400);
+
+               
+
+      //          if (employeeLog.emotionIn === 0) {
+      //             EmployeeLog.findOneAndUpdate({ _id: employeeLog._id }, {
+      //                $set: {
+      //                   emotionIn: emotion
+      //                }
+      //             }, (err) => {
+      //                if (err) return res.send(500);
+      //                else return io.sockets.emit('clearEmotions');
+      //             })
+      //          } else {
+      //             EmployeeLog.findOneAndUpdate({ _id: employeeLog._id }, {
+      //                $set: {
+      //                   emotionOut: emotion
+      //                }
+      //             }, (err) => {
+      //                if (err) return res.send(500);
+      //                else return io.sockets.emit('clearEmotions');
+      //             })
+      //          }
+      //       })
+
+      // });
    })
 
    return router;
