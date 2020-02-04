@@ -6,6 +6,11 @@ const logger       = require('morgan');
 const socketIO     = require('socket.io');
 const cors         = require('cors');
 const express      = require('express');
+const uuidv4 		 = require('uuid/v4');
+const session 		 = require('express-session');
+const bodyParser 	 = require('body-parser');
+require('dotenv').config()
+
 
 // enable .env config variables
 require('dotenv').config();
@@ -25,6 +30,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cookieParser()); // <--- not sure if cookie parser is still important but include is anyways for future use
 app.use(cors());
+app.use(session({secret: process.env.SESSION_SECRET}));
 
 // DATABASE ---------------------------------------------------------------------------------------
 const db = require('./db');
@@ -61,7 +67,7 @@ app.use((err, req, res, next) => {
 	// set locals, only providing error in development
 	res.locals.message = err.message;
 	res.locals.error = req.app.get('env') === 'development' ? err : {};
-	
+
 	// render the error page
 	res.status(err.status || 500);
 	res.render('error');

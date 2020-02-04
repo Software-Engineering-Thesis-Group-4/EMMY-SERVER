@@ -15,5 +15,13 @@ module.exports = (io) => {
       res.redirect('/enroll_employee.html');
    })
 
+   router.get('/process_resetpass', (req, res) => {
+
+      // generate link for password reset
+      // localhost:$PORT/changepass/$username/$token
+      // redirect to confirmed password reset request
+
+   })
+
    return router;
 }
