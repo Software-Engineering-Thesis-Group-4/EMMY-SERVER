@@ -33,4 +33,6 @@ async function sendMail() {
 }
 
 
-module.exports.sendMail = sendMail;
+module.exports = {
+   sendMail
+};
