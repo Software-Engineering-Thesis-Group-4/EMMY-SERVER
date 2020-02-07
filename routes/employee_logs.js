@@ -18,8 +18,8 @@ module.exports = (io) => {
          .populate('employee')
          .exec((err, logs) => {
             if (err) return res.status(500).send('Server error. could not retrieve employee logs.');
-            // return res.status(200).send(logs);
-            return io.sockets.emit('LOAD_ALL_LOGS', logs);
+            io.sockets.emit('LOAD_ALL_LOGS', logs);
+            return res.status(200).send(logs);
          })
    });
 
