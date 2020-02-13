@@ -1,3 +1,7 @@
+if (process.env.NODE_ENV !== 'production'){
+	require('dotenv').config()
+}
+
 const createError  = require('http-errors');
 const http         = require('http');
 const cookieParser = require('cookie-parser');
@@ -30,7 +34,18 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cookieParser()); // <--- not sure if cookie parser is still important but include is anyways for future use
 app.use(cors());
-app.use(session({secret: process.env.SESSION_SECRET}));
+app.use(session({
+	name: process.env.SESSION_NAME,              // -----------> checkkkk
+	secret: process.env.SESSION_SECRET,
+	resave: false,
+	saveUninitialized: false,
+	cookie: {
+		maxAge: process.env.SESSION_DURATION, // 1hr
+		sameSite: false, // cors
+		//secure
+	}
+}));
+
 
 // DATABASE ---------------------------------------------------------------------------------------
 const db = require('./db');
