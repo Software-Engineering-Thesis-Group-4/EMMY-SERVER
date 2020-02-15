@@ -1,18 +1,22 @@
 const mongoose = require('mongoose');
 
-const createConnection = (db_name) => {   
-   // get db connection
-   mongoose.connect(`mongodb://localhost:27017/${db_name}`, { useNewUrlParser: true, useUnifiedTopology: true })
-      .then(() => console.log(`Successfully connected to MongoDB database! [${db_name}]\n------------------------------------------`))
-      .catch((err) => console.error(err));
-   
-   // prevent deprecation warnings (from MongoDB native driver)
-   mongoose.set('useCreateIndex', true);
-   mongoose.set('useFindAndModify', false);
+const createDBConnection = async (db_name, port) => {
+   try {
+      mongoose.set('useCreateIndex', true);
+      mongoose.set('useFindAndModify', false);
+      
+      // get db connection
+      const connection = await mongoose.connect(`mongodb://localhost:${port}/${db_name}`, { useNewUrlParser: true, useUnifiedTopology: true });
+      // prevent deprecation warnings (from MongoDB native driver)
 
-   return mongoose;
+      console.log(`Successfully connected to MongoDB database! [${db_name}]\n------------------------------------------`);
+
+      return connection;
+
+   } catch (error) {
+      console.error(error);
+      throw new Error(error);
+   }
 }
 
-module.exports = {
-   createConnection
-}
+module.exports = { createDBConnection }

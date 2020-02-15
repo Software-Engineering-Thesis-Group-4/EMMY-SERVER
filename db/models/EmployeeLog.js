@@ -7,8 +7,14 @@ const EmployeeLogSchema = Schema({
       ref: 'Employee',
    },
    employeeId: String,
-   in: Date,
-   out: Date,
+   in: {
+      type: Date,
+      default: Date.now
+   },
+   out: {
+      type: Date,
+      default: null
+   },
    emotionIn: {
       type: Number,
       default: 0
