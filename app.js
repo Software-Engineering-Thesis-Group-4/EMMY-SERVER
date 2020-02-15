@@ -40,8 +40,8 @@ app.use(session({
 	resave: false,
 	saveUninitialized: false,
 	cookie: {
-		maxAge: process.env.SESSION_DURATION, // 1hr
-		sameSite: false, // cors
+		maxAge: parseInt(process.env.SESSION_DURATION), // 1hr
+		sameSite: false // cors
 		//secure
 	}
 }));

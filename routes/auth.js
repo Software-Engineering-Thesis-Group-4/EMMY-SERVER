@@ -14,6 +14,10 @@ module.exports = (io) => {
 		email = req.body.email;
 		password = req.body.password;
 
+		User.findById({
+
+		})
+
 		User.findOne({ email }, (err, user) => {
 			if (err)
 				return res
@@ -37,12 +41,25 @@ module.exports = (io) => {
 				});
 			}
 
-			let { email, firstname, lastname } = user;
+			else {
 
-			// Create SESSION
+				let { email, firstname, lastname } = user;
+
+				// valid credentials = Create SESSION
+				req.session.username = firstname + lastname;
+			}
+
+
 
 			res.status(200).send({ token, username, firstname, lastname });
 		});
+	});
+
+	router.get('/logout', (req, res) =>{
+
+		//req.session.destroy()
+		//sendstatus 200 success to redirect frontend in vue
+
 	});
 
 	// POST /auth/reset-password
