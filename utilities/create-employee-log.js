@@ -101,7 +101,7 @@ module.exports = (io, fingerprintNumber) => {
 
                     if (timeIn) {
 
-                        if (timeIn.getUTCDate() < dateNow.getUTCDate()) {
+                        if (timeIn.getDate() < dateNow.getDate()) {
 
                             let employeeLog = new EmployeeLog({
                                 employee: employee._id,
@@ -131,9 +131,7 @@ module.exports = (io, fingerprintNumber) => {
                                 status: 200,
                                 message: `Employee did not check-out yesterday at ${dateNow.toLocaleDateString()}. \n${employee.firstName} ${employee.lastName} checked in.`
                             });
-                        }
-
-                        if (!timeOut) {
+                        } else if (!timeOut) {
                             employeeLatestLog.out = dateNow;
 
                             await employeeLatestLog.save();
