@@ -8,11 +8,18 @@ module.exports = (io, fingerprintNumber) => {
         let message = "";
 
         try {
-
             let employee = await Employee.findOne({ fingerprintId: fingerprintNumber });
 
             // if employee does not exist, return an error
             if (!employee) {
+                io.sockets.emit('logError', {
+                    message: "You are not currently enrolled in the system. Please contact the HR administrator"
+                });
+
+                await setTimeout(() => {
+                    io.sockets.emit('reset');
+                }, 4800)
+
                 return reject({
                     status: 404,
                     message: 'Employee not found!'
@@ -42,6 +49,10 @@ module.exports = (io, fingerprintNumber) => {
                     employee: employee.firstName,
                     status: 'in'
                 });
+
+                await setTimeout(() => {
+                    io.sockets.emit('reset');
+                }, 15000)
 
                 return resolve({
                     status: 200,
@@ -74,6 +85,10 @@ module.exports = (io, fingerprintNumber) => {
                         status: 'in'
                     });
 
+                    await setTimeout(() => {
+                        io.sockets.emit('reset');
+                    }, 15000)
+
                     return resolve({
                         status: 200,
                         message: `Log not found (deleted) \n${employee.firstName} ${employee.lastName} checked in at ${dateNow.toLocaleDateString()}.`
@@ -85,7 +100,7 @@ module.exports = (io, fingerprintNumber) => {
                     let timeOut = employeeLatestLog.out;
 
                     if (timeIn) {
-                                                
+
                         if (timeIn.getUTCDate() < dateNow.getUTCDate()) {
 
                             let employeeLog = new EmployeeLog({
@@ -108,13 +123,17 @@ module.exports = (io, fingerprintNumber) => {
                                 status: 'in'
                             });
 
+                            await setTimeout(() => {
+                                io.sockets.emit('reset');
+                            }, 15000)
+
                             return resolve({
                                 status: 200,
                                 message: `Employee did not check-out yesterday at ${dateNow.toLocaleDateString()}. \n${employee.firstName} ${employee.lastName} checked in.`
                             });
                         }
 
-                        if(!timeOut) {
+                        if (!timeOut) {
                             employeeLatestLog.out = dateNow;
 
                             await employeeLatestLog.save();
@@ -130,11 +149,24 @@ module.exports = (io, fingerprintNumber) => {
                                 status: 'out'
                             });
 
+                            await setTimeout(() => {
+                                io.sockets.emit('reset');
+                            }, 15000)
+
                             return resolve({
                                 status: 200,
                                 message: `${employee.firstName} ${employee.lastName} checked-out at ${dateNow.toLocaleDateString()}`
                             })
+
                         } else {
+                            io.sockets.emit('logError', {
+                                message: "You cannot log multiple attendance in a single day!"
+                            });
+
+                            await setTimeout(() => {
+                                io.sockets.emit('reset');
+                            }, 4500)
+
                             return reject({
                                 status: 400,
                                 message: `Multiple log violation.`
@@ -149,8 +181,6 @@ module.exports = (io, fingerprintNumber) => {
                 status: 500,
                 message: `Server Error: \n${error.message}`
             })
-
-            console.log(error.message);
         }
     });
 }

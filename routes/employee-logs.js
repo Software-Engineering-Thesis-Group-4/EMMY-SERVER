@@ -15,15 +15,15 @@ module.exports = (io) => {
      Description: 
      Get all employeeslogs 
      ----------------------------------------------------------------------------------------------------------------------*/
-     router.get('/', (req, res) => {
-          EmployeeLog
-               .find({})
-               .populate('employee')
-               .exec((err, logs) => {
-                    if (err) return res.status(500).send('Server error. could not retrieve employee logs.');
-                    io.sockets.emit('LOAD_ALL_LOGS', logs);
-                    return res.status(200).send(logs);
-               })
+     router.get('/', async (req, res) => {
+          try {
+               let employeeLogs = await EmployeeLog.find({}).populate('employee');
+               return res.status(200).send(employeeLogs);
+
+          } catch (error) {
+               return res.status(500).send('Server error. could not retrieve employee logs.');
+          }
+
      });
 
 
@@ -54,12 +54,11 @@ module.exports = (io) => {
      Description: 
      endpoint for getting the employee emotion input and update the employee log
      ----------------------------------------------------------------------------------------------------------------------*/
-     router.post('/update_emotion', async (req, res) => {
+     router.patch('/sentiment', async (req, res) => {
 
           try {
                const { emotion, employeeLog, status } = req.body;
                let log = await EmployeeLog.findById(employeeLog);
-               // console.log(log);
 
                if (!log) {
                     throw new Error('Log not found!');
@@ -67,14 +66,12 @@ module.exports = (io) => {
                     switch (status) {
                          case "in":
                               log.emotionIn = emotion;
-                              console.log(await log.save());
-                              io.sockets.emit('reset');
+                              await log.save();
                               return res.sendStatus(200);
 
                          case "out":
                               log.emotionOut = emotion;
-                              console.log(await log.save());
-                              io.sockets.emit('reset');
+                              await log.save();
                               return res.sendStatus(200);
                     }
                }
