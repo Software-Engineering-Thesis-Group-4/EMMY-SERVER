@@ -16,9 +16,9 @@ module.exports = (io, fingerprintNumber) => {
                     message: "You are not currently enrolled in the system. Please contact the HR administrator"
                 });
 
-                await setTimeout(() => {
-                    io.sockets.emit('reset');
-                }, 4800)
+                // await setTimeout(() => {
+                //     io.sockets.emit('reset');
+                // }, 4800)
 
                 return reject({
                     status: 404,
@@ -50,10 +50,6 @@ module.exports = (io, fingerprintNumber) => {
                     status: 'in'
                 });
 
-                await setTimeout(() => {
-                    io.sockets.emit('reset');
-                }, 15000)
-
                 return resolve({
                     status: 200,
                     message: `${employee.firstName} ${employee.lastName} checked in at ${dateNow.toLocaleDateString()}.`
@@ -84,10 +80,6 @@ module.exports = (io, fingerprintNumber) => {
                         employee: employee.firstName,
                         status: 'in'
                     });
-
-                    await setTimeout(() => {
-                        io.sockets.emit('reset');
-                    }, 15000)
 
                     return resolve({
                         status: 200,
@@ -123,10 +115,6 @@ module.exports = (io, fingerprintNumber) => {
                                 status: 'in'
                             });
 
-                            await setTimeout(() => {
-                                io.sockets.emit('reset');
-                            }, 15000)
-
                             return resolve({
                                 status: 200,
                                 message: `Employee did not check-out yesterday at ${dateNow.toLocaleDateString()}. \n${employee.firstName} ${employee.lastName} checked in.`
@@ -147,10 +135,6 @@ module.exports = (io, fingerprintNumber) => {
                                 status: 'out'
                             });
 
-                            await setTimeout(() => {
-                                io.sockets.emit('reset');
-                            }, 15000)
-
                             return resolve({
                                 status: 200,
                                 message: `${employee.firstName} ${employee.lastName} checked-out at ${dateNow.toLocaleDateString()}`
@@ -160,10 +144,6 @@ module.exports = (io, fingerprintNumber) => {
                             io.sockets.emit('logError', {
                                 message: "You cannot log multiple attendance in a single day!"
                             });
-
-                            await setTimeout(() => {
-                                io.sockets.emit('reset');
-                            }, 4500)
 
                             return reject({
                                 status: 400,
