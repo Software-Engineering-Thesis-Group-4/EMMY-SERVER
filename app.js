@@ -1,7 +1,3 @@
-if (process.env.NODE_ENV !== 'production'){
-	require('dotenv').config()
-}
-
 const createError  = require('http-errors');
 const http         = require('http');
 const cookieParser = require('cookie-parser');
@@ -13,8 +9,6 @@ const express      = require('express');
 const uuidv4 		 = require('uuid/v4');
 const session 		 = require('express-session');
 const bodyParser 	 = require('body-parser');
-require('dotenv').config()
-
 
 // enable .env config variables
 require('dotenv').config();
