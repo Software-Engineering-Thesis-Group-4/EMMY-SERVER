@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 const LatestLogSchema = Schema({
    reference: {
       type: Schema.Types.ObjectId,
-      ref: 'EmployeeLog'
+      ref: 'EmployeeLog',
    },
    date: Date,
 });
@@ -22,10 +22,14 @@ const EmployeeSchema = Schema({
    jobTitle        : String,
    photo           : String,
    fingerprintId   : Number,
+   terminated      : {
+      type: Boolean,
+      default: false,
+   },
    latestLog       : {
       type   : LatestLogSchema,
       default: null,
-   }
+   },
 });
 
 

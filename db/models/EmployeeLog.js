@@ -6,8 +6,15 @@ const EmployeeLogSchema = Schema({
       type: Schema.Types.ObjectId,
       ref: 'Employee',
    },
-   in: Date,
-   out: Date,
+   employeeId: String,
+   in: {
+      type: Date,
+      default: Date.now
+   },
+   out: {
+      type: Date,
+      default: null
+   },
    emotionIn: {
       type: Number,
       default: 0
