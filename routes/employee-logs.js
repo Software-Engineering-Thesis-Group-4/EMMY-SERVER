@@ -49,7 +49,7 @@ module.exports = (io) => {
 
 
      /*----------------------------------------------------------------------------------------------------------------------
-     -> POST /api/employeeslogs/update_emotion
+     -> POST /api/employeeslogs/sentiment
      
      Description: 
      endpoint for getting the employee emotion input and update the employee log
