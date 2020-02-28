@@ -7,8 +7,7 @@ const cors         = require('cors');
 const express      = require('express');
 const session 		 = require('express-session');
 const MongoStore 	 = require('connect-mongo')(session);
-
-import { v4 as uuidv4 } from 'uuid';
+const mongoose     = require('mongoose');
 
 // enable .env config variables
 require('dotenv').config();
@@ -27,7 +26,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
-app.use(morgan('dev'));
+
 
 // DATABASE ---------------------------------------------------------------------------------------
 const { createDBConnection } = require('./db');
@@ -45,13 +44,16 @@ app.use('/auth', authRoute); // localhost:3000/auth/
 app.use('/api/employees', employeeRoute); // localhost:3000/api/employees/
 app.use('/api/employeelogs', employeeLogsRoute); // localhost:3000/api/employeelogs/
 
-const user_id = `user-${uuidv4()}`;
-
 // SESSION AND MIDDLEWARE
+const sessionName = process.env.SESSION_SECRET;
+
 app.use(session({
-	store: new MongoStore({ mongooseConnection: mongoose.connection}),
-	key: user_id,
-	name: process.env.SESSION_NAME,
+	store: new MongoStore({
+		mongooseConnection: mongoose.connection,
+		collection: 'sessions'
+	}),
+	// key: user_id,
+	name: sessionName,
 	secret: process.env.SESSION_SECRET,
 	resave: false,
 	saveUninitialized: false,
@@ -62,10 +64,10 @@ app.use(session({
 }));
 
 
-
+// Checks if cookie and/or session still exists or cookie
 app.use((req, res, next) => {
 	if (req.cookies.cookie === 0 && !req.session.user) {
-		 res.clearCookie('user_id');
+		 res.clearCookie(sessionName);
 	}
 	next();
 });

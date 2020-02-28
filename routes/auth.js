@@ -11,11 +11,11 @@ module.exports = (io) => {
 	// POST /auth
 	// Description: authenticate admin user (for login)
 	router.post('/', (req, res) => {
-		let email = req.body.email;
+		let user = req.body.username;
 
-		User.findOne({ email }, (err, user) => {
+		User.findOne({ user }, (err, user) => {
 			if(err) return res.status(500).send({ message: 'Error on the server.' });
-			if(!user) return res.status(404).send({ message: `User ${email} does not exist.`});
+			if(!user) return res.status(404).send({ message: `User ${user} does not exist.`});
 
 			let password = req.body.password;
 
@@ -38,6 +38,8 @@ module.exports = (io) => {
 			});
 
 			let { username, firstname, lastname } = user;
+
+			// create new session for logged in user
 
 			res.status(200).send({ token, username, firstname, lastname });
 		});

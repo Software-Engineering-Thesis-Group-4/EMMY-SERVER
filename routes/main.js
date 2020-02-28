@@ -24,7 +24,7 @@ module.exports = (io) => {
       res.redirect('/enroll_employee.html');
    })
 
-   router.get('')
+   // router.get('') ----> /login, /logout
 
    return router;
 }
