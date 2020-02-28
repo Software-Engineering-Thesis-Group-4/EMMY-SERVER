@@ -31,6 +31,7 @@ app.use(morgan('dev'));
 
 // DATABASE ---------------------------------------------------------------------------------------
 const { createDBConnection } = require('./db');
+// createDBConnection(process.env.DB_NAME, process.env.DB_PORT);
 createDBConnection(process.env.DB_NAME, process.env.DB_PORT);
 
 // IMPORT ROUTES ----------------------------------------------------------------------------------
@@ -42,7 +43,7 @@ const authRoute         = require('./routes/auth')(io);
 app.use('/', indexRoute); // localhost:3000/
 app.use('/auth', authRoute); // localhost:3000/auth/
 app.use('/api/employees', employeeRoute); // localhost:3000/api/employees/
-app.use('/api/employeelogs', employeeLogsRoute);// localhost:3000/api/employeelogs/
+app.use('/api/employeelogs', employeeLogsRoute); // localhost:3000/api/employeelogs/
 
 const user_id = `user-${uuidv4()}`;
 
@@ -81,7 +82,6 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
 	next(createError(404));
 });
-
 
 
 /* ERROR HANDLER -----------------------------------------------------------------------------------

@@ -60,6 +60,21 @@ module.exports = (io) => {
       })
    });
 
+   router.delete('/:id', async (req, res) => {
+      try {
+         let id = req.params.id;
+         let employee = await Employee.findByIdAndUpdate(
+            id,
+            { $set: { terminated: true } },
+            { new: true }
+         );
+         // console.log(employee);
+         res.status(200).send(employee);
+      } catch (error) {
+         res.status(500).send('Server error. Unable to delete employee.');
+      }
+   })
+
    
    
 

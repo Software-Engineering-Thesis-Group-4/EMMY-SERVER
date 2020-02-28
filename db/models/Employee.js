@@ -22,10 +22,14 @@ const EmployeeSchema = Schema({
    jobTitle        : String,
    photo           : String,
    fingerprintId   : Number,
+   terminated      : {
+      type: Boolean,
+      default: false,
+   },
    latestLog       : {
-      type: LatestLogSchema,
+      type   : LatestLogSchema,
       default: null,
-   }
+   },
 });
 
 
