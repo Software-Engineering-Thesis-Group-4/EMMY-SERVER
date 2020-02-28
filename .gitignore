@@ -1,3 +1,13 @@
+##################################
+#PERSONAL
+
+# Ignore environment file
+.env
+
+.gitignore
+
+##################################
+
 # Logs
 logs
 *.log
@@ -102,8 +112,3 @@ dist
 
 # TernJS port file
 .tern-port
-
-# Ignore environment file
-.env
-
-.gitignore
