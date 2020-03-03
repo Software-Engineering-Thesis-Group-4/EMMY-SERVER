@@ -1,6 +1,5 @@
 const express = require('express')
 const router = express.Router();
-const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
 // import User
@@ -8,42 +7,80 @@ const { User } = require("../db/models/User");
 
 module.exports = (io) => {
 
+	   // middleware function to check for logged-in users
+	var sessionChecker = (req, res, next) => {
+		if (req.session.user && req.cookies.user_sid) {
+			console.log('session and cookie exists');
+			res.redirect('/dashboard');
+			console.log('redirected to /dashboard');
+		} else {
+			 next();
+			 console.log('session or cookie does not exist, not permitted');
+		}
+	};
+
 	// POST /auth
 	// Description: authenticate admin user (for login)
-	router.post('/', (req, res) => {
-		let user = req.body.username;
+	router.post('/login', (req, res) => {
+		let email = req.body.email;
 
-		User.findOne({ user }, (err, user) => {
+		User.findOne({ email }, (err, user) => {
 			if(err) return res.status(500).send({ message: 'Error on the server.' });
 			if(!user) return res.status(404).send({ message: `User ${user} does not exist.`});
 
-			let password = req.body.password;
-
 			// compare password
+			let password = req.body.password;
 			let validPassword = bcrypt.compareSync(password, user.password);
 
 			if (!validPassword) {
 				//
 				res.status = 401;
 				return res.send({
-					auth: false,
-					token: null,
-					message: "Invalid username or password."
+					session: false,
+					message: "Invalid email or password."
 				});
 			}
+			else {
 
-			// sign token
-			let token = jwt.sign({ id: user._id }, process.env.JWT_KEY, {
-				expiresIn: 86400 // expires in 24 hours
-			});
+				let { email, username } = user;
+				let sessionID = req.sessionID;
+				let message = `Successful LogIn`;
 
-			let { username, firstname, lastname } = user;
+				// create new session for logged in user
+				req.session.username = username;
+				req.session.email = email;
 
-			// create new session for logged in user
-
-			res.status(200).send({ token, username, firstname, lastname });
+				res.status(200).send({ sessionID, message, username, email });
+			}
 		});
 	});
+
+	router.post('/logout', (req, res) =>{
+
+		if (req.session) {
+			let user = req.session.username;
+			console.log(`${user} logging out`);
+
+			req.session.destroy(function(err) {
+				if (!err){
+					let message = "successfully logged out";
+
+					console.log(message);
+					res.status(200).send({ message });
+				}
+				else {
+					console.err(err)
+					res.status(500).send('Error destroying session');
+				}
+			})
+		}
+
+		else {
+			let message = 'noSession object or some kind of error';
+			console.log(message);
+			res.status(500).send(message);
+		}
+	})
 
 	/*-----------------------------------------------------------
 	-> POST /auth/enroll
@@ -54,10 +91,11 @@ module.exports = (io) => {
 	router.post('/enroll', async (req, res) => {
 		try {
 			// get username and hash password using bcrypt
-			let { email, firstname, lastname } = req.body;
+			let { email, firstname, lastname, password } = req.body;
+			console.log(req.body);
 
 			// hash password using bcrypt
-			let $_hashedPassword = bcrypt.hashSync(req.body.password, 8);
+			let $_hashedPassword = bcrypt.hashSync(password, 8);
 
 			// create a new user of type [User]
 			let newUser = new User({
@@ -77,6 +115,7 @@ module.exports = (io) => {
 		} catch (error) {
 			console.log(error);
 			res.status(500).send("There was a problem registering the user.");
+			// Add duplicate email error
 		}
 	});
 

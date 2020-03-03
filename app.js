@@ -39,11 +39,6 @@ const employeeRoute     = require('./routes/employee')(io);
 const indexRoute        = require('./routes/main')(io);
 const authRoute         = require('./routes/auth')(io);
 
-app.use('/', indexRoute); // localhost:3000/
-app.use('/auth', authRoute); // localhost:3000/auth/
-app.use('/api/employees', employeeRoute); // localhost:3000/api/employees/
-app.use('/api/employeelogs', employeeLogsRoute); // localhost:3000/api/employeelogs/
-
 // SESSION AND MIDDLEWARE
 const sessionName = process.env.SESSION_SECRET;
 
@@ -64,15 +59,18 @@ app.use(session({
 }));
 
 
-// Checks if cookie and/or session still exists or cookie
+// Checks if cookie and/or session still exists or cookie // MIGHT NOT BE NEEDED -pao
 app.use((req, res, next) => {
-	if (req.cookies.cookie === 0 && !req.session.user) {
+	if (req.cookies === 0 && !req.session.user) {
 		 res.clearCookie(sessionName);
 	}
 	next();
 });
 
-
+app.use('/', indexRoute); // localhost:3000/
+app.use('/auth', authRoute); // localhost:3000/auth/
+app.use('/api/employees', employeeRoute); // localhost:3000/api/employees/
+app.use('/api/employeelogs', employeeLogsRoute); // localhost:3000/api/employeelogs/
 
 
 /* CATCH 404 AND FORWARD REQUEST TO ERROR HANDLER --------------------------------------------------
