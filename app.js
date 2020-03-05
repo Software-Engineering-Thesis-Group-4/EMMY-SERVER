@@ -1,16 +1,18 @@
-const createError  = require('http-errors');
-const http         = require('http');
-const path         = require('path');
-const logger       = require('morgan');
-const socketIO     = require('socket.io');
-const cors         = require('cors');
-const express      = require('express');
-const session 		 = require('express-session');
-const MongoStore 	 = require('connect-mongo')(session);
-const mongoose     = require('mongoose');
+const createError = require('http-errors');
+const http        = require('http');
+const path        = require('path');
+const logger      = require('morgan');
+const socketIO    = require('socket.io');
+const cors        = require('cors');
+const express     = require('express');
+const session     = require('express-session');
+const MongoStore  = require('connect-mongo')(session);
+const mongoose    = require('mongoose');
+const dotenv      = require('dotenv');
+
+dotenv.config();
 
 // enable .env config variables
-require('dotenv').config();
 const PORT = process.env.PORT || '3000';
 
 const app    = express();
@@ -30,8 +32,8 @@ app.use(cors());
 
 // DATABASE ---------------------------------------------------------------------------------------
 const { createDBConnection } = require('./db');
-// createDBConnection(process.env.DB_NAME, process.env.DB_PORT);
-createDBConnection(process.env.DB_NAME, process.env.DB_PORT);
+let DB_NAME = process.env.DB_NAME || "Emmy";
+createDBConnection(DB_NAME, process.env.DB_PORT);
 
 // IMPORT ROUTES ----------------------------------------------------------------------------------
 const employeeLogsRoute = require('./routes/employee-logs')(io);
@@ -39,16 +41,12 @@ const employeeRoute     = require('./routes/employee')(io);
 const indexRoute        = require('./routes/main')(io);
 const authRoute         = require('./routes/auth')(io);
 
-// SESSION AND MIDDLEWARE
-const sessionName = process.env.SESSION_SECRET;
-
 app.use(session({
 	store: new MongoStore({
 		mongooseConnection: mongoose.connection,
 		collection: 'sessions'
 	}),
-	// key: user_id,
-	name: sessionName,
+	name: process.env.SESSION_NAME,
 	secret: process.env.SESSION_SECRET,
 	resave: false,
 	saveUninitialized: false,

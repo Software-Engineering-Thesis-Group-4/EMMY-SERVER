@@ -10,15 +10,11 @@ module.exports = (io, fingerprintNumber) => {
         try {
             let employee = await Employee.findOne({ fingerprintId: fingerprintNumber });
 
-            // if employee does not exist, return an error
+            // [1] check if employee does not exist, return an error
             if (!employee) {
                 io.sockets.emit('logError', {
                     message: "You are not currently enrolled in the system. Please contact the HR administrator"
                 });
-
-                // await setTimeout(() => {
-                //     io.sockets.emit('reset');
-                // }, 4800)
 
                 return reject({
                     status: 404,
@@ -26,7 +22,7 @@ module.exports = (io, fingerprintNumber) => {
                 });
             }
 
-            // if employee doesn't have any latest log
+            // [2] if employee doesn't have any latest log
             if (!employee.latestLog) {
 
                 let employeeLog = new EmployeeLog({
@@ -36,7 +32,7 @@ module.exports = (io, fingerprintNumber) => {
 
                 let newLog = await employeeLog.save();
 
-                // update employee's latest log
+                // initialize employee's latest log
                 employee.latestLog = {
                     reference: employeeLog._id,
                     date: dateNow
@@ -56,9 +52,10 @@ module.exports = (io, fingerprintNumber) => {
                 });
 
             } else { // get the employee's latestLog
+
                 let employeeLatestLog = await EmployeeLog.findById(employee.latestLog.reference);
 
-                // if employee's latestLog is not found (deleted) create a new one
+                // if employee's latestLog is not found (deleted), create a new one
                 if (!employeeLatestLog) {
 
                     let employeeLog = new EmployeeLog({
@@ -86,14 +83,18 @@ module.exports = (io, fingerprintNumber) => {
                         message: `Log not found (deleted) \n${employee.firstName} ${employee.lastName} checked in at ${dateNow.toLocaleDateString()}.`
                     });
 
-                } else { // check if the employee is current logged in
+                } else { // if the lastest log exists, check if the employee is currently logged in
 
                     let timeIn = employeeLatestLog.in;
                     let timeOut = employeeLatestLog.out;
 
-                    if (timeIn) {
+                    // get date tomorrow
+                    let dateTomorrow = new Date();
+                    dateTomorrow.setDate(dateNow.getDate() + 1);
 
-                        if (timeIn.getDate() < dateNow.getDate()) {
+                    if (timeIn) {
+                        
+                        if (timeIn > dateTomorrow) {
 
                             let employeeLog = new EmployeeLog({
                                 employee: employee._id,
@@ -119,6 +120,7 @@ module.exports = (io, fingerprintNumber) => {
                                 status: 200,
                                 message: `Employee did not check-out yesterday at ${dateNow.toLocaleDateString()}. \n${employee.firstName} ${employee.lastName} checked in.`
                             });
+                            
                         } else if (!timeOut) {
                             employeeLatestLog.out = dateNow;
 
