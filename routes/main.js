@@ -13,6 +13,10 @@ module.exports = (io) => {
 
    router.get('/enroll-employee', (req, res) => {
       res.redirect('/enroll_employee.html');
+   });
+
+   router.get('/login-test', (req, res) => {
+      res.redirect('/test_login.html');
    })
 
    return router;
