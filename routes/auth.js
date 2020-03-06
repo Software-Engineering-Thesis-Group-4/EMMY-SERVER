@@ -3,52 +3,65 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const path = require('path');
 
+// import utility
+const { encrypt,decrypter } = require('../utility/aes');
+
 // import User
 const { User } = require("../db/models/User");
 
 // session checker middleware
-const isAuthenticated = (req, res, next) => {
-
-	if (req.session.role == 0) {
-		console.log('authenticated!');
-		return next();
+const isAuthenticatedAdmin = (req, res, next) => {
+	if (req.session.username) {
+		if(req.session.accountRole == '0'){
+			console.log('authenticated!');
+			return next();
+		}
 	} else {
-		return res.status(401).send(`you dont have admin privilages`);
+		return res.send(`you dont have admin authorization to access this page`);
 	}
-
 }
+
+const isAuthenticatedUser = (req, res, next) => {
+	
+	if (req.session.username) {
+		if(req.session.accountRole == '0' || req.session.accountRole == '1'){
+			console.log('authenticated!');
+			return next();
+		}
+	} else {
+		return res.status(401).send(`you dont have authorization to access this page`);
+	}
+}
+
 
 module.exports = (io) => {
 
 	router.post('/login', async (req, res) => {
 		try {
 			let _email = req.body.email;
-			let user = await User.findOne({ email: _email });
-
+			let user = await User.findOne({ email: encrypt(_email) });
+			console.log(user);
 			if (!user) {
 				return res.status(401).send(`Invalid email or password.`);
 			}
-			console.log(user);
+			
 			// validate password
 			let password = req.body.password;
 			let validPassword = await bcrypt.compare(password, user.password);
 
 			// if submitted password invalid, return an error
 			if (!validPassword) {
-
 				return res.status(401).send("Invalid email or password");
-
 			} else {
-
 				// get all the information needed to be sent back to user.
-				let { email, username, role } = user;
+				let { email, username, accountRole } = user;
 				let sessionID = req.sessionID;
 				let message = `Login Success.`;
 
 				// attach user details on to session object
 				req.session.username = username;
 				req.session.email = email;
-				req.session.role = role;
+				req.session.accountRole = accountRole;
 
 				// save session to db
 				req.session.save();
@@ -61,7 +74,7 @@ module.exports = (io) => {
 		}
 	});
 
-	router.get('/test', isAuthenticated, (req, res) => {
+	router.get('/test', isAuthenticatedUser, (req, res) => {
 		res.sendFile(path.resolve(__dirname, 'protected.html'));
 	})
 
@@ -88,37 +101,41 @@ module.exports = (io) => {
 	Description:
 	Add/enroll a new "Emmy user"
 	-----------------------------------------------------------*/
-	router.post('/enroll', async (req, res) => {
+	router.post('/enroll',isAuthenticatedAdmin, async (req, res) => {
 		try {
 			// get username and hash password using bcrypt
 			let { email, firstname, lastname, password, role } = req.body;
 			console.log(req.body);
 
-			// hash password using bcrypt
-			let $_hashedPassword = bcrypt.hashSync(password, 8);
+			let user = await User.findOne({ email: encrypt(email) })
 
-			// create a new user of type [User]
-			let newUser = new User({
-				email		: email,
-				firstname	: firstname,
-				lastname	: lastname,
-				username	: `${firstname}${lastname}`,
-				password	: $_hashedPassword,
-				role    	: role
-			});
+			// if user email already exist in the database
+			if(user){
+				return res.status(409).send("Email already exist");
+			} else {
+				// hash password using bcrypt
+				let $_hashedPassword = bcrypt.hashSync(password, 8);
 
-			// save user to db
-			let registeredUser = await newUser.save();
+				// create a new user of type [User]
+				let newUser = new User({
+					email		: encrypt(email),
+					firstname	: encrypt(firstname),
+					lastname	: encrypt(lastname),
+					username	: `${encrypt(firstname)}${encrypt(lastname)}`,
+					password	: $_hashedPassword,
+					accountRole : role
+				});
+				
+				// save user to db
+				let registeredUser = await newUser.save();
 
-			console.log(registeredUser);
-			res.status(200).send(`Successfully registered a new user ( ${email} )`);
-
+				res.status(200).send(`Successfully registered a new user ( ${decrypter(registeredUser.email)} )`);
+			}
 		} catch (error) {
 			console.log(error);
 			res.status(500).send("There was a problem registering the user.");
-			// Add duplicate email error
 		}
 	});
 
 	return router;
-};
+}; 

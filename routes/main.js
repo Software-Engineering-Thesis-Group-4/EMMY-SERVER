@@ -19,5 +19,9 @@ module.exports = (io) => {
       res.redirect('/test_login.html');
    })
 
+   router.get('/reset-password', (req, res) => {
+      res.redirect('/resetPass.html');
+   })
+
    return router;
 }
