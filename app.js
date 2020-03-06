@@ -9,6 +9,7 @@ const session      = require('express-session');
 const MongoStore   = require('connect-mongo')(session);
 const mongoose     = require('mongoose');
 const dotenv       = require('dotenv');
+const helmet	   = require('helmet');
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ const io = socketIO(server);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
+app.use(helmet());
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
