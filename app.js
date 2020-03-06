@@ -1,23 +1,24 @@
 const createError = require('http-errors');
-const http        = require('http');
-const path        = require('path');
-const logger      = require('morgan');
-const socketIO    = require('socket.io');
-const cors        = require('cors');
-const express     = require('express');
-const session     = require('express-session');
-const MongoStore  = require('connect-mongo')(session);
-const mongoose    = require('mongoose');
-const dotenv      = require('dotenv');
+const http = require('http');
+const path = require('path');
+const logger = require('morgan');
+const socketIO = require('socket.io');
+const cors = require('cors');
+const express = require('express');
+const session = require('express-session');
+const MongoStore = require('connect-mongo')(session);
+const mongoose = require('mongoose');
+const dotenv = require('dotenv');
+const cookieParser = require('cookie-parser');
 
 dotenv.config();
 
 // enable .env config variables
 const PORT = process.env.PORT || '3000';
 
-const app    = express();
+const app = express();
 const server = http.createServer(app);
-const io     = socketIO(server);
+const io = socketIO(server);
 
 // APPLICATION LEVEL CONFIGURATIONS ---------------------------------------------------------------
 app.set('views', path.join(__dirname, 'views'));
@@ -28,7 +29,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
-
+app.use(cookieParser());
 
 // DATABASE ---------------------------------------------------------------------------------------
 const { createDBConnection } = require('./db');
@@ -37,9 +38,9 @@ createDBConnection(DB_NAME, process.env.DB_PORT);
 
 // IMPORT ROUTES ----------------------------------------------------------------------------------
 const employeeLogsRoute = require('./routes/employee-logs')(io);
-const employeeRoute     = require('./routes/employee')(io);
-const indexRoute        = require('./routes/main')(io);
-const authRoute         = require('./routes/auth')(io);
+const employeeRoute = require('./routes/employee')(io);
+const indexRoute = require('./routes/main')(io);
+const authRoute = require('./routes/auth')(io);
 
 app.use(session({
 	store: new MongoStore({
@@ -55,15 +56,6 @@ app.use(session({
 		sameSite: false // cors
 	}
 }));
-
-
-// Checks if cookie and/or session still exists or cookie // MIGHT NOT BE NEEDED -pao
-app.use((req, res, next) => {
-	if (req.cookies === 0 && !req.session.user) {
-		 res.clearCookie(sessionName);
-	}
-	next();
-});
 
 app.use('/', indexRoute); // localhost:3000/
 app.use('/auth', authRoute); // localhost:3000/auth/
