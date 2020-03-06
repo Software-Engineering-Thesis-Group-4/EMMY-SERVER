@@ -1,15 +1,14 @@
-const createError = require('http-errors');
-const http = require('http');
-const path = require('path');
-const logger = require('morgan');
-const socketIO = require('socket.io');
-const cors = require('cors');
-const express = require('express');
-const session = require('express-session');
-const MongoStore = require('connect-mongo')(session);
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-const cookieParser = require('cookie-parser');
+const createError  = require('http-errors');
+const http         = require('http');
+const path         = require('path');
+const logger       = require('morgan');
+const socketIO     = require('socket.io');
+const cors         = require('cors');
+const express      = require('express');
+const session      = require('express-session');
+const MongoStore   = require('connect-mongo')(session);
+const mongoose     = require('mongoose');
+const dotenv       = require('dotenv');
 
 dotenv.config();
 
@@ -29,23 +28,27 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
-app.use(cookieParser());
 
 // DATABASE ---------------------------------------------------------------------------------------
 const { createDBConnection } = require('./db');
 let DB_NAME = process.env.DB_NAME || "Emmy";
 createDBConnection(DB_NAME, process.env.DB_PORT);
 
+
+// DB backup runs every 2:00am ----- Timezone: Asia/Kuala Lumpur
+require('./utility/cronScheduler');
+
 // IMPORT ROUTES ----------------------------------------------------------------------------------
 const employeeLogsRoute = require('./routes/employee-logs')(io);
-const employeeRoute = require('./routes/employee')(io);
-const indexRoute = require('./routes/main')(io);
-const authRoute = require('./routes/auth')(io);
+const employeeRoute 	= require('./routes/employee')(io);
+const indexRoute 		= require('./routes/main')(io);
+const authRoute 		= require('./routes/auth')(io);
 
 app.use(session({
 	store: new MongoStore({
 		mongooseConnection: mongoose.connection,
-		collection: 'sessions'
+		collection: 'sessions',
+		autoRemove: 'native'
 	}),
 	name: process.env.SESSION_NAME,
 	secret: process.env.SESSION_SECRET,
@@ -64,7 +67,6 @@ app.use('/api/employeelogs', employeeLogsRoute); // localhost:3000/api/employeel
 
 
 /* CATCH 404 AND FORWARD REQUEST TO ERROR HANDLER --------------------------------------------------
-
 	DESCRIPTION:
 	- If the user tries to access unknown routes aside from the available routes above,
 	  it will be directed to this middleware.
@@ -75,7 +77,6 @@ app.use((req, res, next) => {
 
 
 /* ERROR HANDLER -----------------------------------------------------------------------------------
-
 	DESCRIPTION:
 	- This is the error handling middleware.
 */

@@ -6,54 +6,19 @@ const path = require('path');
 // import User
 const { User } = require("../db/models/User");
 
+// session checker middleware
 const isAuthenticated = (req, res, next) => {
-	// if(req.cookies) {
-		if(req.cookies.sessionId == req.session.id) {
-			console.log('authenticated!');
-			return next();
-		}
-	// }
 
-	return res.status(401).send(`not authenticaed`);
+	if (req.session.role == 0) {
+		console.log('authenticated!');
+		return next();
+	} else {
+		return res.status(401).send(`you dont have admin privilages`);
+	}
+
 }
 
 module.exports = (io) => {
-
-
-	// POST /auth
-	// Description: authenticate admin user (for login)
-	// router.post('/login', (req, res) => {
-	// 	let email = req.body.email;
-
-	// 	User.findOne({ email }, (err, user) => {
-	// 		if(err) return res.status(500).send({ message: 'Error on the server.' });
-	// 		if(!user) return res.status(404).send({ message: `User ${user} does not exist.`});
-
-	// 		// compare password
-	// 		let password = req.body.password;
-	// 		let validPassword = bcrypt.compareSync(password, user.password);
-
-	// 		if (!validPassword) {
-	// 			//
-	// 			res.status = 401;
-	// 			return res.send({
-	// 				session: false,
-	// 				message: "Invalid email or password."
-	// 			});
-	// 		}
-	// 		else {
-	// 			let { email, username } = user;
-	// 			let sessionID = req.sessionID;
-	// 			let message = `Successful LogIn`;
-
-	// 			// create new session for logged in user
-	// 			req.session.username = username;
-	// 			req.session.email = email;
-
-	// 			res.status(200).send({ sessionID, message, username, email });
-	// 		}
-	// 	});
-	// });
 
 	router.post('/login', async (req, res) => {
 		try {
@@ -61,36 +26,35 @@ module.exports = (io) => {
 			let user = await User.findOne({ email: _email });
 
 			if (!user) {
-				return res.status(404).send({ message: `User ${user} does not exist.` });
+				return res.status(401).send(`Invalid email or password.`);
 			}
-
+			console.log(user);
 			// validate password
 			let password = req.body.password;
 			let validPassword = await bcrypt.compare(password, user.password);
 
 			// if submitted password invalid, return an error
 			if (!validPassword) {
-				res.status = 401;
-				return res.send({
-					session: false,
-					message: "Invalid email or password."
-				});
+
+				return res.status(401).send("Invalid email or password");
 
 			} else {
-				let { email, username } = user;
-				let sessionID = req.sessionID;
-				let message = `Successful LogIn`;
 
-				// create new session for logged in user
+				// get all the information needed to be sent back to user.
+				let { email, username, role } = user;
+				let sessionID = req.sessionID;
+				let message = `Login Success.`;
+
+				// attach user details on to session object
 				req.session.username = username;
 				req.session.email = email;
+				req.session.role = role;
+
+				// save session to db
 				req.session.save();
-
-				res.cookie('sessionId', req.session.id);
-
+				
 				res.status(200).send({ sessionID, message, username, email });
 			}
-
 
 		} catch (error) {
 			return res.status(500).send({ message: 'Error on the server.' });
@@ -103,47 +67,31 @@ module.exports = (io) => {
 
 	/*-----------------------------------------------------------
 	-> POST /auth/logout
-
 	Description:
 	logout a user
 	-----------------------------------------------------------*/
 	router.get('/logout', (req, res) => {
 
-		if (req.session) {
-			let user = req.session.username;
-			console.log(`${user} logging out`);
-
-			req.session.destroy(function (err) {
-				if (!err) {
-					let message = "successfully logged out";
-
-					console.log(message);
-					res.status(200).send({ message });
-				}
-				else {
-					console.err(err)
-					res.status(500).send('Error destroying session');
-				}
-			})
+		if(!req.session || !req.session.username) {
+			console.log('You are not logged in.');
+			return res.redirect('/login-test');
+		} else {
+			req.session.destroy();			//clear cookie
+			res.clearCookie('emmy');
+			return res.status(200).send("successfully logged out");
 		}
 
-		else {
-			let message = 'noSession object or some kind of error';
-			console.log(message);
-			res.status(500).send(message);
-		}
-	})
+	});
 
 	/*-----------------------------------------------------------
 	-> POST /auth/enroll
-
 	Description:
 	Add/enroll a new "Emmy user"
 	-----------------------------------------------------------*/
 	router.post('/enroll', async (req, res) => {
 		try {
 			// get username and hash password using bcrypt
-			let { email, firstname, lastname, password } = req.body;
+			let { email, firstname, lastname, password, role } = req.body;
 			console.log(req.body);
 
 			// hash password using bcrypt
@@ -151,11 +99,12 @@ module.exports = (io) => {
 
 			// create a new user of type [User]
 			let newUser = new User({
-				email: email,
-				firstname: firstname,
-				lastname: lastname,
-				username: `${firstname}${lastname}`,
-				password: $_hashedPassword
+				email		: email,
+				firstname	: firstname,
+				lastname	: lastname,
+				username	: `${firstname}${lastname}`,
+				password	: $_hashedPassword,
+				role    	: role
 			});
 
 			// save user to db

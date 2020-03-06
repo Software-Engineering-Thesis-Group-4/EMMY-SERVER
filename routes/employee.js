@@ -2,8 +2,21 @@ const express = require('express')
 const router  = express.Router();
 const path = require('path');
 
+// import utility
+const { encrypt, decrypt } = require('../utility/aes');
+
 // import models
 const { Employee } = require('../db/models/Employee');
+
+// session checker middleware
+const isAuthenticated = (req, res, next) => {
+	if (req.session.role == 0) {
+		console.log('authenticated!');
+		return next();
+	} else {
+		return res.status(401).send(`you dont have admin privilages`);
+	}
+}
 
 module.exports = (io) => {
    
@@ -29,20 +42,20 @@ module.exports = (io) => {
    Description: 
    Add/enroll a new employee
    -----------------------------------------------------------*/
-   router.post('/enroll', (req, res) => {
+   router.post('/enroll', isAuthenticated, (req, res) => {
       let employee      = req.body;
       console.log(employee);
 
       const new_employee = new Employee({
-         employeeId      : employee.employee_id,
-         firstName       : employee.firstname,
-         lastName        : employee.lastname,
-         email           : employee.email,
+         employeeId      : encrypt(employee.employee_id),
+         firstName       : encrypt(employee.firstname),
+         lastName        : encrypt(employee.lastname),
+         email           : encrypt(employee.email),
          isMale          : employee.isMale,
          employmentStatus: employee.employment_status,
          department      : employee.department,
          jobTitle        : employee.job_title,
-         fingerprintId   : employee.fingerprint_id,
+         fingerprintId   : encrypt(employee.fingerprint_id),
       });
 
       
@@ -52,10 +65,12 @@ module.exports = (io) => {
          }     
          
          Employee.find({}).then(employees => {
-            io.sockets.emit('newEmployee', employees);
-            return res.send(201);
+            decEmp = decrypt(employees);
+            io.sockets.emit('newEmployee', decEmp);
+            return res.sendStatus(201);
          }).catch(err => {
-            return res.send(500);
+            console.log(err)
+            return res.sendStatus(500).send('Server error. Unable to fetch employees');
          })
       })
    });
