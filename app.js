@@ -1,28 +1,26 @@
-const createError  = require('http-errors');
-const http         = require('http');
-const path         = require('path');
-const logger       = require('morgan');
-const socketIO     = require('socket.io');
-const cors         = require('cors');
-const express      = require('express');
-const session      = require('express-session');
-const MongoStore   = require('connect-mongo')(session);
-const mongoose     = require('mongoose');
-const dotenv       = require('dotenv');
+const createError = require('http-errors');
+const http = require('http');
+const path = require('path');
+const logger = require('morgan');
+const socketIO = require('socket.io');
+const cors = require('cors');
+const express = require('express');
+const session = require('express-session');
+const MongoStore = require('connect-mongo')(session);
+const mongoose = require('mongoose');
+const dotenv = require('dotenv');
 
-dotenv.config();
-
-// enable .env config variables
-const PORT = process.env.PORT || '3000';
-
+// INITIALIZE EXPRESS APPLICATION
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
+// LOAD ENVIRONMENT VARIABLES
+dotenv.config();
+
 // APPLICATION LEVEL CONFIGURATIONS ---------------------------------------------------------------
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -34,12 +32,7 @@ const { createDBConnection } = require('./db');
 let DB_NAME = process.env.DB_NAME || "Emmy";
 createDBConnection(DB_NAME, process.env.DB_PORT);
 
-// IMPORT ROUTES ----------------------------------------------------------------------------------
-const employeeLogsRoute = require('./routes/employee-logs')(io);
-const employeeRoute = require('./routes/employee')(io);
-const indexRoute = require('./routes/main')(io);
-const authRoute = require('./routes/auth')(io);
-
+// SESSION MIDDLEWARE & CONFIGURATIONS ------------------------------------------------------------
 app.use(session({
 	store: new MongoStore({
 		mongooseConnection: mongoose.connection,
@@ -56,10 +49,20 @@ app.use(session({
 	}
 }));
 
+// IMPORT ROUTES ----------------------------------------------------------------------------------
+const employeeLogsRoute = require('./routes/employee-logs')(io);
+const employeeRoute = require('./routes/employee')(io);
+const indexRoute = require('./routes/main')(io);
+const authRoute = require('./routes/auth')(io);
+
 app.use('/', indexRoute); // localhost:3000/
 app.use('/auth', authRoute); // localhost:3000/auth/
 app.use('/api/employees', employeeRoute); // localhost:3000/api/employees/
 app.use('/api/employeelogs', employeeLogsRoute); // localhost:3000/api/employeelogs/
+
+// app.get(/.*/, (req, res) => {
+// 	res.sendFile(__dirname + '/public/index.html');
+// })
 
 
 /* CATCH 404 AND FORWARD REQUEST TO ERROR HANDLER --------------------------------------------------
@@ -90,6 +93,8 @@ app.use((err, req, res, next) => {
 
 
 // LISTEN -----------------------------------------------------------------------------------------
+const PORT = process.env.PORT || '3000';
+
 server.listen(PORT, () => {
 	console.log(`server listening on port: ${PORT}`);
 	console.log(`local: http://localhost:${PORT}/`);
