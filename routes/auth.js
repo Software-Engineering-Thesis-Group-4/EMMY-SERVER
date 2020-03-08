@@ -1,7 +1,8 @@
-const express = require('express');
-const router = express.Router();
-const bcrypt = require('bcryptjs');
-const path = require('path');
+const express 	= require('express');
+const router 	= express.Router();
+const bcrypt 	= require('bcryptjs');
+const path 		= require('path');
+const jwt  		= require('jsonwebtoken');
 
 // import utility
 const { encrypt,decrypter } = require('../utility/aes');
@@ -9,72 +10,72 @@ const { encrypt,decrypter } = require('../utility/aes');
 // import User
 const { User } = require("../db/models/User");
 
-// session checker middleware
-const isAuthenticatedAdmin = (req, res, next) => {
-	if (req.session.username) {
-		if(req.session.accountRole == '0'){
-			console.log('authenticated!');
-			return next();
-		}
-	} else {
-		return res.send(`you dont have admin authorization to access this page`);
-	}
-}
-
-const isAuthenticatedUser = (req, res, next) => {
-	
-	if (req.session.username) {
-		if(req.session.accountRole == '0' || req.session.accountRole == '1'){
-			console.log('authenticated!');
-			return next();
-		}
-	} else {
+// token checker middleware
+const verifyToken = (req,res,next) => {
+	if(!req.cookies['emmy']){
 		return res.status(401).send(`you dont have authorization to access this page`);
 	}
+
+    jwt.verify(req.cookies['emmy'],process.env.JWT_KEY, (err,user) => {
+		if(err){
+			res.sendStatus(403);
+		} else {
+			req.user = user;
+			return next();
+		}
+	});
+
 }
+
+// const isAuthenticatedUser = (req, res, next) => {
+	
+// 	if (req.session.username) {
+// 		if(req.session.accountRole == '0' || req.session.accountRole == '1'){
+// 			console.log('authenticated!');
+// 			return next();
+// 		}
+// 	} else {
+// 		return res.status(401).send(`you dont have authorization to access this page`);
+// 	}
+// }
 
 
 module.exports = (io) => {
 
 	router.post('/login', async (req, res) => {
-		try {
-			let _email = req.body.email;
-			let user = await User.findOne({ email: encrypt(_email) });
-			console.log(user);
-			if (!user) {
-				return res.status(401).send(`Invalid email or password.`);
-			}
-			
-			// validate password
-			let password = req.body.password;
-			let validPassword = await bcrypt.compare(password, user.password);
+		const email 	= req.body.email;
+		const password 	= req.body.password; 
 
-			// if submitted password invalid, return an error
-			if (!validPassword) {
-				return res.status(401).send("Invalid email or password");
-			} else {
-				// get all the information needed to be sent back to user.
-				let { email, username, accountRole } = user;
-				let sessionID = req.sessionID;
-				let message = `Login Success.`;
-
-				// attach user details on to session object
-				req.session.username = username;
-				req.session.email = email;
-				req.session.accountRole = accountRole;
-
-				// save session to db
-				req.session.save();
+		await User.findOne({ email : encrypt(email)})
+			.then(async (user) => {
+				if(!user){
+					return res.status(401).send('Login failed invalid email or password')
+				}
+				const validPassword = await bcrypt.compare(password, user.password)
 				
-				res.status(200).send({ sessionID, message, username, email });
-			}
+				if (!validPassword) {
+					return res.status(401).send("Invalid email or password");
+				} else {
 
-		} catch (error) {
-			return res.status(500).send({ message: 'Error on the server.' });
-		}
+					const token = jwt.sign({ email : user.email, role  : user.accountRole }, process.env.JWT_KEY,
+						{
+							expiresIn : '30s'
+						})
+
+					res.cookie('emmy', token,{ 
+						maxAge: parseInt(process.env.COOKIE_DURATION), 
+						sameSite: false
+					});
+					res.send('login succes')
+				}
+			})
+			.catch(err => {
+				console.error(err);
+				res.status(500).send('Error on server');
+			});
 	});
 
-	router.get('/test', isAuthenticatedUser, (req, res) => {
+	router.get('/test', verifyToken, (req, res) => {
 		res.sendFile(path.resolve(__dirname, 'protected.html'));
 	})
 
@@ -101,7 +102,7 @@ module.exports = (io) => {
 	Description:
 	Add/enroll a new "Emmy user"
 	-----------------------------------------------------------*/
-	router.post('/enroll',isAuthenticatedAdmin, async (req, res) => {
+	router.post('/enroll', async (req, res) => {
 		try {
 			// get username and hash password using bcrypt
 			let { email, firstname, lastname, password, role } = req.body;

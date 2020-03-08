@@ -10,6 +10,7 @@ const MongoStore   = require('connect-mongo')(session);
 const mongoose     = require('mongoose');
 const dotenv       = require('dotenv');
 const helmet	   = require('helmet');
+const cookieParser = require('cookie-parser');
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
+app.use(cookieParser());
 
 // DATABASE ---------------------------------------------------------------------------------------
 const { createDBConnection } = require('./db');
@@ -46,21 +48,6 @@ const employeeRoute 	= require('./routes/employee')(io);
 const indexRoute 		= require('./routes/main')(io);
 const authRoute 		= require('./routes/auth')(io);
 
-app.use(session({
-	store: new MongoStore({
-		mongooseConnection: mongoose.connection,
-		collection: 'sessions',
-		autoRemove: 'native'
-	}),
-	name: process.env.SESSION_NAME,
-	secret: process.env.SESSION_SECRET,
-	resave: false,
-	saveUninitialized: false,
-	cookie: {
-		maxAge: parseInt(process.env.SESSION_DURATION), // 1hr from .env
-		sameSite: false // cors
-	}
-}));
 
 app.use('/', indexRoute); // localhost:3000/
 app.use('/auth', authRoute); // localhost:3000/auth/
