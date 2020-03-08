@@ -40,7 +40,7 @@ createDBConnection(DB_NAME, process.env.DB_PORT);
 
 
 // DB backup runs every 2:00am ----- Timezone: Asia/Kuala Lumpur
-require('./utility/cronScheduler');
+//require('./utility/cronScheduler');
 
 // IMPORT ROUTES ----------------------------------------------------------------------------------
 const employeeLogsRoute = require('./routes/employee-logs')(io);

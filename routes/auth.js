@@ -5,26 +5,31 @@ const path 		= require('path');
 const jwt  		= require('jsonwebtoken');
 
 // import utility
-const { encrypt,decrypter } = require('../utility/aes');
-
+const { encrypt,decrypter } 				= require('../utility/aes');
+const { createToken, createRefreshToken }	= require('../utility/jwt')
 // import User
 const { User } = require("../db/models/User");
 
 // token checker middleware
 const verifyToken = (req,res,next) => {
-	if(!req.cookies['emmy']){
+	if(req.cookies.emmy){
+		jwt.verify(decrypter(req.cookies.emmy),process.env.JWT_KEY,(err,user) => {
+			if(err){
+				if(err.name === 'TokenExpiredError'){
+
+					return res.status(401).send(`you dont have authorization to access this page`);
+					
+				} else {
+					return res.status(401).send(`you dont have authorization to access this page`);
+				}
+			} else {
+				req.user = user;
+				return next();
+			}
+		});
+	} else {
 		return res.status(401).send(`you dont have authorization to access this page`);
 	}
-
-    jwt.verify(req.cookies['emmy'],process.env.JWT_KEY, (err,user) => {
-		if(err){
-			res.sendStatus(403);
-		} else {
-			req.user = user;
-			return next();
-		}
-	});
-
 }
 
 // const isAuthenticatedUser = (req, res, next) => {
@@ -56,13 +61,20 @@ module.exports = (io) => {
 				if (!validPassword) {
 					return res.status(401).send("Invalid email or password");
 				} else {
-
-					const token = jwt.sign({ email : user.email, role  : user.accountRole }, process.env.JWT_KEY,
-						{
-							expiresIn : '30s'
-						})
-
-					res.cookie('emmy', token,{ 
+					// create refresh token
+					createRefreshToken({ 
+						email 		: user.email,
+						username	: user.firstname + user.lastname,
+						role		: user.accountRole
+					})
+					// create token
+					const token = createToken({ 
+						email 		: user.email,
+						username	: user.firstname + user.lastname,
+						role		: user.accountRole
+					})
+					// put token in cookie
+					res.cookie('emmy', encrypt(token),{ 
 						maxAge: parseInt(process.env.COOKIE_DURATION), 
 						sameSite: false
 					});
@@ -86,11 +98,11 @@ module.exports = (io) => {
 	-----------------------------------------------------------*/
 	router.get('/logout', (req, res) => {
 
-		if(!req.session || !req.session.username) {
+		if(!req.cookies['emmy']) {
 			console.log('You are not logged in.');
 			return res.redirect('/login-test');
 		} else {
-			req.session.destroy();			//clear cookie
+			//clear cookie
 			res.clearCookie('emmy');
 			return res.status(200).send("successfully logged out");
 		}

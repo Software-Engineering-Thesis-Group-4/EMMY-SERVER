@@ -8,15 +8,6 @@ const { encrypt, decrypt } = require('../utility/aes');
 // import models
 const { Employee } = require('../db/models/Employee');
 
-// session checker middleware
-const isAuthenticated = (req, res, next) => {
-	if (req.session.role == 0) {
-		console.log('authenticated!');
-		return next();
-	} else {
-		return res.status(401).send(`you dont have admin privilages`);
-	}
-}
 
 module.exports = (io) => {
    
@@ -42,7 +33,7 @@ module.exports = (io) => {
    Description: 
    Add/enroll a new employee
    -----------------------------------------------------------*/
-   router.post('/enroll', isAuthenticated, (req, res) => {
+   router.post('/enroll', (req, res) => {
       let employee      = req.body;
       console.log(employee);
 
