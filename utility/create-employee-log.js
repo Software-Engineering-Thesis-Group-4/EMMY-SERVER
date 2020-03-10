@@ -5,7 +5,6 @@ module.exports = (io, fingerprintNumber) => {
     return new Promise(async (resolve, reject) => {
 
         const dateNow = new Date();
-        let message = "";
 
         try {
             let employee = await Employee.findOne({ fingerprintId: fingerprintNumber });
