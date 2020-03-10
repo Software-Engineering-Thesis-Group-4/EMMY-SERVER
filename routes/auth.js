@@ -1,86 +1,115 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const path = require('path');
 
 // import User
 const { User } = require("../db/models/User");
 
-// session checker middleware
-const isAuthenticated = (req, res, next) => {
-
-	if (req.session.username) {
-		console.log('authenticated!');
-		return next();
-	} else {
-		return res.status(401).send(`you are not logged in`);
-	}
-
-}
-
 module.exports = (io) => {
 
+	/*-----------------------------------------------------------
+	-> POST /auth/login
+
+	Description:
+	Authenticate a user
+	-----------------------------------------------------------*/
 	router.post('/login', async (req, res) => {
 		try {
-			let _email = req.body.email;
-			let user = await User.findOne({ email: _email });
-
-			if (!user) {
-				return res.status(401).send(`Invalid email or password.`);
-			}
-
-			// validate password
+			// get email
+			let email = req.body.email;
 			let password = req.body.password;
-			let validPassword = await bcrypt.compare(password, user.password);
 
-			// if submitted password invalid, return an error
-			if (!validPassword) {
+			// find user using email
+			let user = await User.findOne({ email });
 
-				return res.status(401).send("Invalid email or password");
+			// if exists, compare password
+			if (user) {
+				console.log(`user found! ${user.email}`)
+				let isValid = await bcrypt.compare(password, user.password);
+
+				// if password is valid, generate and sign token
+				if (isValid) {
+					console.log('authenticated!');
+
+					// sign key
+					let token = jwt.sign({
+						username: user.username,
+						email: user.email,
+					}, process.env.JWT_KEY, { expiresIn: '1h' });
+
+					// TODO: encrypt token
+					// code here...
+
+					return res.status(200).send({
+						email: user.email,
+						username: user.username,
+						token
+					});
+
+				} else {
+					console.log('Invalid password.')
+					return res.status(401).send(`Invalid email or password.`);
+				}
 
 			} else {
-
-				// get all the information needed to be sent back to user.
-				let { email, username } = user;
-				let sessionID = req.sessionID;
-				let message = `Login Success.`;
-
-				// attack username and email to session object
-				req.session.username = username;
-				req.session.email = email;
-
-				// save session to db
-				req.session.save();
-				
-				res.status(200).send({ sessionID, message, username, email });
+				console.log(`User not found!`);
+				return res.status(404).send(`Invalid email or password.`);
 			}
 
 		} catch (error) {
-			return res.status(500).send({ message: 'Error on the server.' });
+			console.log(error);
+			return res.status(500).send(`Internal Server Error.`);
 		}
 	});
 
-	router.get('/test', isAuthenticated, (req, res) => {
-		res.sendFile(path.resolve(__dirname, 'protected.html'));
+
+	router.post('/verify', async (req, res) => {
+		try {
+			let token = req.body.token;
+			// console.log(token);
+
+			// TODO: decrypt token
+			// code here....
+
+			if (token) {
+				// get email from token and find user
+				let decoded = jwt.verify(token, process.env.JWT_KEY);
+				// console.log(`email: ${ decoded.email }`);
+
+				let user = await User.findOne({ email: decoded.email });
+				// console.log(`user: ${ user }`);
+
+				if(user) {
+					// user verified
+					console.log(`User authenticated! (${ user.username })`)
+					res.sendStatus(200);
+				} else {
+					// unauthorized access
+					console.log(`Unauthorized Resource Access`);
+					res.sendStatus(401);
+				}
+
+
+			} else {
+				console.log('invalid token!');
+				res.sendStatus(401);
+			}
+
+		} catch (error) {
+
+		}
 	})
 
 	/*-----------------------------------------------------------
 	-> POST /auth/logout
 
 	Description:
-	logout a user
+	Unauthenticate a user
 	-----------------------------------------------------------*/
 	router.get('/logout', (req, res) => {
-
-		if(!req.session || !req.session.username) {
-			console.log('You are not logged in.');
-			return res.redirect('/login-test');
-		} else {
-			req.session.destroy();			//clear cookie
-			res.clearCookie('emmy');
-			return res.status(200).send("successfully logged out");
-		}
-
+		// TODO: create logout
 	});
 
 	/*-----------------------------------------------------------
