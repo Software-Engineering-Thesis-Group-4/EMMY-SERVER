@@ -1,14 +1,12 @@
 const createError = require('http-errors');
-const http = require('http');
-const path = require('path');
-const logger = require('morgan');
-const socketIO = require('socket.io');
-const cors = require('cors');
-const express = require('express');
-const session = require('express-session');
-const MongoStore = require('connect-mongo')(session);
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
+const http        = require('http');
+const path        = require('path');
+const logger      = require('morgan');
+const socketIO    = require('socket.io');
+const cors        = require('cors');
+const express     = require('express');
+const dotenv      = require('dotenv');
+const helmet      = require('helmet');
 
 // INITIALIZE EXPRESS APPLICATION
 const app = express();
@@ -26,28 +24,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
+app.use(helmet());
 
 // DATABASE ---------------------------------------------------------------------------------------
 const { createDBConnection } = require('./db');
 let DB_NAME = process.env.DB_NAME || "Emmy";
 createDBConnection(DB_NAME, process.env.DB_PORT);
-
-// SESSION MIDDLEWARE & CONFIGURATIONS ------------------------------------------------------------
-app.use(session({
-	store: new MongoStore({
-		mongooseConnection: mongoose.connection,
-		collection: 'sessions',
-		autoRemove: 'native'
-	}),
-	name: process.env.SESSION_NAME,
-	secret: process.env.SESSION_SECRET,
-	resave: false,
-	saveUninitialized: false,
-	cookie: {
-		maxAge: parseInt(process.env.SESSION_DURATION), // 1hr from .env
-		sameSite: false // cors
-	}
-}));
 
 // IMPORT ROUTES ----------------------------------------------------------------------------------
 const employeeLogsRoute = require('./routes/employee-logs')(io);
@@ -60,6 +42,7 @@ app.use('/auth', authRoute); // localhost:3000/auth/
 app.use('/api/employees', employeeRoute); // localhost:3000/api/employees/
 app.use('/api/employeelogs', employeeLogsRoute); // localhost:3000/api/employeelogs/
 
+// SERVE VUE SPA -----------------------------------------------------------------------------------
 // app.get(/.*/, (req, res) => {
 // 	res.sendFile(__dirname + '/public/index.html');
 // })
