@@ -8,7 +8,7 @@ module.exports = (io) => {
    });
 
    router.get('/enroll-admin', (req, res) => {
-      res.redirect('/enroll_admin.html');
+      res.redirect('/enroll_user.html');
    });
 
    router.get('/enroll-employee', (req, res) => {
