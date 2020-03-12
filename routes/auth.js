@@ -107,7 +107,7 @@ module.exports = (io) => {
 	Description:
 	Add/enroll a new "Emmy user"
 	-----------------------------------------------------------*/
-	router.post('/enroll', isAuthenticated, isAuthenticatedAdmin, async (req, res) => {
+	router.post('/enroll', isAuthenticatedAdmin, async (req, res) => {
 		try {
 			// get username and hash password using bcrypt
 			let { email, firstname, lastname, password, role } = req.body;
