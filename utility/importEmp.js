@@ -1,12 +1,12 @@
 const csv   = require('csv-parser');
-const fs              = require('fs');
-const path            = require('path');
+const fs    = require('fs');
+const path  = require('path');
 
 // path to csv file ---- static public files
 const pathCsv = path.join(__dirname,'/../public');
 
 // import utility 
-const { encrypt, decrypt, decrypter} = require('../model/aes')
+const { encrypt, decrypter} = require('../model/aes')
 
 // import model
 const Employee  = require('../model/employee.model');

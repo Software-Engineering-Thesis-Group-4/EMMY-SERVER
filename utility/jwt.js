@@ -1,30 +1,41 @@
 const jwt   = require('jsonwebtoken');
 
-// import utility
-const { encrypt,decrypter } = require('../utility/aes');
-
 // import model
 const { Token } = require("../db/models/Token");
 
 const createToken = (user) => {
     return jwt.sign(user, process.env.JWT_KEY,
         {
-            expiresIn : '10s'
+            expiresIn : process.env.TOKEN_DURATION
         })
 }
 
 const createRefreshToken = (user) => {
     const refToken =  jwt.sign(user, process.env.REFRESH_KEY);
-    console.log(`user in jwt ${user.role}`)
-    const newRefToken = new Token({
-        email       : user.email,
-        username    : user.username,
-        token       : refToken,
-        role		: user.role
+    
+    Token.findOneAndDelete({ email: user.email})
+    .then(token => {
+        if(token){
+            console.log('Deleted Refresh token')
+            const newRefToken = new Token({
+                email       : user.email,
+                token       : refToken
+            })
+            newRefToken.save()
+                .then(() => console.log('Succesfully saved refresh token'))
+                .catch(err => console.error(err))
+        } else {
+        if(!token){
+            const newRefToken = new Token({
+                email       : user.email,
+                token       : refToken
+            })
+            newRefToken.save()
+                .then(() => console.log('Succesfully saved refresh token'))
+                .catch(err => console.error(err))
+        }
+        }
     })
-    newRefToken.save()
-        .then(() => console.log('Succesfully saved refresh token'))
-        .catch(err => console.error(err))
 }
 
 module.exports = { 

@@ -2,92 +2,79 @@ const express 	= require('express');
 const router 	= express.Router();
 const bcrypt 	= require('bcryptjs');
 const path 		= require('path');
-const jwt  		= require('jsonwebtoken');
+
 
 // import utility
 const { encrypt,decrypter } 				= require('../utility/aes');
 const { createToken, createRefreshToken }	= require('../utility/jwt')
-// import User
-const { User } = require("../db/models/User");
 
-// token checker middleware
-const verifyToken = (req,res,next) => {
-	if(req.cookies.emmy){
-		jwt.verify(decrypter(req.cookies.emmy),process.env.JWT_KEY,(err,user) => {
-			if(err){
-				if(err.name === 'TokenExpiredError'){
+// import models
+const { User }	= require("../db/models/User");
+const { Token }	= require("../db/models/Token");
 
-					return res.status(401).send(`you dont have authorization to access this page`);
-					
-				} else {
-					return res.status(401).send(`you dont have authorization to access this page`);
-				}
-			} else {
-				req.user = user;
-				return next();
-			}
-		});
-	} else {
-		return res.status(401).send(`you dont have authorization to access this page`);
-	}
-}
-
-// const isAuthenticatedUser = (req, res, next) => {
-	
-// 	if (req.session.username) {
-// 		if(req.session.accountRole == '0' || req.session.accountRole == '1'){
-// 			console.log('authenticated!');
-// 			return next();
-// 		}
-// 	} else {
-// 		return res.status(401).send(`you dont have authorization to access this page`);
-// 	}
-// }
+// import auth middlewares
+const { isAuthenticated,isAuthenticatedAdmin } = require('../utility/validUser');
 
 
+// start of route after middlewares
 module.exports = (io) => {
 
 	router.post('/login', async (req, res) => {
-		const email 	= req.body.email;
-		const password 	= req.body.password; 
+		
+		// if user already logged in redirect to dashboard
+		if(req.cookies.emmy && req.cookies.emmyTalk){
+			return res.redirect('/');
+		}
+		try {
+			let _email = encrypt(req.body.email);
+			let user = await User.findOne({ email: _email });
 
-		await User.findOne({ email : encrypt(email)})
-			.then(async (user) => {
-				if(!user){
-					return res.status(401).send('Login failed invalid email or password')
-				}
-				const validPassword = await bcrypt.compare(password, user.password)
-				
-				if (!validPassword) {
-					return res.status(401).send("Invalid email or password");
-				} else {
-					// create refresh token
-					createRefreshToken({ 
-						email 		: user.email,
-						username	: user.firstname + user.lastname,
-						role		: user.accountRole
-					})
-					// create token
-					const token = createToken({ 
-						email 		: user.email,
-						username	: user.firstname + user.lastname,
-						role		: user.accountRole
-					})
-					// put token in cookie
-					res.cookie('emmy', encrypt(token),{ 
-						maxAge: parseInt(process.env.COOKIE_DURATION), 
-						sameSite: false
-					});
-					res.send('login succes')
-				}
-			})
-			.catch(err => {
-				console.error(err);
-				res.status(500).send('Error on server');
-			});
+			if (!user) {
+				return res.status(404).send({ message: `User ${user} does not exist.` });
+			}
+
+			// validate password
+			let password = req.body.password;
+			let validPassword = await bcrypt.compare(password, user.password);
+
+			// if submitted password invalid, return an error
+			if (!validPassword) {
+				res.status = 401;
+				return res.send({
+					message: "Invalid email or password."
+				});
+
+			} else {
+				//create refresh token
+				createRefreshToken({ 
+					email 		: user.email,
+					username	: user.firstname + user.lastname,
+					role		: user.accountRole
+				})
+				// create token
+				const token = createToken({ 
+					email 		: user.email,
+					username	: user.firstname + user.lastname,
+					role		: user.accountRole
+				})
+				// put token in cookie
+				res.cookie('emmy', encrypt(token),{ 
+					maxAge: parseInt(process.env.COOKIE_DURATION), 
+					sameSite: false
+				});
+				// create cookie with user email in it for refresh token validation
+				res.cookie('emmyTalk', user.email,{  
+					sameSite: false
+				});
+				res.send('login succes')
+			}
+		} catch (error) {
+			return res.status(500).send({ message: 'Error on the server.' });
+		}
 	});
 
-	router.get('/test', verifyToken, (req, res) => {
+	router.get('/test', isAuthenticatedAdmin, (req, res) => {
+		
 		res.sendFile(path.resolve(__dirname, 'protected.html'));
 	})
 
@@ -98,15 +85,21 @@ module.exports = (io) => {
 	-----------------------------------------------------------*/
 	router.get('/logout', (req, res) => {
 
-		if(!req.cookies['emmy']) {
-			console.log('You are not logged in.');
-			return res.redirect('/login-test');
+		if(req.cookies.emmy && req.cookies.emmyTalk) {
+			// delete token from db
+			Token.findOneAndDelete({email: req.cookies.emmyTalk})
+			.then(() => {
+				console.log('Succesfully deleted token in db')
+				//clear cookie
+				res.clearCookie('emmy');
+				res.clearCookie('emmyTalk');
+				return res.status(200).send("successfully logged out");
+			})
+			.catch(err => console.error(err))		
 		} else {
-			//clear cookie
-			res.clearCookie('emmy');
-			return res.status(200).send("successfully logged out");
+			console.log('You are not logged in.');
+			return res.redirect('/login-test');			
 		}
-
 	});
 
 	/*-----------------------------------------------------------
@@ -114,7 +107,7 @@ module.exports = (io) => {
 	Description:
 	Add/enroll a new "Emmy user"
 	-----------------------------------------------------------*/
-	router.post('/enroll', async (req, res) => {
+	router.post('/enroll', isAuthenticated, isAuthenticatedAdmin, async (req, res) => {
 		try {
 			// get username and hash password using bcrypt
 			let { email, firstname, lastname, password, role } = req.body;
