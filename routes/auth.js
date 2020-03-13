@@ -2,11 +2,12 @@ const express 	= require('express');
 const router 	= express.Router();
 const bcrypt 	= require('bcryptjs');
 const path 		= require('path');
-
+const jwt		= require('jsonwebtoken');
 
 // import utility
 const { encrypt,decrypter } 				= require('../utility/aes');
-const { createToken, createRefreshToken }	= require('../utility/jwt')
+const { createToken, createRefreshToken }	= require('../utility/jwt');
+const { resetPassMail }						= require('../utility/mailer');
 
 // import models
 const { User }	= require("../db/models/User");
@@ -56,7 +57,7 @@ module.exports = (io) => {
 					email 		: user.email,
 					username	: user.firstname + user.lastname,
 					role		: user.accountRole
-				})
+				}, process.env.TOKEN_DURATION)
 				// put token in cookie
 				res.cookie('emmy', encrypt(token),{ 
 					maxAge: parseInt(process.env.COOKIE_DURATION), 
@@ -142,6 +143,70 @@ module.exports = (io) => {
 			res.status(500).send("There was a problem registering the user.");
 		}
 	});
+
+
+	// reset password send mail
+	router.post('/reset-password', async (req,res) =>{
+
+		const email = encrypt(req.body.email);
+
+		User.findOne({ email: email })
+		.then(user => {
+			const username = decrypter(user.firstname) + decrypter(user.lastname)
+			const decr = decrypter(user.email);
+			// create token with user info ------- 1 min lifespan
+			const token = createToken({ email : user.email }, '1m');
+			// gets last 7 char in token and makes it the verif key
+			const key	= token.substring(token.length - 7)
+			// send key to user email
+			resetPassMail(decr,username, key);
+			// create cookie with encrypted token expires the same time as the token expires
+			res.cookie('emmyPass', encrypt(token),{ 
+				maxAge: parseInt(60000), 
+				sameSite: false
+			});
+
+			res.status(200).send('Succesfuly sent mail')
+		})
+		.catch(error => {
+			console.error(error)
+			res.status(500).send('Server error')
+		})
+	});
+
+	// reset password use key sent on email
+	router.post('/reset-password-key', (req,res) =>{
+
+		const key = req.body.key;
+
+		// check if cookie exist
+		if(req.cookies.emmyPass){
+			const decKey = decrypter(req.cookies.emmyPass);
+			// check if key is correct
+			if(key === decKey.substring(decKey.length - 7)){
+				jwt.verify(decKey, process.env.JWT_KEY, (err, user) =>{
+					if(err){
+						return res.status(401).send(`Key expired`);
+					}
+					// if token not yet expired reset password to default 1234
+					User.findOneAndUpdate({ email: user.email },{ password: bcrypt.hashSync('1234', 8)},{ new: true })
+					.then(user => {
+						res.status(200).send(`Succesfuly resetted password for ${user.email}`);
+					})
+					.catch(err => {
+						console.log(err);
+						res.status(400).send('failed to reset password');
+					})
+					});
+			} else {
+				res.status(400).send('Invalid key');
+			}
+		} else {
+			res.status(401).send('Cookie expired');
+		}
+		
+	});
+
 
 	return router;
 }; 

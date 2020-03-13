@@ -3,11 +3,11 @@ const jwt   = require('jsonwebtoken');
 // import model
 const { Token } = require("../db/models/Token");
 
-const createToken = (user) => {
+const createToken = (user,duration) => {
     return jwt.sign(user, process.env.JWT_KEY,
         {
-            expiresIn : process.env.TOKEN_DURATION
-        })
+            expiresIn : duration
+        });
 }
 
 const createRefreshToken = (user) => {

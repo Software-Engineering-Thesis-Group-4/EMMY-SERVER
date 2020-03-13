@@ -1,38 +1,45 @@
 const nodemailer = require("nodemailer");
 
-const emailUser = process.env.EMAIL_USERNAME;
-const emailPass = process.env.EMAIL_PASSWORD;
 
+const gmail = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USERNAME,
+    pass: process.env.EMAIL_PASSWORD
+  },tls:{
+            rejectUnauthorized: false
+        }
+});
 
-// async..await is not allowed in global scope, must use a wrapper
-async function sendMail() {
-
-  // create reusable transporter object using the default SMTP transport
-  let transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false, // true for 465, false for other ports
-    auth: {
-      user: emailUser,
-      pass: emailPass
-    },
-    tls:{
-        rejectUnauthorized: false
-    }
+const sendMail = (sendToEmail, emailSubj, emailBody) => {
+  gmail.sendMail({
+    from    : 'Emmy',
+    to      : sendToEmail, // list of receivers
+    subject : emailSubj, // Subject line
+    text    : emailBody // plain text body 
   });
 
-  // send mail with defined transport object
-  await transporter.sendMail({
-    from    : 'emmstest1@gmail.com',
-    to      : "mokiong1427@gmail.com", // list of receivers
-    subject : "Hello ✔", // Subject line
-    text    : "Hello world?", // plain text body
-    html    : "<b>Hello world?</b>" // html body
-  });
-
+  console.log('Succesfully sent mail');
 }
 
+const resetPassMail = (sendToEmail, username, key) => {
+  const siteUrl = 'https//emmy/blah/blah';
+  const devDets = '096969696969'
+  const message = `Hello ${ username }, here is your verification key ${ key }.\n\n`
+                + `You are currently trying to reset your password in ${siteUrl}.\n`
+                + `If you are not trying to reset your password please ignore this email or `
+                + `contact us and we will handle the rest. ${ devDets }`
 
-module.exports = {
-   sendMail
-};
+  gmail.sendMail({
+    from    : 'Emmy',
+    to      : sendToEmail, // list of receivers
+    subject : 'Reset password', // Subject line
+    text    : message, // plain text body 
+  });
+
+  console.log('Succesfully sent mail');
+}
+
+module.exports = { 
+  resetPassMail 
+} 

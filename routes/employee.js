@@ -36,7 +36,7 @@ module.exports = (io) => {
    router.post('/enroll', (req, res) => {
       let employee      = req.body;
       console.log(employee);
-
+      
       const new_employee = new Employee({
          employeeId      : encrypt(employee.employee_id),
          firstName       : encrypt(employee.firstname),

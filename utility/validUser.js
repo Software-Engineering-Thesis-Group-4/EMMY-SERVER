@@ -37,7 +37,7 @@ const isAuthenticated = (req,res,next) => {
 										email 		: user.email,
 										username	: user.username,
 										role		: user.role
-									})
+									},process.env.TOKEN_DURATION)
 									console.log('making token from refresh token...')
 									// updating cookie value and expire time
 									res.cookie('emmy', encrypt(token),{ 
@@ -73,17 +73,6 @@ const isAuthenticated = (req,res,next) => {
 
 // check if user has admin rights
 const isAuthenticatedAdmin = (req,res,next) => {
-	// const cook = decrypter(req.cookies.emmy);
-	// jwt.verify(cook,process.env.JWT_KEY,(err,user) => {
-	// 	if(err){
-	// 		return res.status(401).send(`you dont have authorization to access this page`);
-	// 	}
-	// 	if(user.role === '0'){
-	// 		return next();
-	// 	} else {
-	// 		return res.status(401).send(`you dont have admin authorization to access this page`);
-	// 	}
-    // })
     // user needs emmy, emmyTalk cookie and   
     // refresh token saved in db, in order to be authorized
 	if(req.cookies.emmy && req.cookies.emmyTalk){
@@ -110,7 +99,7 @@ const isAuthenticatedAdmin = (req,res,next) => {
 										email 		: user.email,
 										username	: user.username,
 										role		: user.role
-									})
+									},process.env.TOKEN_DURATION)
 									console.log('making token from refresh token...')
 									// updating cookie value and expire time
 									res.cookie('emmy', encrypt(token),{ 
