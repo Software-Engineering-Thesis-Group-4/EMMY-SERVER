@@ -8,7 +8,6 @@ const express     = require('express');
 const dotenv      = require('dotenv');
 const helmet      = require('helmet');
 
-// INITIALIZE EXPRESS APPLICATION
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
@@ -31,11 +30,16 @@ const { createDBConnection } = require('./db');
 let DB_NAME = process.env.DB_NAME || "Emmy";
 createDBConnection(DB_NAME, process.env.DB_PORT);
 
+
+// DB backup runs every 2:00am ----- Timezone: Asia/Kuala Lumpur
+//require('./utility/cronScheduler');
+
 // IMPORT ROUTES ----------------------------------------------------------------------------------
 const employeeLogsRoute = require('./routes/employee-logs')(io);
-const employeeRoute = require('./routes/employee')(io);
-const indexRoute = require('./routes/main')(io);
-const authRoute = require('./routes/auth')(io);
+const employeeRoute     = require('./routes/employee')(io);
+const indexRoute        = require('./routes/main')(io);
+const authRoute         = require('./routes/auth')(io);
+
 
 app.use('/', indexRoute); // localhost:3000/
 app.use('/auth', authRoute); // localhost:3000/auth/
@@ -44,7 +48,6 @@ app.use('/api/employeelogs', employeeLogsRoute); // localhost:3000/api/employeel
 
 
 /* CATCH 404 AND FORWARD REQUEST TO ERROR HANDLER --------------------------------------------------
-
 	DESCRIPTION:
 	- If the user tries to access unknown routes aside from the available routes above,
 	  it will be directed to this middleware.
@@ -55,7 +58,6 @@ app.use((req, res, next) => {
 
 
 /* ERROR HANDLER -----------------------------------------------------------------------------------
-
 	DESCRIPTION:
 	- This is the error handling middleware.
 */

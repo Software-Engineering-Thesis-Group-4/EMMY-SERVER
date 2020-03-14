@@ -8,6 +8,18 @@ const { EmployeeLog } = require('../db/models/EmployeeLog');
 // import utilities
 const CreateEmployeeLog = require('../utility/create-employee-log');
 
+// session checker middleware
+const isAuthenticated = (req, res, next) => {
+
+	if (req.session.username) {
+		console.log('authenticated!');
+		return next();
+	} else {
+		return res.status(401).send(`you are not logged in`);
+	}
+
+}
+
 module.exports = (io) => {
      /*----------------------------------------------------------------------------------------------------------------------
      -> GET /api/employeeslogs

@@ -23,6 +23,10 @@ const UserSchema = Schema({
    password: {
       type: String,
       required: true
+   },
+   accountRole: {
+      type: String,
+      required: true
    }
 });
 
