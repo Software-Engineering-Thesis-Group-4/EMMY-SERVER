@@ -42,11 +42,6 @@ app.use('/auth', authRoute); // localhost:3000/auth/
 app.use('/api/employees', employeeRoute); // localhost:3000/api/employees/
 app.use('/api/employeelogs', employeeLogsRoute); // localhost:3000/api/employeelogs/
 
-// SERVE VUE SPA -----------------------------------------------------------------------------------
-// app.get(/.*/, (req, res) => {
-// 	res.sendFile(__dirname + '/public/index.html');
-// })
-
 
 /* CATCH 404 AND FORWARD REQUEST TO ERROR HANDLER --------------------------------------------------
 
