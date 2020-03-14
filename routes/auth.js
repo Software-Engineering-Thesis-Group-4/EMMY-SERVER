@@ -81,9 +81,9 @@ module.exports = (io) => {
 				let user = await User.findOne({ email: decoded.email });
 				// console.log(`user: ${ user }`);
 
-				if(user) {
+				if (user) {
 					// user verified
-					console.log(`User authenticated! (${ user.username })`)
+					console.log(`User authenticated! (${user.username})`)
 					res.sendStatus(200);
 				} else {
 					// unauthorized access
