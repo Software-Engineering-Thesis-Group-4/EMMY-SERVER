@@ -34,7 +34,7 @@ module.exports = (io) => {
 			// if submitted password invalid, return an error
 			if (validPassword) {
 				//create refresh token
-				const refToken = createRefreshToken({ 
+				createRefreshToken({ 
 					email 		: user.email,
 					username	: user.firstname + user.lastname,
 					role		: user.accountRole
@@ -87,7 +87,7 @@ module.exports = (io) => {
 					Token.findOne({ email : email})
 					.then(valUser => {
 						// check if refresh token of user is valid
-						jwt.verify(mail.token, process.env.REFRESH_KEY, (err,user) => {
+						jwt.verify(valUser.token, process.env.REFRESH_KEY, (err,user) => {
 							if(err){
 								res.sendStatus(401);
 							}
