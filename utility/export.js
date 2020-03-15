@@ -10,10 +10,18 @@ const pathCsv = path.join(__dirname,'/../public');
 const csvWriter = createCsvWriter({
   path  : './public/generated.csv',
   header: [
-    {id: 'Fullname' , title: 'Fullname'},
-    {id: 'Email'    , title: 'Email'},
-    {id: 'Mobile'   , title: 'Mobile'},
-    {id: 'City'     , title: 'City'}
+    {id: 'employeeId'       , title: 'employee_id'},
+    {id: 'firstName'        , title: 'firstname'},
+    {id: 'lastName'         , title: 'lastname'},
+    {id: 'email'            , title: 'email'},
+    {id: 'isMale'           , title: 'isMale'},
+    {id: 'employmentStatus' , title: 'employment_status'},
+    {id: 'department'       , title: 'department'},
+    {id: 'jobTitle'         , title: 'job_title'},
+    {id: 'photo'            , title: 'photo'},
+    {id: 'fingerprintId'    , title: 'fingerprint_id'},
+    {id: 'terminated'       , title: 'terminated'},
+    {id: 'latestLog'        , title: 'latestLog'}
   ]
 
 });

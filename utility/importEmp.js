@@ -6,37 +6,45 @@ const path  = require('path');
 const pathCsv = path.join(__dirname,'/../public');
 
 // import utility 
-const { encrypt, decrypter} = require('../model/aes')
+const { encrypt, decrypter} = require('./aes')
 
 // import model
-const Employee  = require('../model/employee.model');
+const { Employee }  = require('../db/models/Employee');
 
 
 const csvImport = (csvFile) => {
   
   fs.createReadStream(csvFile)
     .pipe(csv({
-    strict : true
+    strict     : true
   }))
   .on('data', (data) => {
-
+    
+    const empId         = encrypt(data.employee_id);
+    const firstName     = encrypt(data.firstname);
+    const lastName      = encrypt(data.lastname);
+    const email         = encrypt(data.email);
+    const fingerprintId = encrypt(parseInt(data.fingerprint_id))
+  
     const newEmp = new Employee({
-      employeeId      : encrypt(data.employee_id),
-      firstName       : encrypt(data.firstname),
-      lastName        : encrypt(data.lastname),
-      email           : encrypt(data.email),
+      employeeId      : empId,
+      firstName       : firstName,
+      lastName        : lastName,
+      email           : email,
       isMale          : data.isMale,
-      employmentStatus: data.employment_status,
+      employmentStatus: parseInt(data.employment_status),
       department      : data.department,
       jobTitle        : data.job_title,
-      fingerprintId   : encrypt(data.fingerprint_id),
+      photo           : data.photo,
+      fingerprintId   : fingerprintId,
+      terminated      : data.terminated
    });
 
     newEmp.save()
       .then((emp) => {
         console.log(`Added employee ${decrypter(emp.firstName)}`);
       })
-      .catch(res.sendStatus(500).send('Server error. Unable to register employee.'));
+      .catch(err => console.error(err));
     
   })
   .on('end', () => {

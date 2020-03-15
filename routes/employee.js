@@ -1,10 +1,11 @@
 const express = require('express')
 const router  = express.Router();
-const path = require('path');
+const path    = require('path');
 
 // import utility
 const { encrypt, decrypt } = require('../utility/aes');
-
+const { csvImport }        = require('../utility/importEmp');
+const { toCsv }            = require('../utility/export');
 // import models
 const { Employee } = require('../db/models/Employee');
 
@@ -66,6 +67,55 @@ module.exports = (io) => {
       })
    });
 
+   /*----------------------------------------------------------------------------------------------------------------------
+	Route:
+	POST /api/employees/upload
+	Description:
+	This route is used when the HR uploads a CSV file for adding multiple employees
+	Assignee:
+	Michael Ong
+	----------------------------------------------------------------------------------------------------------------------*/
+	router.post('/enroll/csv', async (req, res) => {
+
+      try{
+         const pathPublic = path.join(__dirname,'/../public/');
+         if(req.files){
+            const csvFile  = req.files.csvImport;
+            // check if file is csv
+            if(csvFile.name.substring(csvFile.name.length, csvFile.name.length-3) != 'csv'){
+               res.status(422).send('must be csv file');
+            } else {
+               await csvFile.mv(pathPublic + 'import.csv', (err) => {
+                  if(err){
+                     console.error(err);
+                     res.status(500).send('error on server'); 
+                  }
+                  csvImport(pathPublic + 'import.csv');
+                  // go to vue route after importing employees 
+                  // send employees to res?
+                  res.send('success')
+               })
+            }
+         } else {
+            res.status(204).send('Not selected a file or file is empty! Please select a file');
+         }
+      } catch (error){
+         res.status(500).send('error on server');
+      }    
+   });
+   
+   // export report to csv file must be used in logs ---- used in employees for testing purposes
+   router.get('/export/csv', (req,res) => {
+      // decrypts every field and saves it to new database
+         Employee.find()
+            .then(emp => {
+                  emp = decrypt(emp);
+                  toCsv(emp);
+                  res.send('success')
+            })
+            .catch(err => console.error(err));
+
+   });
 
    /*----------------------------------------------------------------------------------------------------------------------
      -> DELETE /api/employees/:id

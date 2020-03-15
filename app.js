@@ -8,15 +8,17 @@ const express      = require('express');
 const dotenv       = require('dotenv');
 const helmet	   = require('helmet');
 const cookieParser = require('cookie-parser');
-
-dotenv.config();
+const fileUpload   = require('express-fileupload');
 
 // enable .env config variables
+dotenv.config();
+
+
 const PORT = process.env.PORT || '3000';
 
-const app = express();
+const app 	 = express();
 const server = http.createServer(app);
-const io = socketIO(server);
+const io 	 = socketIO(server);
 
 // APPLICATION LEVEL CONFIGURATIONS ---------------------------------------------------------------
 app.set('views', path.join(__dirname, 'views'));
@@ -29,6 +31,9 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
 app.use(cookieParser());
+app.use(fileUpload({
+	debug		: true
+}));
 
 // DATABASE ---------------------------------------------------------------------------------------
 const { createDBConnection } = require('./db');
@@ -37,7 +42,7 @@ createDBConnection(DB_NAME, process.env.DB_PORT);
 
 
 // DB backup runs every 2:00am ----- Timezone: Asia/Kuala Lumpur
-//require('./utility/cronScheduler');
+// require('./utility/cronScheduler');
 
 // IMPORT ROUTES ----------------------------------------------------------------------------------
 const employeeLogsRoute = require('./routes/employee-logs')(io);

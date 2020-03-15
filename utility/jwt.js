@@ -14,18 +14,18 @@ const createRefreshToken = (user) => {
     const refToken =  jwt.sign(user, process.env.REFRESH_KEY);
     
     Token.findOneAndDelete({ email: user.email})
-    .then(token => {
-        if(token){
+    .then(emp => {
+        if(emp){
             console.log('Deleted Refresh token')
             const newRefToken = new Token({
-                email       : user.email,
+                email       : emp.email,
                 token       : refToken
             })
             newRefToken.save()
                 .then(() => console.log('Succesfully saved refresh token'))
                 .catch(err => console.error(err))
         } else {
-        if(!token){
+        if(!emp){
             const newRefToken = new Token({
                 email       : user.email,
                 token       : refToken

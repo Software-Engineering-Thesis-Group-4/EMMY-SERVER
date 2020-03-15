@@ -16,7 +16,7 @@
     "debug": "~2.6.9",
     "ejs": "~2.6.1",
     "express": "^4.17.1",
-    "express-session": "^1.17.0",
+    "express-fileupload": "^1.1.6",
     "fs": "0.0.1-security",
     "helmet": "^3.21.3",
     "http-errors": "~1.6.3",

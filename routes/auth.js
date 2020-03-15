@@ -13,19 +13,12 @@ const { resetPassMail }						= require('../utility/mailer');
 const { User }	= require("../db/models/User");
 const { Token }	= require("../db/models/Token");
 
-// import auth middlewares
-const { isAuthenticated,isAuthenticatedAdmin } = require('../utility/validUser');
 
-
-// start of route after middlewares
+// start of route after middlewares 
 module.exports = (io) => {
 
 	router.post('/login', async (req, res) => {
 		
-		// if user already logged in redirect to dashboard
-		if(req.cookies.emmy && req.cookies.emmyTalk){
-			return res.redirect('/');
-		}
 		try {
 			let _email = encrypt(req.body.email);
 			let user = await User.findOne({ email: _email });
@@ -33,21 +26,15 @@ module.exports = (io) => {
 			if (!user) {
 				return res.status(404).send({ message: `User ${user} does not exist.` });
 			}
-
+			
 			// validate password
 			let password = req.body.password;
 			let validPassword = await bcrypt.compare(password, user.password);
 
 			// if submitted password invalid, return an error
-			if (!validPassword) {
-				res.status = 401;
-				return res.send({
-					message: "Invalid email or password."
-				});
-
-			} else {
+			if (validPassword) {
 				//create refresh token
-				createRefreshToken({ 
+				const refToken = createRefreshToken({ 
 					email 		: user.email,
 					username	: user.firstname + user.lastname,
 					role		: user.accountRole
@@ -58,26 +45,73 @@ module.exports = (io) => {
 					username	: user.firstname + user.lastname,
 					role		: user.accountRole
 				}, process.env.TOKEN_DURATION)
-				// put token in cookie
-				res.cookie('emmy', encrypt(token),{ 
-					maxAge: parseInt(process.env.COOKIE_DURATION), 
-					sameSite: false
+				
+				// encrypt token before sending to user
+				const encToken = encrypt(token);
+				res.send({ auth_token : encToken, user_role: user.accountRole })
+
+			} else {
+				return res.status(401).send({
+					message: "Invalid email or password."
 				});
-				// create cookie with user email in it for refresh token validation
-				res.cookie('emmyTalk', user.email,{  
-					sameSite: false
-				});
-				res.send('login succes')
+				
 			}
 		} catch (error) {
 			return res.status(500).send({ message: 'Error on the server.' });
 		}
 	});
 
-	router.get('/test', isAuthenticatedAdmin, (req, res) => {
+	router.get('/test', (req, res) => {
 		
 		res.sendFile(path.resolve(__dirname, 'protected.html'));
 	})
+
+	/*----------------------------------------------------------------------------------------------------------------------
+	Route:
+	POST /auth/verify
+	Description:
+	TODO: put route description here...
+	Author:
+	Michael Ong
+	----------------------------------------------------------------------------------------------------------------------*/
+	// verify user
+	router.get('/verify', (req, res) => {
+
+		const token = decrypter(req.body.auth_token); 
+		const email = req.body.email;
+
+		jwt.verify(token,process.env.JWT_KEY, (err,user) => {
+			if(err){
+				if(err.name === 'TokenExpiredError'){
+					// if token expired find refresh token of user using user email
+					Token.findOne({ email : email})
+					.then(valUser => {
+						// check if refresh token of user is valid
+						jwt.verify(mail.token, process.env.REFRESH_KEY, (err,user) => {
+							if(err){
+								res.sendStatus(401);
+							}
+							// create token from refresh token
+							const token = createToken({ 
+								email 		: user.email,
+								username	: user.username,
+								role		: user.role
+							},process.env.TOKEN_DURATION)
+							// send token and role to client
+							console.log('making token from refresh token...')
+							res.status(200).send({auth_token: token, user_role:user.role})
+						})
+					})
+				} else {
+					res.sendStatus(401); 	
+				} 
+				// if token not expired send token and role
+				res.status(200).send({auth_token: req.body.auth_token, user_role:user.role});
+			}
+		})
+	})
+
+
 
 	/*-----------------------------------------------------------
 	-> POST /auth/logout
@@ -86,21 +120,19 @@ module.exports = (io) => {
 	-----------------------------------------------------------*/
 	router.get('/logout', (req, res) => {
 
-		if(req.cookies.emmy && req.cookies.emmyTalk) {
-			// delete token from db
-			Token.findOneAndDelete({email: req.cookies.emmyTalk})
-			.then(() => {
-				console.log('Succesfully deleted token in db')
-				//clear cookie
-				res.clearCookie('emmy');
-				res.clearCookie('emmyTalk');
-				return res.status(200).send("successfully logged out");
+		const token = decrypter(req.body.auth_token);
+
+		jwt.verify(token, process.env.JWT_KEY, (err,user) =>{
+			if(err){
+				res.send(err.stack)
+			} 
+			Token.findOneAndDelete({email : user.email})
+			.then(user => {
+				console.log('Succesfully deleted refresh token in db')
 			})
-			.catch(err => console.error(err))		
-		} else {
-			console.log('You are not logged in.');
-			return res.redirect('/login-test');			
-		}
+			.catch(error => console.error(error));
+		})
+
 	});
 
 	/*-----------------------------------------------------------
@@ -108,7 +140,7 @@ module.exports = (io) => {
 	Description:
 	Add/enroll a new "Emmy user"
 	-----------------------------------------------------------*/
-	router.post('/enroll', isAuthenticatedAdmin, async (req, res) => {
+	router.post('/enroll', async (req, res) => {
 		try {
 			// get username and hash password using bcrypt
 			let { email, firstname, lastname, password, role } = req.body;
@@ -123,12 +155,17 @@ module.exports = (io) => {
 				// hash password using bcrypt
 				let $_hashedPassword = bcrypt.hashSync(password, 8);
 
+				const encMail 	= encrypt(email);
+				const encFirst 	= encrypt(firstname);
+				const encLast 	= encrypt(lastname);
+				
+
 				// create a new user of type [User]
 				let newUser = new User({
-					email		: encrypt(email),
-					firstname	: encrypt(firstname),
-					lastname	: encrypt(lastname),
-					username	: `${encrypt(firstname)}${encrypt(lastname)}`,
+					email		: encMail,
+					firstname	: encFirst,
+					lastname	: encLast,
+					username	: `${encFirst}${encLast}`,
 					password	: $_hashedPassword,
 					accountRole : role
 				});

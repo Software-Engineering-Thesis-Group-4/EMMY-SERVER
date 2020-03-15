@@ -10,9 +10,9 @@
 
  
   const dbOptions = {
-    user: false,                           // must have value for security, default to false for dev purposes
-    pass: false,                           // must have value for security, default to false for dev purposes
-    host: 'localhost',
+    user: false,                           // must have value for security, default to false for dev phase
+    pass: false,                           // must have value for security, default to false for dev phase
+    host: 'localhost',                    
     port: process.env.DB_PORT,
     database: process.env.DB_NAME,
     autoBackupPath: process.env.BACKUP_PATH
@@ -28,8 +28,11 @@
             
       // if backup exist delete it 
       if(fs.existsSync(newBackupPath)){
-        childProc.exec('rd/s/q ' + newBackupPath,(err,stdout,stderr) =>{
-          console.log('succesfully deleted old backup!')
+        childProc.exec('rd/s/q ' + newBackupPath,(err,stdout,stderr) => {
+          if(err){
+            console.log(err)
+          } else 
+            console.log('succesfully deleted old backup!')
         })
         childProc.execSync(cmd,{
           cwd: 'C:\\Program Files\\MongoDB\\Server\\4.2\\bin'
