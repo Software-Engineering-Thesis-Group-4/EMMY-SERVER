@@ -181,7 +181,7 @@ module.exports = (io) => {
 			let { email, firstname, lastname, password, role } = req.body;
 			console.log(req.body);
 
-			let user = await User.findOne({ email: encrypt(email) })
+			let user = await User.findOne({ email })
 
 			// if user email already exist in the database
 			if (user) {
@@ -192,10 +192,10 @@ module.exports = (io) => {
 
 				// create a new user of type [User]
 				let newUser = new User({
-					email: encrypt(email),
-					firstname: encrypt(firstname),
-					lastname: encrypt(lastname),
-					username: `${encrypt(firstname)}${encrypt(lastname)}`,
+					email: email,
+					firstname: firstname,
+					lastname: lastname,
+					username: `${firstname}${lastname}`,
 					password: $_hashedPassword,
 					accountRole: role
 				});
@@ -203,7 +203,7 @@ module.exports = (io) => {
 				// save user to db
 				let registeredUser = await newUser.save();
 
-				res.status(200).send(`Successfully registered a new user ( ${decrypter(registeredUser.email)} )`);
+				res.status(200).send(`Successfully registered a new user ( ${registeredUser.email} )`);
 			}
 		} catch (error) {
 			console.log(error);
