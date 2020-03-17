@@ -4,7 +4,7 @@ const path    = require('path');
 
 // import utility
 const { encrypt, decrypt } = require('../utility/aes');
-const { csvImport }        = require('../utility/importEmp');
+const { isValidCsv }       = require('../utility/importEmp');
 const { toCsv }            = require('../utility/export');
 // import models
 const { Employee } = require('../db/models/Employee');
@@ -79,7 +79,9 @@ module.exports = (io) => {
 
       try{
          const pathPublic = path.join(__dirname,'/../public/');
+         console.log(req.files);
          if(req.files){
+            console.log(req.files);
             const csvFile  = req.files.csvImport;
             // check if file is csv
             if(csvFile.name.substring(csvFile.name.length, csvFile.name.length-3) != 'csv'){
@@ -90,10 +92,10 @@ module.exports = (io) => {
                      console.error(err);
                      res.status(500).send('error on server'); 
                   }
-                  csvImport(pathPublic + 'import.csv');
+                  isValidCsv(pathPublic + 'import.csv',res);
+                  
                   // go to vue route after importing employees 
                   // send employees to res?
-                  res.send('success')
                })
             }
          } else {
@@ -111,7 +113,6 @@ module.exports = (io) => {
             .then(emp => {
                   emp = decrypt(emp);
                   toCsv(emp);
-                  res.send('success')
             })
             .catch(err => console.error(err));
 

@@ -241,7 +241,6 @@ module.exports = (io) => {
 		} else {
 			res.status(401).send('Cookie expired');
 		}
-		
 	});
 
 

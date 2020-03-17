@@ -11,7 +11,6 @@ const { encrypt, decrypter} = require('./aes')
 // import model
 const { Employee }  = require('../db/models/Employee');
 
-
 const csvImport = (csvFile) => {
   
   fs.createReadStream(csvFile)
@@ -38,20 +37,46 @@ const csvImport = (csvFile) => {
       photo           : data.photo,
       fingerprintId   : fingerprintId,
       terminated      : data.terminated
-   });
+    });
 
     newEmp.save()
       .then((emp) => {
         console.log(`Added employee ${decrypter(emp.firstName)}`);
       })
-      .catch(err => console.error(err));
-    
+      .catch(err => res.send("invalid value in csv"));
   })
   .on('end', () => {
-    console.log('Succesfully imported csv file')  
+    console.log('Succesfully read csv file')  
   });
 }
 
+
+const isValidCsv = (csvFile,res) => {
+  const headerVal = 'employee_id,firstname,lastname,' 
+                    +'email,isMale,employment_status,'
+                    +'department,job_title,photo,fingerprint_id,terminated';
+
+  fs.createReadStream(csvFile)
+    .pipe(csv({
+    strict     : true
+  }))
+  .on('headers', (header) => {
+    // check if format of csv is correct
+      if(header.toString() === headerVal){
+        csvImport(csvFile);
+        console.log('Imported csv file data')
+        res.send('success')
+      }
+      else {
+        res.send('Invalid csv format')
+      }
+  })
+  
+}
+
+
+
+
 module.exports = {
-    csvImport
+    isValidCsv
 }
