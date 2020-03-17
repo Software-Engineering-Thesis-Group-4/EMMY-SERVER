@@ -3,6 +3,7 @@ const router 	= express.Router();
 const bcrypt 	= require('bcryptjs');
 const path 		= require('path');
 const jwt		= require('jsonwebtoken');
+const isOnline  = require('is-online');
 
 // import utility
 const { encrypt,decrypter } 				= require('../utility/aes');
@@ -127,7 +128,7 @@ module.exports = (io) => {
 				res.send(err.stack)
 			} 
 			Token.findOneAndDelete({email : user.email})
-			.then(user => {
+			.then(() => {
 				console.log('Succesfully deleted refresh token in db')
 			})
 			.catch(error => console.error(error));
@@ -185,30 +186,58 @@ module.exports = (io) => {
 	// reset password send mail
 	router.post('/reset-password', async (req,res) =>{
 
-		const email = encrypt(req.body.email);
+		try {
+			const email = encrypt(req.body.email);
 
-		User.findOne({ email: email })
-		.then(user => {
-			const username = decrypter(user.firstname) + decrypter(user.lastname)
-			const decr = decrypter(user.email);
-			// create token with user info ------- 1 min lifespan
-			const token = createToken({ email : user.email }, '1m');
-			// gets last 7 char in token and makes it the verif key
-			const key	= token.substring(token.length - 7)
-			// send key to user email
-			resetPassMail(decr,username, key);
-			// create cookie with encrypted token expires the same time as the token expires
-			res.cookie('emmyPass', encrypt(token),{ 
-				maxAge: parseInt(60000), 
-				sameSite: false
-			});
+			// check if user has internet access
+			const netStatus = await isOnline();
 
-			res.status(200).send('Succesfuly sent mail')
-		})
-		.catch(error => {
-			console.error(error)
-			res.status(500).send('Server error')
-		})
+			if(netStatus){
+				const user = await User.findOne({ email: email });
+				const username = decrypter(user.firstname) + ' ' + decrypter(user.lastname)
+				const decr = decrypter(user.email);
+
+				// create token with user info ------- 1 min lifespan
+				const token = createToken({ email : user.email }, '1m');
+				// gets last 7 char in token and makes it the verif key
+				const key = token.substring(token.length - 7)
+				// send key to user email
+				resetPassMail(decr,username, key);
+				// create cookie with encrypted token expires the same time as the token expires
+				res.cookie('emmyPass', encrypt(token),{ 
+					maxAge: parseInt(60000), 
+					sameSite: false
+				});
+				res.status(200).send('Succesfuly sent mail')
+			} else {
+				res.send('Please check internet connection!')
+			}
+		} catch (error) {
+			console.log(error)
+			res.status(500).send('Error on server!')
+		}
+		// User.findOne({ email: email })
+		// .then(user => {
+		// 	const username = decrypter(user.firstname) + decrypter(user.lastname)
+		// 	const decr = decrypter(user.email);
+		// 	// create token with user info ------- 1 min lifespan
+		// 	const token = createToken({ email : user.email }, '1m');
+		// 	// gets last 7 char in token and makes it the verif key
+		// 	const key	= token.substring(token.length - 7)
+		// 	// send key to user email
+		// 	resetPassMail(decr,username, key);
+		// 	// create cookie with encrypted token expires the same time as the token expires
+		// 	res.cookie('emmyPass', encrypt(token),{ 
+		// 		maxAge: parseInt(60000), 
+		// 		sameSite: false
+		// 	});
+
+		// 	res.status(200).send('Succesfuly sent mail')
+		// })
+		// .catch(error => {
+		// 	console.error(error)
+		// 	res.status(500).send('Server error')
+		// })
 	});
 
 	// reset password use key sent on email
