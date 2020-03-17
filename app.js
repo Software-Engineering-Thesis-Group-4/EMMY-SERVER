@@ -46,6 +46,8 @@ app.use('/auth', authRoute); // localhost:3000/auth/
 app.use('/api/employees', employeeRoute); // localhost:3000/api/employees/
 app.use('/api/employeelogs', employeeLogsRoute); // localhost:3000/api/employeelogs/
 
+// TODO: add route for servering a single page application (Vue)
+// code here...
 
 /* CATCH 404 AND FORWARD REQUEST TO ERROR HANDLER --------------------------------------------------
 	DESCRIPTION:
