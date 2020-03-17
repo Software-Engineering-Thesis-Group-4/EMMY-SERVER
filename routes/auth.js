@@ -13,9 +13,6 @@ const { resetPassMail } = require('../utility/mailer');
 const { User } = require("../db/models/User");
 const { Token } = require("../db/models/Token");
 
-// import auth middlewares
-const { isAuthenticated, isAuthenticatedAdmin } = require('../utility/validUser');
-
 
 // start of route after middlewares
 module.exports = (io) => {
@@ -26,58 +23,41 @@ module.exports = (io) => {
 	POST /auth/login
 
 	Description:
-	TODO: put route description here...
+	This route is used for authenticating users and generating access tokens
 
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/login', async (req, res) => {
 
-		// if user already logged in redirect to dashboard
-		if (req.cookies.emmy && req.cookies.emmyTalk) {
-			return res.redirect('/');
-		}
-
 		try {
-			let _email = encrypt(req.body.email);
-			let user = await User.findOne({ email: _email });
+			let email = req.body.email;
+			let user = await User.findOne({ email });
 
 			// if exists, compare password
 			if (user) {
-				console.log(`user found! ${user.email}`)
 				let isValid = await bcrypt.compare(password, user.password);
 
 				// if submitted password invalid, return an error
-				if (!validPassword) {
-					res.status = 401;
-					return res.send({
+				if (!isValid) {
+					return res.status(401).send({
 						message: "Invalid email or password."
 					});
-
-				} else {
-					//create refresh token
-					createRefreshToken({
-						email: user.email,
-						username: user.firstname + user.lastname,
-						role: user.accountRole
-					})
-					// create token
-					const token = createToken({
-						email: user.email,
-						username: user.firstname + user.lastname,
-						role: user.accountRole
-					}, process.env.TOKEN_DURATION)
-					// put token in cookie
-					res.cookie('emmy', encrypt(token), {
-						maxAge: parseInt(process.env.COOKIE_DURATION),
-						sameSite: false
-					});
-					// create cookie with user email in it for refresh token validation
-					res.cookie('emmyTalk', user.email, {
-						sameSite: false
-					});
-					res.send('login succes')
 				}
+
+				// create a new refresh token and save to db
+				createRefreshToken(user.email);
+				
+				let user_credentials = {
+					email: user.email,
+					username: user.firstname + user.lastname,
+					isAdmin: user.isAdmin
+				}
+
+				// create a new token
+				const token = createToken(user_credentials, process.env.TOKEN_DURATION);
+
+				res.send('login succes')
 			}
 
 		} catch (error) {
@@ -92,18 +72,15 @@ module.exports = (io) => {
 	POST /auth/verify
 
 	Description:
-	TODO: put route description here...
+	This route is used for validating access tokens
 
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
+	// TODO: perform the token renewal here which will replace the token in the user's localStorage
 	router.post('/verify', async (req, res) => {
 		try {
 			let token = req.body.token;
-			// console.log(token);
-
-			// TODO: decrypt token
-			// code here....
 
 			if (token) {
 				// get email from token and find user
@@ -140,13 +117,13 @@ module.exports = (io) => {
 	GET /auth/logout
 
 	Description:
-	TODO: put route description here...
+	This route is used for unauthenticating users and removes their respective refresh tokens
 
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
+	// FIXME: @MichaelOng Remove the use of cookies
 	router.get('/logout', (req, res) => {
-
 		if (req.cookies.emmy && req.cookies.emmyTalk) {
 			// delete token from db
 			Token.findOneAndDelete({ email: req.cookies.emmyTalk })
@@ -217,7 +194,7 @@ module.exports = (io) => {
 	POST /auth/reset-password
 
 	Description:
-	TODO: put route description here...
+	This is used for handling forgot password requests.
 
 	Author:
 	Michael Ong
@@ -256,11 +233,12 @@ module.exports = (io) => {
 	POST /auth/reset-password-key
 
 	Description:
-	TODO: put route description here...
+	This route is used for handling the reset key to access reset password page.
 
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
+	// FIXME: @MichaelOng refactor code to accept the key in the req.body as we have removed the use of cookies.
 	router.post('/reset-password-key', (req, res) => {
 
 		const key = req.body.key;
