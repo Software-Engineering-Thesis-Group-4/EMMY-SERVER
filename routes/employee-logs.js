@@ -6,7 +6,7 @@ const { Employee } = require('../db/models/Employee');
 const { EmployeeLog } = require('../db/models/EmployeeLog');
 
 // import utilities
-const CreateEmployeeLog = require('../utility/create-employee-log');
+const CreateEmployeeLog = require('../utility/CreateEmployeeLog.js');
 
 // session checker middleware
 const isAuthenticated = (req, res, next) => {
