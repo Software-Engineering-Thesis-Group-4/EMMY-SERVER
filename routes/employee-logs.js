@@ -6,7 +6,7 @@ const { Employee } = require('../db/models/Employee');
 const { EmployeeLog } = require('../db/models/EmployeeLog');
 
 // import utilities
-const CreateEmployeeLog = require('../utility/CreateEmployeeLog.js');
+const { handleEmployeeLog } = require('../utility/EmployeeLogHandler.js');
 
 // session checker middleware
 const isAuthenticated = (req, res, next) => {
@@ -48,7 +48,7 @@ module.exports = (io) => {
      router.post('/', async (req, res) => {
           try {
                const fingerprintNumber = req.body.enrollNumber;
-               let response = await CreateEmployeeLog(io, fingerprintNumber);
+               let response = await handleEmployeeLog(io, fingerprintNumber);
                return res.status(response.status).send(response.message);
 
           } catch ({ status, message }) {
