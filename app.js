@@ -37,14 +37,14 @@ createDBConnection(DB_NAME, process.env.DB_PORT);
 // IMPORT ROUTES ----------------------------------------------------------------------------------
 const employeeLogsRoute = require('./routes/employee-logs')(io);
 const employeeRoute     = require('./routes/employee')(io);
-const indexRoute        = require('./routes/main')(io);
+const utilityRoute      = require('./routes/main')(io);
 const authRoute         = require('./routes/auth')(io);
 
 
-app.use('/', indexRoute); // localhost:3000/
-app.use('/auth', authRoute); // localhost:3000/auth/
-app.use('/api/employees', employeeRoute); // localhost:3000/api/employees/
-app.use('/api/employeelogs', employeeLogsRoute); // localhost:3000/api/employeelogs/
+app.use('/auth', authRoute);									// localhost:3000/auth/
+app.use('/utility', utilityRoute); 							// localhost:3000/utility
+app.use('/api/employees', employeeRoute); 				// localhost:3000/api/employees/
+app.use('/api/employeelogs', employeeLogsRoute); 		// localhost:3000/api/employeelogs/
 
 // TODO: add route for servering a single page application (Vue)
 // code here...
