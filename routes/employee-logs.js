@@ -10,13 +10,13 @@ const { handleEmployeeLog } = require('../utility/EmployeeLogHandler.js');
 
 module.exports = (io) => {
      /*----------------------------------------------------------------------------------------------------------------------
-     -> GET /api/employeeslogs
+     -> GET /api/employeelogs
      
      Description:
-     Get all employeeslogs
+     Get all employeelogs
 
      Author:
-     ?
+     // TODO: include
      ----------------------------------------------------------------------------------------------------------------------*/
      router.get('/', async (req, res) => {
           try {
@@ -31,13 +31,13 @@ module.exports = (io) => {
 
 
      /*----------------------------------------------------------------------------------------------------------------------
-     -> POST /api/employeeslogs
+     -> POST /api/employeelogs
      
      Description: 
      Fingerprint scanner endpoint 
 
      Author:
-     ?
+     // TODO: include
      ----------------------------------------------------------------------------------------------------------------------*/
      router.post('/', async (req, res) => {
           try {
@@ -52,13 +52,13 @@ module.exports = (io) => {
 
 
      /*----------------------------------------------------------------------------------------------------------------------
-     -> POST /api/employeeslogs/sentiment
+     -> POST /api/employeelogs/sentiment
      
      Description: 
      endpoint for getting the employee emotion input and update the employee log
 
      Author:
-     ?
+     // TODO: include
      ----------------------------------------------------------------------------------------------------------------------*/
      router.patch('/sentiment', async (req, res) => {
 
