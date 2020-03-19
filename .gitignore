@@ -4,7 +4,7 @@
 # Ignore environment file
 .env
 
-.gitignore
+launch.json
 
 ##################################
 
