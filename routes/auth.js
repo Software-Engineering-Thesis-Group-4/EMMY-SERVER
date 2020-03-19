@@ -17,7 +17,7 @@ const { Token } = require("../db/models/Token");
 // start of route after middlewares
 module.exports = (io) => {
 
-
+	// REMOVE: TEMPORARILY DISABLE ENCRYPTION
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
 	POST /auth/login
@@ -70,19 +70,21 @@ module.exports = (io) => {
 		} catch (error) {
 			return res.status(500).send({ message: 'Error on the server.' });
 		}
-	})
+	});
 
+
+	// REFACTOR: CONVERT THIS USING THE ASYNC SYNTAX
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
-	POST /auth/verify
+	GET /auth/verify
 
 	Description:
-	TODO: put route description here...
+	This route is used for verifying if the access token is still valid, if the access token is expired it will then be
+	refreshed if the refresh token is still valid. else the user would have to login again.
 
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	// TODO: refactor this code to async syntax
 	router.get('/verify', (req, res) => {
 
 		const token = decrypter(req.body.auth_token);
@@ -121,17 +123,17 @@ module.exports = (io) => {
 
 
 
-	/*-----------------------------------------------------------
+	// REFACTOR: CONVERT THIS USING THE ASYNC SYNTAX
+	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
-	POST /auth/logout
+	GET /auth/logout
 
 	Description:
-	logout a user
+	This route is used for unauthenticating users and deleting their refresh tokens
 
 	Author:
 	Michael Ong
-	-----------------------------------------------------------*/
-	// TODO: refactor this code to async syntax
+	----------------------------------------------------------------------------------------------------------------------*/
 	router.get('/logout', (req, res) => {
 
 		const token = decrypter(req.body.auth_token);
@@ -154,59 +156,70 @@ module.exports = (io) => {
 	POST /auth/enroll
 
 	Description:
-	This route is for registering new users and accounts for Emmy
+	This route is for registering new users or accounts for Emmy
 
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/enroll', async (req, res) => {
 		try {
-			// get username and hash password using bcrypt
-			let { email, firstname, lastname, password, role } = req.body;
-			console.log(req.body);
+			// Extract user information
+			let { email, firstname, lastname, password, isAdmin } = req.body;
+			email = email.trim();
+			firstname = firstname.trim();
+			lastname = lastname.trim();
+			isAdmin = (isAdmin === "true") ? true : false;
 
-			let user = await User.findOne({ email: encrypt(email) })
+			// Find an existing user and return an error if one already exists.
+			let user = await User.findOne({ email });
+			if (user) return res.status(409).send("User already exists.");
 
-			// if user email already exist in the database
-			if (user) {
-				return res.status(409).send("Email already exist");
-			} else {
-				// hash password using bcrypt
-				let $_hashedPassword = bcrypt.hashSync(password, 8);
+			// hash password
+			password = bcrypt.hashSync(password);
 
-				const encMail = encrypt(email);
-				const encFirst = encrypt(firstname);
-				const encLast = encrypt(lastname);
+			// perform encryption
+			/*
+				email     = encrypt(email);
+				firstname = encrypt(firstname);
+				lastname  = encrypt(lastname);
+			*/
 
+			// create a new User
+			let newUser = new User({
+				email    : email,
+				firstname: firstname,
+				lastname : lastname,
+				username : `${firstname}${lastname}`,
+				password : password,
+				// isAdmin: false (default)
+			});
 
-				// create a new user of type [User]
-				let newUser = new User({
-					email: encMail,
-					firstname: encFirst,
-					lastname: encLast,
-					username: `${encFirst}${encLast}`,
-					password: $_hashedPassword,
-					accountRole: role
-				});
-
-				// save user to db
-				let registeredUser = await newUser.save();
-
-				res.status(200).send(`Successfully registered a new user ( ${decrypter(registeredUser.email)} )`);
+			if (isAdmin) {
+				newUser.isAdmin = true;
 			}
+
+			// save user to db
+			await newUser.save();
+
+			res.status(200).send(`Successfully registered a new user (${newUser.email})`);
+
 		} catch (error) {
 			console.log(error);
-			res.status(500).send("There was a problem registering the user.");
+			return res.status(500).send("Server Error. Failed to register user.");
 		}
 	});
+
+
+
+
 
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
 	POST /auth/reset-password
-
+	
 	Description:
 	This is used for handling forgot password requests.
-
+	
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
@@ -243,17 +256,21 @@ module.exports = (io) => {
 		}
 	});
 
+
+
+
+
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
 	POST /auth/reset-password-key
-
+	
 	Description:
 	This route is used for handling the reset key to access reset password page.
-
+	
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	// TODO: refactor this code to async syntax
+	// REFACTOR: CONVERT THIS USING THE ASYNC SYNTAX
 	router.post('/reset-password-key', (req, res) => {
 
 		const key = req.body.key;
