@@ -11,16 +11,16 @@ const gmail = nodemailer.createTransport({
         }
 });
 
-const sendMail = (sendToEmail, emailSubj, emailBody) => {
-  gmail.sendMail({
-    from    : 'Emmy',
-    to      : sendToEmail, // list of receivers
-    subject : emailSubj, // Subject line
-    text    : emailBody // plain text body 
-  });
+// const sendMail = (sendToEmail, emailSubj, emailBody) => {
+//   gmail.sendMail({
+//     from    : 'Emmy',
+//     to      : sendToEmail, // list of receivers
+//     subject : emailSubj, // Subject line
+//     text    : emailBody // plain text body 
+//   });
 
-  console.log('Succesfully sent mail');
-}
+//   console.log('Succesfully sent mail');
+// }
 
 const resetPassMail = (sendToEmail, username, key) => {
   const siteUrl = 'https//emmy/blah/blah';

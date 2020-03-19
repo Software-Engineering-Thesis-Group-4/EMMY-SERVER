@@ -22,6 +22,7 @@
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.15",
     "moment": "^2.24.0",
+    "express-fileupload": "^1.1.6",
     "mongodb": "^3.3.4",
     "mongoose": "^5.7.12",
     "morgan": "~1.9.1",

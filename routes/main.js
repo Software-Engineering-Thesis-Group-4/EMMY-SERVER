@@ -27,5 +27,10 @@ module.exports = (io) => {
       res.redirect('/resetPassEmail.html');
    })
 
+   router.get('/import-csv', (req, res) => {
+      res.redirect('/mass_upload.html');
+   })
+
+
    return router;
 }

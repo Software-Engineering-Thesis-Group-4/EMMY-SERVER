@@ -8,24 +8,15 @@ const { EmployeeLog } = require('../db/models/EmployeeLog');
 // import utilities
 const { handleEmployeeLog } = require('../utility/EmployeeLogHandler.js');
 
-// session checker middleware
-const isAuthenticated = (req, res, next) => {
-
-	if (req.session.username) {
-		console.log('authenticated!');
-		return next();
-	} else {
-		return res.status(401).send(`you are not logged in`);
-	}
-
-}
-
 module.exports = (io) => {
      /*----------------------------------------------------------------------------------------------------------------------
      -> GET /api/employeeslogs
      
-     Description: 
-     Get all employeeslogs 
+     Description:
+     Get all employeeslogs
+
+     Author:
+     ?
      ----------------------------------------------------------------------------------------------------------------------*/
      router.get('/', async (req, res) => {
           try {
@@ -44,6 +35,9 @@ module.exports = (io) => {
      
      Description: 
      Fingerprint scanner endpoint 
+
+     Author:
+     ?
      ----------------------------------------------------------------------------------------------------------------------*/
      router.post('/', async (req, res) => {
           try {
@@ -62,6 +56,9 @@ module.exports = (io) => {
      
      Description: 
      endpoint for getting the employee emotion input and update the employee log
+
+     Author:
+     ?
      ----------------------------------------------------------------------------------------------------------------------*/
      router.patch('/sentiment', async (req, res) => {
 

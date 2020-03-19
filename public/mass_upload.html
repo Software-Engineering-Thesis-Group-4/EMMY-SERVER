@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta http-equiv="X-UA-Compatible" content="ie=edge">
+   <title>Enroll User</title>
+</head>
+<body>
+   <h1>Mass upload csv file</h1>
+   <form action="/api/employees/enroll/csv" method="post"  enctype="multipart/form-data">
+        <label for="csvImport">Select a file:</label>
+        <input type="file" id="csvImport" name="csvImport" accept=".csv"><br><br>
+        <input type="submit" style="background-color:greenyellow; border: none; padding: 11px;" value="submit">
+        <input type="reset" style="background-color: #fff; border: 1px solid #cecece; padding: 10px;" value="Reset">
+   </form>
+   <h1>export csv</h1>
+   <a class="btn btn-secondary"  style="background-color:greenyellow; border: none; padding: 11px;" href="/api/employees/export/csv">To CSV</a>
+   <a class="btn btn-secondary"  style="background-color: #fff; border: 1px solid #cecece; padding: 10px;" href="/generated.csv" download="reports.csv">get CSV</a>
+  
+</body>
+</html>

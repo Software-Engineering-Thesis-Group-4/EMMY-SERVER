@@ -30,6 +30,7 @@ function handleEmployeeLog(io, fingerprintId) {
 			// find employee
 			let employee = await Employee.findOne({ fingerprintId });
 
+			// EMPLOYEE DOES NOT EXIST -----------------------------------------------------------------------------------
 			if (!employee) {
 
 				// TODO: emit event here...
@@ -40,6 +41,7 @@ function handleEmployeeLog(io, fingerprintId) {
 				});
 			}
 
+			// LATEST LOG NOT INITIALIZED (Recently registered employee) -------------------------------------------------
 			if (!employee.latestLog) {
 
 				let clockIn = new EmployeeLog({
@@ -67,6 +69,7 @@ function handleEmployeeLog(io, fingerprintId) {
 			// get the last recorded log of the employee
 			let lastLog = await EmployeeLog.findById(employee.latestLog.reference);
 
+			// EMPLOYEE LOG NOT FOUND -----------------------------------------------------------------------------------
 			if (!lastLog) {
 
 				let clockIn = new EmployeeLog({
@@ -91,10 +94,11 @@ function handleEmployeeLog(io, fingerprintId) {
 				});
 			}
 
-			// peform validations ------------------------------------------------------------
+			// PEFORM VALIDATIONS --------------------------------------------------------------------------------------
 			let timeIn = lastLog.in;
 			let timeOut = lastLog.out;
 
+			// no time-out
 			if (!timeOut) {
 
 				let overdue = isOverdue(timeIn);

@@ -31,118 +31,125 @@ module.exports = (io) => {
 	router.post('/login', async (req, res) => {
 
 		try {
-			let email = req.body.email;
-			let user = await User.findOne({ email });
+			let _email = encrypt(req.body.email);
+			let user = await User.findOne({ email: _email });
 
-			// if exists, compare password
-			if (user) {
-				let isValid = await bcrypt.compare(password, user.password);
-
-				// if submitted password invalid, return an error
-				if (!isValid) {
-					return res.status(401).send({
-						message: "Invalid email or password."
-					});
-				}
-
-				// create a new refresh token and save to db
-				createRefreshToken(user.email);
-				
-				let user_credentials = {
-					email: user.email,
-					username: user.firstname + user.lastname,
-					isAdmin: user.isAdmin
-				}
-
-				// create a new token
-				const token = createToken(user_credentials, process.env.TOKEN_DURATION);
-
-				res.send('login succes')
+			if (!user) {
+				return res.status(404).send({ message: `User ${user} does not exist.` });
 			}
 
-		} catch (error) {
-			console.log(error);
-			return res.status(500).send(`Internal Server Error.`);
-		}
-	});
+			// validate password
+			let password = req.body.password;
+			let validPassword = await bcrypt.compare(password, user.password);
 
+			// if submitted password invalid, return an error
+			if (validPassword) {
+				//create refresh token
+				createRefreshToken({
+					email: user.email,
+					username: user.firstname + user.lastname,
+					role: user.accountRole
+				})
+				// create token
+				const token = createToken({
+					email: user.email,
+					username: user.firstname + user.lastname,
+					role: user.accountRole
+				}, process.env.TOKEN_DURATION)
+
+				// encrypt token before sending to user
+				const encToken = encrypt(token);
+				res.send({ auth_token: encToken, user_role: user.accountRole })
+
+			} else {
+				return res.status(401).send({
+					message: "Invalid email or password."
+				});
+
+			}
+		} catch (error) {
+			return res.status(500).send({ message: 'Error on the server.' });
+		}
+	})
 
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
 	POST /auth/verify
 
 	Description:
-	This route is used for validating access tokens
+	TODO: put route description here...
 
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	// TODO: perform the token renewal here which will replace the token in the user's localStorage
-	router.post('/verify', async (req, res) => {
-		try {
-			let token = req.body.token;
+	// TODO: refactor this code to async syntax
+	router.get('/verify', (req, res) => {
 
-			if (token) {
-				// get email from token and find user
-				let decoded = jwt.verify(token, process.env.JWT_KEY);
-				// console.log(`email: ${ decoded.email }`);
+		const token = decrypter(req.body.auth_token);
+		const email = req.body.email;
 
-				let user = await User.findOne({ email: decoded.email });
-				// console.log(`user: ${ user }`);
-
-				if (user) {
-					// user verified
-					console.log(`User authenticated! (${user.username})`)
-					res.sendStatus(200);
+		jwt.verify(token, process.env.JWT_KEY, (err, user) => {
+			if (err) {
+				if (err.name === 'TokenExpiredError') {
+					// if token expired find refresh token of user using user email
+					Token.findOne({ email: email })
+						.then(valUser => {
+							// check if refresh token of user is valid
+							jwt.verify(valUser.token, process.env.REFRESH_KEY, (err, user) => {
+								if (err) {
+									res.sendStatus(401);
+								}
+								// create token from refresh token
+								const token = createToken({
+									email: user.email,
+									username: user.username,
+									role: user.role
+								}, process.env.TOKEN_DURATION)
+								// send token and role to client
+								console.log('making token from refresh token...')
+								res.status(200).send({ auth_token: token, user_role: user.role })
+							})
+						})
 				} else {
-					// unauthorized access
-					console.log(`Unauthorized Resource Access`);
 					res.sendStatus(401);
 				}
-
-
-			} else {
-				console.log('invalid token!');
-				res.sendStatus(401);
+				// if token not expired send token and role
+				res.status(200).send({ auth_token: req.body.auth_token, user_role: user.role });
 			}
-
-		} catch (error) {
-
-		}
+		})
 	})
 
 
-	/*----------------------------------------------------------------------------------------------------------------------
+
+	/*-----------------------------------------------------------
 	Route:
-	GET /auth/logout
+	POST /auth/logout
 
 	Description:
-	This route is used for unauthenticating users and removes their respective refresh tokens
+	logout a user
 
 	Author:
 	Michael Ong
-	----------------------------------------------------------------------------------------------------------------------*/
-	// FIXME: @MichaelOng Remove the use of cookies
+	-----------------------------------------------------------*/
+	// TODO: refactor this code to async syntax
 	router.get('/logout', (req, res) => {
-		if (req.cookies.emmy && req.cookies.emmyTalk) {
-			// delete token from db
-			Token.findOneAndDelete({ email: req.cookies.emmyTalk })
+
+		const token = decrypter(req.body.auth_token);
+
+		jwt.verify(token, process.env.JWT_KEY, (err, user) => {
+			if (err) {
+				res.send(err.stack)
+			}
+			Token.findOneAndDelete({ email: user.email })
 				.then(() => {
-					console.log('Succesfully deleted token in db')
-					//clear cookie
-					res.clearCookie('emmy');
-					res.clearCookie('emmyTalk');
-					return res.status(200).send("successfully logged out");
+					console.log('Succesfully deleted refresh token in db')
 				})
-				.catch(err => console.error(err))
-		} else {
-			console.log('You are not logged in.');
-			return res.redirect('/login-test');
-		}
+				.catch(error => console.error(error));
+		})
+
 	});
 
-
-	/*----------------------------------------------------------------------------------------------------------------------
+	/* ---------------------------------------------------------------------------------------------------------------------
 	Route:
 	POST /auth/enroll
 
@@ -158,7 +165,7 @@ module.exports = (io) => {
 			let { email, firstname, lastname, password, role } = req.body;
 			console.log(req.body);
 
-			let user = await User.findOne({ email })
+			let user = await User.findOne({ email: encrypt(email) })
 
 			// if user email already exist in the database
 			if (user) {
@@ -167,12 +174,17 @@ module.exports = (io) => {
 				// hash password using bcrypt
 				let $_hashedPassword = bcrypt.hashSync(password, 8);
 
+				const encMail = encrypt(email);
+				const encFirst = encrypt(firstname);
+				const encLast = encrypt(lastname);
+
+
 				// create a new user of type [User]
 				let newUser = new User({
-					email: email,
-					firstname: firstname,
-					lastname: lastname,
-					username: `${firstname}${lastname}`,
+					email: encMail,
+					firstname: encFirst,
+					lastname: encLast,
+					username: `${encFirst}${encLast}`,
 					password: $_hashedPassword,
 					accountRole: role
 				});
@@ -180,14 +192,13 @@ module.exports = (io) => {
 				// save user to db
 				let registeredUser = await newUser.save();
 
-				res.status(200).send(`Successfully registered a new user ( ${registeredUser.email} )`);
+				res.status(200).send(`Successfully registered a new user ( ${decrypter(registeredUser.email)} )`);
 			}
 		} catch (error) {
 			console.log(error);
 			res.status(500).send("There was a problem registering the user.");
 		}
 	});
-
 
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
@@ -200,13 +211,17 @@ module.exports = (io) => {
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/reset-password', async (req, res) => {
+		try {
+			const email = encrypt(req.body.email);
 
-		const email = encrypt(req.body.email);
+			// check if user has internet access
+			const netStatus = await isOnline();
 
-		User.findOne({ email: email })
-			.then(user => {
-				const username = decrypter(user.firstname) + decrypter(user.lastname)
+			if (netStatus) {
+				const user = await User.findOne({ email: email });
+				const username = decrypter(user.firstname) + ' ' + decrypter(user.lastname)
 				const decr = decrypter(user.email);
+
 				// create token with user info ------- 1 min lifespan
 				const token = createToken({ email: user.email }, '1m');
 				// gets last 7 char in token and makes it the verif key
@@ -218,15 +233,15 @@ module.exports = (io) => {
 					maxAge: parseInt(60000),
 					sameSite: false
 				});
-
 				res.status(200).send('Succesfuly sent mail')
-			})
-			.catch(error => {
-				console.error(error)
-				res.status(500).send('Server error')
-			})
+			} else {
+				res.send('Please check internet connection!')
+			}
+		} catch (error) {
+			console.log(error)
+			res.status(500).send('Error on server!')
+		}
 	});
-
 
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
@@ -238,7 +253,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	// FIXME: @MichaelOng refactor code to accept the key in the req.body as we have removed the use of cookies.
+	// TODO: refactor this code to async syntax
 	router.post('/reset-password-key', (req, res) => {
 
 		const key = req.body.key;
@@ -268,7 +283,6 @@ module.exports = (io) => {
 		} else {
 			res.status(401).send('Cookie expired');
 		}
-
 	});
 
 
