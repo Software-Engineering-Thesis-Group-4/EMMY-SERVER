@@ -142,7 +142,7 @@ module.exports = (io) => {
 	POST /api/employees/:id
 
 	Description:
-	?
+	This route is used for marking employees as "terminated"
 
 	Author:
 	Nathaniel Saludes
