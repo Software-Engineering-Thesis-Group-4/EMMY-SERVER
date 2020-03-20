@@ -1,0 +1,22 @@
+AUTH ------------------------------------------------------------------------
+
+POST	/auth/enroll
+POST	/auth/login
+GET	/auth/logout
+POST	/auth/verify
+POST	/auth/reset-password
+POST	/auth/reset-password-key
+
+EMPLOYEES -------------------------------------------------------------------
+
+GET      /api/employees/
+POST     /api/employees/enroll
+DELETE   /api/employees/:id
+POST     /api/employees/csv/import
+GET      /api/employees/csv/export
+
+EMPLOYEE LOGS ---------------------------------------------------------------
+
+GET   /api/employeelogs/
+POST  /api/employeelogs/
+POST  /api/employeelogs/sentiment
