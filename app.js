@@ -7,7 +7,7 @@ const cors        = require('cors');
 const express     = require('express');
 const dotenv      = require('dotenv');
 const helmet      = require('helmet');
-const fileUpload   = require('express-fileupload');
+const fileUpload  = require('express-fileupload');
 
 const app 	 = express();
 const server = http.createServer(app);

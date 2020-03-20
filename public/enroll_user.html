@@ -10,26 +10,22 @@
    <h1>ENROLL ADMIN (TEST)</h1>
    <form action="/auth/enroll" method="POST">
       <label for="email">Email: </label><br>
-      <input type="email" name="email" id="email" placeholder="email">
+      <input type="email" name="email" id="email" placeholder="email" required="required">
       <br><br>
 
       <label for="password">Firstname: </label><br>
-      <input type="text" name="firstname" id="firstname" placeholder="Enter firstname...">
+      <input type="text" name="firstname" id="firstname" placeholder="Enter firstname..." required="required">
       <br><br>
 
       <label for="password">Lastname: </label><br>
-      <input type="text" name="lastname" id="lastname" placeholder="Enter lastname...">
+      <input type="text" name="lastname" id="lastname" placeholder="Enter lastname..." required="required">
       <br><br>
 
       <label for="password">Password: </label><br>
-      <input type="password" name="password" id="password" placeholder="password">
+      <input type="password" name="password" id="password" placeholder="password" required="required">
       <br><br>
 
-      <label for="role">Choose a role:</label>
-      <select name ="role">
-         <option value="0">HR manager</option>
-         <option value="1">HR assistant</option>
-      </select>
+      <input type="checkbox" name="isAdmin"><label for="isAdmin">Administrator</label>
       <br><br>
 
       <input type="submit" style="background-color:greenyellow; border: none; padding: 11px;" value="Enroll">
