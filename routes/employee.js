@@ -3,7 +3,7 @@ const router  = express.Router();
 const path    = require('path');
 
 // import utility
-const { encrypt, decrypt } = require('../utility/aes');
+// const { encrypt, decrypt } = require('../utility/aes');
 const { isValidCsv } = require('../utility/importEmp');
 const { toCsv } = require('../utility/export');
 
@@ -36,7 +36,6 @@ module.exports = (io) => {
 
 
 
-   // REMOVE: TEMPORARILY DISABLE ENCRYPTION
    /*----------------------------------------------------------------------------------------------------------------------
 	Route:
 	POST /api/employees/enroll
@@ -47,37 +46,43 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/enroll', (req, res) => {
-      let employee = req.body;
-      
-      const new_employee = new Employee({
-         employeeId       : encrypt(employee.employee_id),
-         firstName        : encrypt(employee.firstname),
-         lastName         : encrypt(employee.lastname),
-         email            : encrypt(employee.email),
-         isMale           : employee.isMale,
-         employmentStatus : employee.employment_status,
-         department       : employee.department,
-         jobTitle         : employee.job_title,
-         fingerprintId    : encrypt(employee.fingerprint_id),
-      });
-
-      // REFACTOR: CONVERT THIS SECTION TO ASYNC SYNTAX
-      new_employee.save((err) => {
-         if(err) {
-            return res.sendStatus(500).send('Server error. Unable to register new employee.');
-         }     
+	router.post('/enroll', async (req, res) => {
+      try {
+         let {
+            employee_id,
+            firstname,
+            lastname,
+            email,
+            gender,
+            employment_status,
+            department,
+            job_title,
+            fingerprint_id
+         } = req.body;
+   
+         gender = (gender === "M") ? true : false;
          
-         Employee.find({}).then(employees => {
-            decEmp = decrypt(employees);
-            io.sockets.emit('newEmployee', decEmp);
-            return res.sendStatus(201);
-         }).catch(err => {
-            console.log(err)
-            return res.sendStatus(500).send('Server error. Unable to fetch employees');
-         })
-      })
+         const newEmployee = new Employee({
+            employeeId       : employee_id,
+            firstName        : firstname,
+            lastName         : lastname,
+            email            : email,
+            isMale           : gender,
+            employmentStatus : employment_status,
+            department       : department,
+            jobTitle         : job_title,
+            fingerprintId    : fingerprint_id,
+         });
+
+         await newEmployee.save();
+
+         return res.status(201).send("Successfully registered a new employee.")
+
+      } catch (error) {
+         return res.status(500).send(`500 Internal Server Error. <br>${error.message}`);
+      }
    });
+
 
 
    /*----------------------------------------------------------------------------------------------------------------------
