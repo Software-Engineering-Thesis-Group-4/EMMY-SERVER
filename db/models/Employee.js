@@ -12,26 +12,57 @@ const LatestLogSchema = Schema({
 
 // EMPLOYEE SCHEMA -----------------------
 const EmployeeSchema = Schema({
-   employeeId      : String,
-   firstName       : String,
-   lastName        : String,
-   email           : String,
-   isMale          : Boolean,
-   employmentStatus: Number,    // 1=full-time, 0=part-time
-   department      : String,
-   jobTitle        : String,
-   photo           : String,
-   fingerprintId   : Number,
-   terminated      : {
+   employeeId: {
+      type: String,
+      unique: true,
+      required: true
+   },
+   firstName: {
+      type: String,
+      required: true
+   },
+   lastName: {
+      type: String,
+      required: true
+   },
+   email: {
+      type: String,
+      required: true
+   },
+   isMale: {
+      type: Boolean,
+      required: true
+   },
+   employmentStatus: {
+      type: Number, // 1=full-time, 0=part-time
+      required: true
+   },    
+   department: {
+      type: String,
+      required: true
+   },
+   jobTitle: {
+      type: String,
+      required: true
+   },
+   photo: {
+      type: String,
+      default: null
+   },
+   fingerprintId: {
+      type: Number,
+      unique: true,
+      required: true
+   },
+   terminated: {
       type: Boolean,
       default: false,
    },
-   latestLog       : {
-      type   : LatestLogSchema,
+   latestLog: {
+      type: LatestLogSchema,
       default: null,
    },
 });
-
 
 const Employee = mongoose.model('Employee', EmployeeSchema);
 
