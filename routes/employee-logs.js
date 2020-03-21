@@ -16,7 +16,7 @@ module.exports = (io) => {
      Get all employeelogs
 
      Author:
-     // TODO: include
+     Nathaniel Saludes
      ----------------------------------------------------------------------------------------------------------------------*/
      router.get('/', async (req, res) => {
           try {
@@ -37,7 +37,7 @@ module.exports = (io) => {
      Fingerprint scanner endpoint 
 
      Author:
-     // TODO: include
+     Nathaniel Saludes
      ----------------------------------------------------------------------------------------------------------------------*/
      router.post('/', async (req, res) => {
           try {
@@ -58,7 +58,7 @@ module.exports = (io) => {
      endpoint for getting the employee emotion input and update the employee log
 
      Author:
-     // TODO: include
+     Nathaniel Saludes
      ----------------------------------------------------------------------------------------------------------------------*/
      router.patch('/sentiment', async (req, res) => {
 
