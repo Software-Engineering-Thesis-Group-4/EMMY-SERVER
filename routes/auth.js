@@ -1,23 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const path = require('path');
 const jwt = require('jsonwebtoken');
 
 // import utilities
 const { encrypt, decrypter } = require('../utility/aes');
-const { createToken, createRefreshToken } = require('../utility/jwt');
+const { createToken, createRefreshToken, removeRefreshToken } = require('../utility/jwt');
 const { resetPassMail } = require('../utility/mailer');
 
 // import models
 const { User } = require("../db/models/User");
-const { Token } = require("../db/models/Token");
+const { RefreshToken } = require("../db/models/RefreshToken");
 
 
 // start of route after middlewares
 module.exports = (io) => {
 
-	// REMOVE: TEMPORARILY DISABLE ENCRYPTION
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
 	POST /auth/login
@@ -31,35 +29,46 @@ module.exports = (io) => {
 	router.post('/login', async (req, res) => {
 
 		try {
-			let _email = encrypt(req.body.email);
-			let user = await User.findOne({ email: _email });
+			let {
+				email,
+				password } = req.body;
+
+			if (!email) {
+				return res.status(401).send({
+					message: "No credentials provided."
+				})
+			}
+
+			let user = await User.findOne({ email });
 
 			if (!user) {
-				return res.status(404).send({ message: `User ${user} does not exist.` });
+				return res.status(401).send({
+					message: `Invalid email or password`
+				});
 			}
 
 			// validate password
-			let password = req.body.password;
-			let validPassword = await bcrypt.compare(password, user.password);
+			let passwordIsValid = await bcrypt.compare(password, user.password);
 
 			// if submitted password invalid, return an error
-			if (validPassword) {
-				//create refresh token
-				createRefreshToken({
-					email: user.email,
-					username: user.firstname + user.lastname,
-					role: user.accountRole
-				})
-				// create token
-				const token = createToken({
-					email: user.email,
-					username: user.firstname + user.lastname,
-					role: user.accountRole
-				}, process.env.TOKEN_DURATION)
+			if (passwordIsValid) {
 
-				// encrypt token before sending to user
-				const encToken = encrypt(token);
-				res.send({ auth_token: encToken, user_role: user.accountRole })
+				// encrypt user credentials
+				let email = encrypt(user.email);
+
+				//create refresh token
+				createRefreshToken(user.email);
+
+				// create access token
+				const access_token = createToken(email, process.env.TOKEN_DURATION);
+
+				// return user credentials and access token
+				return res.status(200).send({
+					token: access_token,
+					email: user.email,
+					username: user.username,
+					isAdmin: user.isAdmin
+				});
 
 			} else {
 				return res.status(401).send({
@@ -73,7 +82,10 @@ module.exports = (io) => {
 	});
 
 
-	// REFACTOR: CONVERT THIS USING THE ASYNC SYNTAX
+
+
+
+	// FIX VERIFICATION PROCESS
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
 	GET /auth/verify
@@ -85,45 +97,68 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/verify', (req, res) => {
+	router.get('/verify', async (req, res) => {
+		try {
+			// get token & email
+			let { token, email } = req.body;
 
-		const token = decrypter(req.body.auth_token);
-		const email = req.body.email;
+			// find user
+			let user = await User.findOne({ email });
 
-		jwt.verify(token, process.env.JWT_KEY, (err, user) => {
-			if (err) {
-				if (err.name === 'TokenExpiredError') {
-					// if token expired find refresh token of user using user email
-					Token.findOne({ email: email })
-						.then(valUser => {
-							// check if refresh token of user is valid
-							jwt.verify(valUser.token, process.env.REFRESH_KEY, (err, user) => {
-								if (err) {
-									res.sendStatus(401);
-								}
-								// create token from refresh token
-								const token = createToken({
-									email: user.email,
-									username: user.username,
-									role: user.role
-								}, process.env.TOKEN_DURATION)
-								// send token and role to client
-								console.log('making token from refresh token...')
-								res.status(200).send({ auth_token: token, user_role: user.role })
-							})
-						})
-				} else {
-					res.sendStatus(401);
-				}
-				// if token not expired send token and role
-				res.status(200).send({ auth_token: req.body.auth_token, user_role: user.role });
+			// if user doesn't exist, return error
+			if (!user) {
+				return res.status(401).send({
+					message: `Unauthorized Access. Unknown user.`
+				})
 			}
-		})
+
+			// if user exists, verify access token
+			jwt.verify(token, process.env.JWT_KEY, async (err) => {
+
+				// if token is already expired check if refresh token is still valid
+				// refresh token is still valid, renew token
+				if (err) {
+
+					let refreshToken = await RefreshToken.findOne({ email });
+
+					// refresh token does not exist
+					if (!refreshToken) {
+						return res.send(401).send({
+							message: `Unauthorized Access.`
+						})
+					}
+
+
+					// validate refresh token
+					jwt.verify(refreshToken, process.env.REFRESH_KEY, (err) => {
+
+						// refresh token expired. return error
+						if (err) {
+							removeRefreshToken(email);
+							return res.send(401).send({
+								message: `Session Expired. Unauthorized Access.`
+							});
+						}
+
+						// renew token
+						let token = createToken(email, process.env.TOKEN_DURATION);
+						return res.status(200).send({ token });
+					})
+				}
+
+				// token is valid and is authenticated
+				return res.sendStatus(200);
+			});
+
+		} catch (error) {
+			console.log(error);
+			return res.status(500).send(`500 Internal Server Error. ${error.message}`)
+		}
 	})
 
 
 
-	// REFACTOR: CONVERT THIS USING THE ASYNC SYNTAX
+
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
 	GET /auth/logout
@@ -134,26 +169,29 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/logout', (req, res) => {
+	router.post('/logout', (req, res) => {
+		try {
+			let { token } = req.body;
 
-		const token = decrypter(req.body.auth_token);
+			jwt.verify(token, process.env.JWT_KEY, (err, payload) => {
+				if (err) {
+					return res.status(401).send('Invalid Token.');
+				}
 
-		jwt.verify(token, process.env.JWT_KEY, (err, user) => {
-			if (err) {
-				res.send(err.stack)
-			}
-			Token.findOneAndDelete({ email: user.email })
-				.then(() => {
-					console.log('Succesfully deleted refresh token in db')
-				})
-				.catch(error => console.error(error));
-		})
+				let email = decrypter(payload.email);
+				removeRefreshToken(email);
 
+				return res.status(200).send('Logged out successfully.')
+			});
+
+		} catch (error) {
+			return res.status(500).send(`500 Server Error. ${error.message}`);
+		}
 	});
 
 
 
-	
+
 	/* ---------------------------------------------------------------------------------------------------------------------
 	Route:
 	POST /auth/enroll
@@ -167,11 +205,18 @@ module.exports = (io) => {
 	router.post('/enroll', async (req, res) => {
 		try {
 			// Extract user information
-			let { email, firstname, lastname, password, isAdmin } = req.body;
-			email = email.trim();
+			let {
+				email,
+				firstname,
+				lastname,
+				password,
+				isAdmin } = req.body;
+
+			// data cleaning
+			email     = email.trim();
 			firstname = firstname.trim();
-			lastname = lastname.trim();
-			isAdmin = (isAdmin === "true") ? true : false;
+			lastname  = lastname.trim();
+			isAdmin   = (isAdmin === "true") ? true : false;
 
 			// Find an existing user and return an error if one already exists.
 			let user = await User.findOne({ email });
@@ -180,31 +225,25 @@ module.exports = (io) => {
 			// hash password
 			password = bcrypt.hashSync(password);
 
-			// perform encryption
-			/*
-				email     = encrypt(email);
-				firstname = encrypt(firstname);
-				lastname  = encrypt(lastname);
-			*/
-
 			// create a new User
 			let newUser = new User({
-				email    : email,
+				email: email,
 				firstname: firstname,
-				lastname : lastname,
-				username : `${firstname}${lastname}`,
-				password : password,
-				// isAdmin: false (default)
+				lastname: lastname,
+				username: `${firstname}${lastname}`,
+				password: password,
+				// isAdmin: (default value is "false" if not provided)
 			});
 
+			// if isAdmin is true, set isAdmin field
 			if (isAdmin) {
 				newUser.isAdmin = true;
 			}
 
-			// save user to db
+			// update user in database
 			await newUser.save();
 
-			res.status(200).send(`Successfully registered a new user (${newUser.email})`);
+			return res.status(200).send(`Successfully registered a new user (${newUser.email})`);
 
 		} catch (error) {
 			console.log(error);
@@ -215,7 +254,7 @@ module.exports = (io) => {
 
 
 
-
+	// FIX RESET PASSWORD PROCESS
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
 	POST /auth/reset-password
@@ -273,7 +312,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	// REFACTOR: CONVERT THIS USING THE ASYNC SYNTAX
+	// REFACTOR USING THE ASYNC SYNTAX
 	router.post('/reset-password-key', (req, res) => {
 
 		const key = req.body.key;
