@@ -1,22 +1,37 @@
 const mongoose = require('mongoose');
 
-const createDBConnection = async (db_name, port) => {
-   try {
-      mongoose.set('useCreateIndex', true);
-      mongoose.set('useFindAndModify', false);
-      
-      // get db connection
-      const connection = await mongoose.connect(`mongodb://localhost:${port}/${db_name}`, { useNewUrlParser: true, useUnifiedTopology: true });
-      // prevent deprecation warnings (from MongoDB native driver)
+exports.createDBConnection = (db_name, port) => {
+   return new Promise(async (resolve, reject) => {
+      try {
 
-      console.log(`Successfully connected to MongoDB database! [${db_name}]\n------------------------------------------`);
+         // get db connection
+         console.time('Mongoose connection startup');
+         const connection = await mongoose.connect(`mongodb://localhost:${port}/${db_name}`, { 
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            useCreateIndex: true,
+            useFindAndModify: false
+         });
+         console.log(`MongoDB Database: "${db_name}" (connected)`);
+         console.timeEnd('Mongoose connection startup');
+         resolve(connection);
 
-      return connection;
+      } catch (error) {
 
-   } catch (error) {
-      console.error(error);
-      throw new Error(error);
-   }
+         console.error(error);
+         reject(error);
+         
+      }
+   });
 }
 
-module.exports = { createDBConnection }
+/* exports.closeDBConnection = async () => {
+   try {
+      console.log('closing connection...');
+      await mongoose.connection.close();
+      console.log('database connection closed.');
+      console.log("-------------------------------------------------------------------");
+   } catch (error) {
+      throw new Error(error);
+   }
+} */
