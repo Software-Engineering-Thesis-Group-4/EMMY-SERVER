@@ -22,7 +22,7 @@ function isOverdue(timeIn) {
 	return false;
 }
 
-function handleEmployeeLog(io, fingerprintId) {
+exports.handleEmployeeLog = (io, fingerprintId) => {
 
 	return new Promise(async (resolve, reject) => {
 		try {
@@ -33,7 +33,9 @@ function handleEmployeeLog(io, fingerprintId) {
 			// EMPLOYEE DOES NOT EXIST -----------------------------------------------------------------------------------
 			if (!employee) {
 
-				// TODO: emit event here...
+				io.sockets.emit('logError', {
+					message: `You are not currently registered in the system.`
+				})
 
 				reject({
 					status: 404,
@@ -58,7 +60,11 @@ function handleEmployeeLog(io, fingerprintId) {
 
 				employee.save();
 
-				// TODO: emit event here...
+				io.sockets.emit('employeeLog', {
+					reference: clockIn._id,
+					employee: `${employee.firstName} ${employee.lastName}`,
+					status: "in",
+				})
 
 				resolve({
 					status: 200,
@@ -86,7 +92,11 @@ function handleEmployeeLog(io, fingerprintId) {
 
 				employee.save();
 
-				// TODO: emit event here...
+				io.sockets.emit("employeeLog", {
+					reference: clockIn._id,
+					employee: `${employee.firstName} ${employee.lastName}`,
+					status: "in",
+				})
 
 				resolve({
 					status: 404,
@@ -117,7 +127,13 @@ function handleEmployeeLog(io, fingerprintId) {
 						date: clockIn.dateCreated
 					}
 
-					// TODO: emit event here...
+					employee.save();
+
+					io.sockets.emit('employeeLog', {
+						reference: lastLog._id,
+						employee: `${employee.firstName} ${employee.lastName}`,
+						status: "in",
+					});
 
 					resolve({
 						status: 200,
@@ -132,7 +148,11 @@ function handleEmployeeLog(io, fingerprintId) {
 					lastLog.out = new Date();
 					lastLog.save();
 
-					// TODO: emit event here...
+					io.sockets.emit('employeeLog', {
+						reference: lastLog._id,
+						employee: `${employee.firstName} ${employee.lastName}`,
+						status: "out",
+					})
 
 					resolve({
 						status: 200,
@@ -146,7 +166,9 @@ function handleEmployeeLog(io, fingerprintId) {
 
 				if (moment(now).isSame(timeOut, 'day')) {
 
-					// TODO: emit event here...
+					io.sockets.emit('logError', {
+						message: `Sorry! you have already checked-out for the day. Please try again tomorrow.`,
+					})
 
 					reject({
 						status: 400,
@@ -169,7 +191,11 @@ function handleEmployeeLog(io, fingerprintId) {
 
 					employee.save();
 
-					// TODO: emit event here...
+					io.sockets.emit('employeeLog', {
+						reference: lastLog._id,
+						employee: `${employee.firstName} ${employee.lastName}`,
+						status: "in",
+					})
 
 					resolve({
 						status: 200,
@@ -189,7 +215,3 @@ function handleEmployeeLog(io, fingerprintId) {
 	}); // promise
 
 } // end
-
-module.exports = {
-	handleEmployeeLog
-}
