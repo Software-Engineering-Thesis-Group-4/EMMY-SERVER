@@ -1,44 +1,55 @@
 const jwt = require('jsonwebtoken');
 
 // import model
-const { Token } = require("../db/models/Token");
+const { RefreshToken } = require("../db/models/RefreshToken");
 
-const createToken = (user,duration) => {
-    return jwt.sign(user, process.env.JWT_KEY,
-        {
-            expiresIn : duration
-        });
+exports.createToken = (email) => {
+	return jwt.sign({ email }, process.env.JWT_KEY, {
+		expiresIn: process.env.TOKEN_DURATION
+	});
 }
 
-const createRefreshToken = (user) => {
-    const refToken =  jwt.sign(user, process.env.REFRESH_KEY);
-    
-    Token.findOneAndDelete({ email: user.email})
-    .then(emp => {
-        if(emp){
-            console.log('Deleted Refresh token')
-            const newRefToken = new Token({
-                email       : emp.email,
-                token       : refToken
-            })
-            newRefToken.save()
-                .then(() => console.log('Succesfully saved refresh token'))
-                .catch(err => console.error(err))
-        } else {
-        if(!emp){
-            const newRefToken = new Token({
-                email       : user.email,
-                token       : refToken
-            })
-            newRefToken.save()
-                .then(() => console.log('Succesfully saved refresh token'))
-                .catch(err => console.error(err))
-        }
-        }
-    })
+
+exports.createRefreshToken = async (email) => {
+
+	try {
+		const refToken = jwt.sign({ email }, process.env.REFRESH_KEY, {
+			expiresIn: process.env.REFRESH_TOKEN_DURATION
+		});
+
+		// If token already exists, delete token to avoid duplicate
+		let tokenExists = await RefreshToken.findOneAndDelete({ email });
+
+		// confirm is refresh token is deleted
+		if (tokenExists) {
+			console.log('Deleted Refresh token');
+		}
+
+		// create a new refresh token
+		let db_refreshToken = new RefreshToken({
+			email: email,
+			token: refToken
+		});
+
+		db_refreshToken.save();
+		console.log('Succesfully saved refresh token');
+
+	} catch (error) {
+		console.error(error);
+		throw new Error(error.message);
+	}
 }
 
-module.exports = { 
-    createToken,
-    createRefreshToken
-  }
+exports.removeRefreshToken = async (email) => {
+	try {
+		let deletedRT = await RefreshToken.findOneAndDelete({ email });
+
+		if(deletedRT) {
+			console.log('Succesfully removed/deleted refresh token');
+		}
+
+	} catch (error) {
+		console.log('Failed to removed/delete refresh token');
+		throw new Error(error.message)
+	}
+}
