@@ -2,8 +2,8 @@ AUTH ------------------------------------------------------------------------
 
 POST	/auth/enroll
 POST	/auth/login
-GET	/auth/logout
-POST	/auth/verify
+POST	/auth/logout
+GET	/auth/verify
 POST	/auth/reset-password
 POST	/auth/reset-password-key
 
