@@ -5,22 +5,22 @@ exports.createDBConnection = (db_name, port) => {
       try {
 
          // get db connection
-         console.time('Mongoose connection startup');
-         const connection = await mongoose.connect(`mongodb://localhost:${port}/${db_name}`, { 
+         //console.time('Mongoose connection startup');
+         const connection = await mongoose.connect(`mongodb://localhost:${port}/${db_name}`, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
             useCreateIndex: true,
             useFindAndModify: false
          });
          console.log(`MongoDB Database: "${db_name}" (connected)`);
-         console.timeEnd('Mongoose connection startup');
+         //console.timeEnd('Mongoose connection startup');
          resolve(connection);
 
       } catch (error) {
 
          console.error(error);
          reject(error);
-         
+
       }
    });
 }

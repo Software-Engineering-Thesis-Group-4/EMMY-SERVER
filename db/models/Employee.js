@@ -36,7 +36,7 @@ const EmployeeSchema = Schema({
    employmentStatus: {
       type: Number, // 1=full-time, 0=part-time
       required: true
-   },    
+   },
    department: {
       type: String,
       required: true
