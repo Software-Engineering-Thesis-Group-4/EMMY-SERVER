@@ -25,8 +25,7 @@ async function main() {
       });
       
       let employeeLog = new EmployeeLog({
-         employee: "5e62ec3fc7fab75a78bd0519",
-         employeeId: 201502034,
+         employeeRef: "5e62ec3fc7fab75a78bd0519",
          in: yesterday.format(),
          dateCreated: yesterday.format()
       });
@@ -34,7 +33,7 @@ async function main() {
       employeeLog.save();
       console.log('employeeLog saved!');
       
-      let employee = await Employee.findById("5e49f35fa182182ea436b5b0");
+      let employee = await Employee.findById({ _id: "5e49f35fa182182ea436b5b0" });
       
       console.log(employee)
       

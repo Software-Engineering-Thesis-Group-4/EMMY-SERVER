@@ -3,24 +3,9 @@ const moment = require('moment');
 // IMPORT MODELS
 const { Employee } = require('../db/models/Employee.js');
 const { EmployeeLog } = require('../db/models/EmployeeLog.js');
+const { isOverdue } = require('./OverdueEmployeeLog.js');
 
-function isOverdue(timeIn) {
-	let now = new Date();
 
-	if (moment(now).isSame(timeIn, 'day')) {
-		// still the same day
-		return false;
-	}
-
-	let startOfDay = moment().startOf('day').set('hour', 5);
-	if (moment(now).isSameOrAfter(startOfDay)) {
-		// employee forgot to logout
-		return true;
-	}
-
-	// NOT yet past 5am in the morning.
-	return false;
-}
 
 exports.handleEmployeeLog = (io, fingerprintId) => {
 
@@ -47,8 +32,7 @@ exports.handleEmployeeLog = (io, fingerprintId) => {
 			if (!employee.latestLog) {
 
 				let clockIn = new EmployeeLog({
-					employee: employee._id,
-					employeeId: employee.employeeId
+					employeeRef: employee._id
 				});
 
 				clockIn.save();
@@ -79,8 +63,7 @@ exports.handleEmployeeLog = (io, fingerprintId) => {
 			if (!lastLog) {
 
 				let clockIn = new EmployeeLog({
-					employee: employee._id,
-					employeeId: employee.employeeId,
+					employeeRef: employee._id
 				});
 
 				clockIn.save();
@@ -116,8 +99,7 @@ exports.handleEmployeeLog = (io, fingerprintId) => {
 				if (overdue) {
 
 					let clockIn = new EmployeeLog({
-						employee: employee._id,
-						employeeId: employee.employeeId,
+						employeeRef: employee._id
 					});
 
 					clockIn.save();
@@ -178,8 +160,7 @@ exports.handleEmployeeLog = (io, fingerprintId) => {
 				} else {
 
 					let clockIn = new EmployeeLog({
-						employee: employee._id,
-						employeeId: employee.employeeId
+						employeeRef: employee._id
 					});
 
 					clockIn.save();

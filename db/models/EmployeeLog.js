@@ -2,11 +2,10 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const EmployeeLogSchema = Schema({
-   employee: {
+   employeeRef: {
       type: Schema.Types.ObjectId,
       ref: 'Employee',
    },
-   employeeId: String,
    in: {
       type: Date,
       default: Date.now
