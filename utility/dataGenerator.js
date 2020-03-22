@@ -51,54 +51,41 @@ let dateCreated = faker.date.future();
 
 
 // DONE
-async function createEmployee(id, fname, rlname, email, gender, status, department, jobTitle) {
+function createEmployee(id, fname, rlname, email, gender, status, department, jobTitle, photoPath, fid) {
 
-      try {
-         let connected = await createDBConnection(process.env.DB_NAME, process.env.DB_PORT);
+         let createStatus = true;
 
-         if (connected){
-            console.log('connected!');
+			const new_employee = new Employee({
+				employeeId: id,
+				firstName: fname,
+				lastName: rlname,
+				email: email,
+				isMale: gender,
+				employmentStatus: status,
+				department: department,
+				jobTitle: jobTitle,
+				photo: photoPath,
+				fingerprintId: fid,
+				terminated: false,
+            latestLog: null
+			});
+			console.log("Here");
 
-            let createStatus = true;
+			new_employee.save((err) => {
+				if (err) {
+					console.log(
+						"Error or Duplicate Record. Unable to register new employee."
+					);
+					console.error(err);
+					createStatus = false;
+				} else {
+					console.log("Record Saved");
+				}
+			});
 
-            const new_employee = new Employee({
-               employeeId      : id,
-               firstName       : fname,
-               lastName        : rlname,
-               email           : email,
-               isMale          : gender,
-               employmentStatus: status,
-               department      : department,
-               jobTitle        : jobTitle,
-               fingerprintId   : null,
-               terminated      : false,
-               latestLog       : null
-            });
-            console.log('Here');
+			console.log("Here2");
 
-            new_employee.save((err) => {
-               if(err) {
-                  console.log('Error or Duplicate Record. Unable to register new employee.');
-                  console.err(err);
-                  createStatus = false;
-               }
-               else {
-                  console.log('Record Saved');
-               }
-            });
-
-            console.log('Here2');
-
-            return createStatus;
-
-         }
-         else {
-            console.log('NOT connected!');
-         }
-      } catch(err) {
-         console.log(err);
-      }
-
+			return createStatus;
 }
 
 // TODO Continue working on generating employeeLog dummy data
@@ -182,54 +169,51 @@ async function createEmployee(id, fname, rlname, email, gender, status, departme
 
 // GENERATE DATA HERE
 
-let employees = 10; // number of employee and logs
-let num = 0;
 
-console.log(`Number of entries: ${employees}\n`);
+//let num = 0;
 
-for (i = 1; i <= employees; ++i){
+async function start(){
 
-   // Create Employee
-   let randomID = faker.random.uuid();
-   let randomFname = faker.name.firstName();
-   let randomLname = faker.name.lastName();
-   let randomEmail = faker.internet.email();
-   let gender = randomGender();
-   let status = Math.floor(Math.random() * 2);
-   let department = faker.commerce.department();
-   let jobTitle = "GeneratedJobTitle";
-   let fid       = i;
+   try{
+      await createDBConnection(process.env.DB_NAME, process.env.DB_PORT);
 
-   Object._id
+      let employees = 10; // number of employee and logs
+      console.log(`Number of entries: ${employees}\n`);
 
-   let employee_message = 'Success';
-   //let log_message = 'Success';
+      for (i = 1; i <= employees; ++i){
 
-   let inputEmployee = createEmployee(randomID, randomFname, randomLname, randomEmail,
-   gender, status, department, jobTitle, fid);
+         // Create Employee
+         let randomID = faker.random.uuid();
+         let randomFname = faker.name.firstName();
+         let randomLname = faker.name.lastName();
+         let randomEmail = faker.internet.email();
+         let gender = randomGender();
+         let status = Math.floor(Math.random() * 2);
+         let department = faker.commerce.department();
+         let jobTitle = faker.name.jobTitle();
+         let photoURL = faker.image.imageUrl();
+         let fingerprintID = i;
+         //let fid       = i;
 
-   let name = `${randomFname} ${randomLname}`;
+         let employee_message = 'Success';
+         //let log_message = 'Success';
 
-   if(inputEmployee == false){
-      employee_message = 'Failed';
+         let inputEmployee = createEmployee(randomID, randomFname,    randomLname, randomEmail, gender, status, department, jobTitle, photoURL, fingerprintID);
+
+         let name = `${randomFname} ${randomLname}`;
+
+         if(inputEmployee == false){
+            employee_message = 'Failed';
+         }
+
+         console.log(`Employee:  ${name} = ${i}`);
+         console.log(`Status: ${employee_message}\n`);
+      }
+   }  catch(err){
+      console.log(err);
    }
 
-   console.log(`Employee:  ${name} = ${i}`);
-   console.log(`Status: ${employee_message}\n`);
-   // let inputLog = createEmployeeLog(randomID, randomDateIn, emotionIn, randomDateOut, emotionOut);
-
-   // if(inputLog == false){
-   //    log_message = 'Failed';
-   // }
-
-   // console.log(`Log:  ${i} = ${log_message}`);
-
-   num = num + 1;
 }
 
-   if (num == 5){
-      console.log('Operation Sucess');
-   }
-   else {
-      console.log('Operation Failed');
-   }
+start();
+console.log('DONE');
