@@ -1,12 +1,4 @@
 ##################################
-#PERSONAL
-
-# Ignore environment file
-.env
-
-launch.json
-
-##################################
 
 # Logs
 logs
@@ -113,5 +105,17 @@ dist
 # TernJS port file
 .tern-port
 
+<<<<<<< Updated upstream
 # vscode
 .vscode/
+=======
+##################################
+#PERSONAL
+
+# Ignore environment file
+.env
+
+launch.json
+
+.gitignore
+>>>>>>> Stashed changes
