@@ -1,6 +1,6 @@
 const moment = require('moment');
 
-exports.isOverdue(timeIn) {
+exports.isOverdue = (timeIn) => {
 	let now = new Date();
 
 	if (moment(now).isSame(timeIn, 'day')) {
