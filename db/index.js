@@ -25,7 +25,7 @@ exports.createDBConnection = (db_name, port) => {
    });
 }
 
-/* exports.closeDBConnection = async () => {
+exports.closeDBConnection = async () => {
    try {
       console.log('closing connection...');
       await mongoose.connection.close();
@@ -34,4 +34,4 @@ exports.createDBConnection = (db_name, port) => {
    } catch (error) {
       throw new Error(error);
    }
-} */
+}
