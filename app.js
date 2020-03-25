@@ -28,6 +28,7 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'client'))); // the directory for Vue
 app.use(cors());
 app.use(helmet());
 app.use(fileUpload({
@@ -41,12 +42,12 @@ const utilityRoute = require('./routes/main')(io);
 const authRoute = require('./routes/auth')(io);
 
 app.use('/auth', authRoute);									// localhost:3000/auth/
-app.use('/main', utilityRoute); 							// localhost:3000/utility
+app.use('/main', utilityRoute); 								// localhost:3000/utility
 app.use('/api/employees', employeeRoute); 				// localhost:3000/api/employees/
 app.use('/api/employeelogs', employeeLogsRoute); 		// localhost:3000/api/employeelogs/
-
-// TODO: add route for servering a single page application (Vue)
-// code here...
+app.get(/.*/, (req, res) => {									// localhost:3000/* (for serving vue spa)
+	res.sendFile(__dirname + '/client/index.html');
+});
 
 // CATCH 404 AND FORWARD REQUEST TO ERROR HANDLER -------------------------------------------------------------
 app.use((req, res, next) => {
