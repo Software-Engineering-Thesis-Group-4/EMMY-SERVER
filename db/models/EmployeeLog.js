@@ -5,6 +5,7 @@ const EmployeeLogSchema = Schema({
    employeeRef: {
       type: Schema.Types.ObjectId,
       ref: 'Employee',
+      required: true
    },
    in: {
       type: Date,
