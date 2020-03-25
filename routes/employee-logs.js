@@ -20,7 +20,7 @@ module.exports = (io) => {
      ----------------------------------------------------------------------------------------------------------------------*/
      router.get('/', async (req, res) => {
           try {
-               let employeeLogs = await EmployeeLog.find({}).populate('employee');
+               let employeeLogs = await EmployeeLog.find({}).populate('employeeRef');
                return res.status(200).send(employeeLogs);
 
           } catch (error) {
