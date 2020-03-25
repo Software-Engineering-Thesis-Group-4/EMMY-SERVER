@@ -12,14 +12,12 @@ exports.createDBConnection = (db_name, port) => {
             useCreateIndex: true,
             useFindAndModify: false
          });
-         console.log(`MongoDB Database: "${db_name}" (connected)`);
+         console.log(`MongoDB Database: "${db_name}" ` + `(connected)`.green);
          //console.timeEnd('Mongoose connection startup');
          resolve(connection);
 
       } catch (error) {
-
-         console.error(error);
-         reject(error);
+         reject(error.message);
 
       }
    });

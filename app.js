@@ -5,9 +5,11 @@ const logger      = require('morgan');
 const socketIO    = require('socket.io');
 const cors        = require('cors');
 const express     = require('express');
+const ip          = require('ip');
 const dotenv      = require('dotenv');
 const helmet      = require('helmet');
 const fileUpload  = require('express-fileupload');
+const colors      = require('colors');
 
 const app = express();
 const server = http.createServer(app);
@@ -67,13 +69,13 @@ app.use((err, req, res, next) => {
 // BOOSTRAPPER ------------------------------------------------------------------------------------------------
 async function bootstrap() {
 	try {
-		console.log("-------------------------------------------------------------------");
+		console.log("-------------------------------------------------------------------\n" + "SERVER STARTED".black.bgGreen);
 		await createDBConnection(DB_NAME, process.env.DB_PORT);
 
 		server.listen(PORT, () => {
 			console.log("-------------------------------------------------------------------");
-			console.log(`server listening on port: ${PORT}`);
-			console.log(`local: http://localhost:${PORT}/`);
+			console.log("local: " + `http://localhost:`.cyan + `${PORT}`.brightCyan);
+			console.log("network: " + `http://${ip.address()}:`.cyan + `${PORT}`.brightCyan)
 			console.log("-------------------------------------------------------------------");
 		});
 
