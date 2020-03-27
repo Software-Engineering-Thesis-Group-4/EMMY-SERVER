@@ -8,7 +8,6 @@ module.exports = (io) => {
    });
    
    router.get('/register-admin', (req, res) => {
-      console.log(basePath);
       res.redirect('/enroll_user.html');
    });
 
