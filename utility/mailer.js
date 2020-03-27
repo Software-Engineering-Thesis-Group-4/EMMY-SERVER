@@ -6,27 +6,18 @@ const gmail = nodemailer.createTransport({
   auth: {
     user: process.env.EMAIL_USERNAME,
     pass: process.env.EMAIL_PASSWORD
-  },tls:{
+  },
+    tls:{
             rejectUnauthorized: false
         }
 });
 
-// const sendMail = (sendToEmail, emailSubj, emailBody) => {
-//   gmail.sendMail({
-//     from    : 'Emmy',
-//     to      : sendToEmail, // list of receivers
-//     subject : emailSubj, // Subject line
-//     text    : emailBody // plain text body 
-//   });
+exports.resetPassMail = (sendToEmail, username, key) => {
 
-//   console.log('Succesfully sent mail');
-// }
-
-const resetPassMail = (sendToEmail, username, key) => {
   const siteUrl = 'https//emmy/blah/blah';
   const devDets = '096969696969'
   const message = `Hello ${ username }, here is your verification key ${ key }.\n\n`
-                + `You are currently trying to reset your password in ${siteUrl}.\n`
+                + `You are currently trying to reset your password in ${siteUrl}.\n\n`
                 + `If you are not trying to reset your password please ignore this email or `
                 + `contact us and we will handle the rest. ${ devDets }`
 
@@ -35,11 +26,8 @@ const resetPassMail = (sendToEmail, username, key) => {
     to      : sendToEmail, // list of receivers
     subject : 'Reset password', // Subject line
     text    : message, // plain text body 
-  });
+  })
+  .catch(err => console.log(err));
 
   console.log('Succesfully sent mail');
 }
-
-module.exports = { 
-  resetPassMail 
-} 

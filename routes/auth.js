@@ -1,7 +1,8 @@
-const express = require('express');
-const router = express.Router();
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const express 	= require('express');
+const router 	= express.Router();
+const bcrypt	= require('bcryptjs');
+const jwt 		= require('jsonwebtoken');
+const isOnline  = require('is-online');
 
 // import utilities
 const { encrypt, decrypter } = require('../utility/aes');
@@ -267,30 +268,36 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/reset-password', async (req, res) => {
 		try {
-			const email = encrypt(req.body.email);
+			const email = req.body.email;
 
 			// check if user has internet access
 			const netStatus = await isOnline();
 
 			if (netStatus) {
 				const user = await User.findOne({ email: email });
-				const username = decrypter(user.firstname) + ' ' + decrypter(user.lastname)
-				const decr = decrypter(user.email);
+				if(user){
+					const username = user.firstname + ' ' + user.lastname
+					const decr = user.email;
 
-				// create token with user info ------- 1 min lifespan
-				const token = createToken({ email: user.email }, '1m');
-				// gets last 7 char in token and makes it the verif key
-				const key = token.substring(token.length - 7)
-				// send key to user email
-				resetPassMail(decr, username, key);
-				// create cookie with encrypted token expires the same time as the token expires
-				res.cookie('emmyPass', encrypt(token), {
-					maxAge: parseInt(60000),
-					sameSite: false
-				});
-				res.status(200).send('Succesfuly sent mail')
+					// create token with user info ------- 1 min lifespan
+					const token = createToken({ email: user.email }, '1m');
+
+					// gets last 7 char in token and makes it the verif key
+					const key = token.substring(token.length - 7)
+
+					// send key to user email
+					resetPassMail(decr, username, key);
+
+					// encrypt token before sending to user
+					const encTok = encrypt(token);
+
+					res.status(200).send({resetTok : encTok})
+				}
+				else {
+					res.send('Email doesnt exist in database');
+				}
 			} else {
-				res.send('Please check internet connection!')
+				res.send('Please check your internet connection!');
 			}
 		} catch (error) {
 			console.log(error)
@@ -313,35 +320,41 @@ module.exports = (io) => {
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 	// REFACTOR USING THE ASYNC SYNTAX
-	router.post('/reset-password-key', (req, res) => {
+	router.post('/reset-password-key', async (req, res) => {
+		try{
+			const { key,encTok } = req.body;
+			const decTok = decrypter(encTok);
+			
 
-		const key = req.body.key;
+			if(key == decTok.substring(decTok.length - 7)){
+				jwt.verify(decTok, process.env.JWT_KEY, async (err, payload) => {
+					if(err){
 
-		// check if cookie exist
-		if (req.cookies.emmyPass) {
-			const decKey = decrypter(req.cookies.emmyPass);
-			// check if key is correct
-			if (key === decKey.substring(decKey.length - 7)) {
-				jwt.verify(decKey, process.env.JWT_KEY, (err, user) => {
-					if (err) {
-						return res.status(401).send(`Key expired`);
+						res.status(401).send('Key expired');
+
+					} else {
+
+					// if token is not expired and key is correct, reset password to 1234
+						const user = await User.findOneAndUpdate(
+							{ email: asd }, 
+							{ password: bcrypt.hashSync('1234', 8) }, 
+							{ new: true }
+						)
+
+						if(user){
+							res.status(200).send(`Succesfuly resetted password for ${payload.email}`);
+						}
 					}
-					// if token not yet expired reset password to default 1234
-					User.findOneAndUpdate({ email: user.email }, { password: bcrypt.hashSync('1234', 8) }, { new: true })
-						.then(user => {
-							res.status(200).send(`Succesfuly resetted password for ${user.email}`);
-						})
-						.catch(err => {
-							console.log(err);
-							res.status(400).send('failed to reset password');
-						})
-				});
+				})
+				
 			} else {
 				res.status(400).send('Invalid key');
 			}
-		} else {
-			res.status(401).send('Cookie expired');
-		}
+
+		} catch (error) {
+			console.log(error)
+			res.status(500).send('Error on server!')
+		} 
 	});
 
 

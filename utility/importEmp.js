@@ -52,9 +52,10 @@ const csvImport = (csvFile) => {
 
 
 const isValidCsv = (csvFile, res) => {
+
 	const headerVal = 'employee_id,firstname,lastname,'
-		+ 'email,isMale,employment_status,'
-		+ 'department,job_title,photo,fingerprint_id,terminated';
+					+ 'email,isMale,employment_status,'
+					+ 'department,job_title,photo,fingerprint_id,terminated';
 
 	fs.createReadStream(csvFile)
 		.pipe(csv({
@@ -65,9 +66,11 @@ const isValidCsv = (csvFile, res) => {
 			if (header.toString() === headerVal) {
 				csvImport(csvFile);
 				console.log('Imported csv file data')
+				
+				// go to vue route
+				// dont know what to pass to vue
 				res.send('success')
-			}
-			else {
+			} else {
 				res.send('Invalid csv format')
 			}
 		})

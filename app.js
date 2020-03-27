@@ -8,18 +8,19 @@ const express     = require('express');
 const dotenv      = require('dotenv');
 const helmet      = require('helmet');
 const fileUpload  = require('express-fileupload');
-
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
-const PORT = process.env.PORT || '3000';
-
-const { createDBConnection } = require('./db');
-const DB_NAME = process.env.DB_NAME || "Emmy";
 
 
 // LOAD ENVIRONMENT VARIABLES ---------------------------------------------------------------------------------
 dotenv.config();
+
+
+const PORT = process.env.PORT || '3000';
+const { createDBConnection } = require('./db');
+const DB_NAME = process.env.DB_NAME || "Emmy";
+
 
 // APPLICATION CONFIGURATIONS ---------------------------------------------------------------------------------
 app.set('views', path.join(__dirname, 'views'));
@@ -31,6 +32,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
 app.use(helmet());
 app.use(fileUpload({
+	// always runs every request dont know why :(
 	debug: true
 }));
 

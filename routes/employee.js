@@ -99,25 +99,30 @@ module.exports = (io) => {
 
       try{
          const pathPublic = path.join(__dirname,'/../public/');
-         console.log(req.files);
+
          if(req.files){
-            console.log(req.files);
             const csvFile  = req.files.csvImport;
+
             // check if file is csv
             if(csvFile.name.substring(csvFile.name.length, csvFile.name.length-3) != 'csv'){
+
                res.status(422).send('must be csv file');
+
             } else {
+
                await csvFile.mv(pathPublic + 'import.csv', (err) => {
                   if(err){
                      console.error(err);
                      res.status(500).send('error on server'); 
                   }
+
                   isValidCsv(pathPublic + 'import.csv',res);
                   
                   // go to vue route after importing employees 
                   // send employees to res?
                })
             }
+            
          } else {
             res.status(204).send('Not selected a file or file is empty! Please select a file');
          }

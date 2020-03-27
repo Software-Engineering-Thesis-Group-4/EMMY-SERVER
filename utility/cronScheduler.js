@@ -1,10 +1,11 @@
 const cron = require('node-cron');
 const dbBackup = require('./dbbackup.js');
 
-const sched = '1 * * * * *';
-cron.schedule(sched, () => {
+const { SCHEDULE } = process.env;
+
+cron.schedule(SCHEDULE, () => {
   dbBackup.dbAutoBackUp();
-  console.log('running every minute!');
+  
 },{
     scheduled : true,
     timezone  : "Asia/Kuala_Lumpur"
