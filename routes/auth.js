@@ -190,8 +190,8 @@ module.exports = (io) => {
 	});
 
 
-
-
+   
+   // TODO: Implement password length validation
 	/* ---------------------------------------------------------------------------------------------------------------------
 	Route:
 	POST /auth/enroll
