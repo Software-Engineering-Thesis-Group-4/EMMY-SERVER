@@ -22,6 +22,7 @@ const NotificationLogSchema = Schema({
       type: Number,
       default: null // not submitted or changePassword type
    }
+   // FIX: Add 'read' field as an indicator if the user have seen the notification
 });
 
 const Notification = mongoose.model('NotificationLog', NotificationLogSchema);
