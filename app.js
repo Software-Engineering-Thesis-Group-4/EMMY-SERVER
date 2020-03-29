@@ -52,9 +52,10 @@ app.get(/.*/, (req, res) => {									// localhost:3000/* (for serving vue spa)
 });
 
 // CATCH 404 AND FORWARD REQUEST TO ERROR HANDLER -------------------------------------------------------------
-app.use((req, res, next) => {
-	next(createError(404));
-});
+// REMOVE: Not sure if removing middleware will have serious side effects. will disable temporarily
+// app.use((req, res, next) => {
+// 	next(createError(404));
+// });
 
 // ERROR HANDLER ----------------------------------------------------------------------------------------------
 app.use((err, req, res, next) => {
