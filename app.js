@@ -11,17 +11,17 @@ const helmet      = require('helmet');
 const fileUpload  = require('express-fileupload');
 const colors      = require('colors');
 
+// LOAD ENVIRONMENT VARIABLES ---------------------------------------------------------------------------------
+dotenv.config();
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 const PORT = process.env.PORT || '3000';
 
 const { createDBConnection } = require('./db');
-const DB_NAME = process.env.DB_NAME || "Emmy";
+const DB_NAME = process.env.DB_NAME;
 
-
-// LOAD ENVIRONMENT VARIABLES ---------------------------------------------------------------------------------
-dotenv.config();
 
 // APPLICATION CONFIGURATIONS ---------------------------------------------------------------------------------
 app.set('views', path.join(__dirname, 'views'));
