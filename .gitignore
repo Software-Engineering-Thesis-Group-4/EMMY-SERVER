@@ -105,12 +105,9 @@ dist
 # TernJS port file
 .tern-port
 
-<<<<<<< Updated upstream
-# vscode
-.vscode/
-=======
 ##################################
 #PERSONAL
+.vscode/
 
 # Ignore environment file
 .env

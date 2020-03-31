@@ -1,5 +1,5 @@
 const faker = require('faker');
-const { createDBConnection } = require('../db/index.js');
+const { createDBConnection, closeDBConnection  } = require('../db/index.js');
 require('dotenv').config();
 
 // import models
@@ -7,8 +7,6 @@ const { Employee } = require('../db/models/Employee');
 const { EmployeeLog } = require('../db/models/EmployeeLog');
 
 // createDBConnection(process.env.DB_NAME, process.env.DB_PORT);
-
-
 
 function randomGender() {
    let gender;
@@ -23,197 +21,168 @@ function randomGender() {
    return gender;
 }
 
-//let randomName = faker.name.findName();
+function randomDepartment() {
 
+   let department = ['Human Resources', 'Faculty', 'Finance'];
 
+   let random = Math.floor(Math.random() * department.length);
+   let selected = department[random];
 
+   return selected;
+}
 
+// TODO update department field to randomly choose a school department via Array[i]
+function createEmployee(objectData, iterator) {
 
+   let createStatus = true;
 
-// Employee Log
-let randomDateIn = faker.date.future();
-let emotionIn = Math.floor(Math.random() * 6);  //0 - 5
+   const new_employee = new Employee({
+      employeeId: objectData.randomID,
+      firstName: objectData.randomFname,
+      lastName: objectData.randomLname,
+      email: objectData.randomEmail,
+      isMale: objectData.randomGender,
+      employmentStatus: objectData.status,
+      department: objectData.department,
+      jobTitle: objectData.jobTitle,
+      photo: objectData.photoURL,
+      fingerprintId: objectData.fingerprintID,
+      terminated: false,
+      latestLog: null
+   });
 
-let randomDateOut = faker.date.future();
-let emotionOut = Math.floor(Math.random() * 6);
-
-let dateCreated = faker.date.future();
-
-// console.log(`
-//    Log Created: ${dateCreated}
-//    \nName: ${randomName}
-//    \nEmployee ID: ${randomID}
-//    \nDateIn: ${randomDateIn}
-//    \nEmotionIn: ${emotionIn}
-//    \nDateOut: ${randomDateOut}
-//    \nEmotionOut: ${emotionOut}
-//    `);
-
-
-// DONE
-function createEmployee(id, fname, rlname, email, gender, status, department, jobTitle, photoPath, fid) {
-
-         let createStatus = true;
-
-			const new_employee = new Employee({
-				employeeId: id,
-				firstName: fname,
-				lastName: rlname,
-				email: email,
-				isMale: gender,
-				employmentStatus: status,
-				department: department,
-				jobTitle: jobTitle,
-				photo: photoPath,
-				fingerprintId: fid,
-				terminated: false,
-            latestLog: null
-			});
-			console.log("Here");
-
-			new_employee.save((err) => {
-				if (err) {
-					console.log(
-						"Error or Duplicate Record. Unable to register new employee."
-					);
-					console.error(err);
-					createStatus = false;
-				} else {
-					console.log("Record Saved");
-				}
-			});
-
-			console.log("Here2");
-
-			return createStatus;
+   new_employee.save((err) => {
+      if (err) {
+         console.log("Error or Duplicate Record. Unable to register new employee.");
+         //console.error(err);
+         createStatus = false;
+      } else {
+         console.log(`Record Saved - Employee: ${iterator}: ${objectData.randomFname}`);
+      }
+   });
+   return createStatus;
 }
 
 // TODO Continue working on generating employeeLog dummy data
-// function createEmployeeLog(idNum, randomDateIn, emotionIn, randomDateOut, emotionIn) {
+async function createEmployeeLog(fprintIDNum) {
 
-//    let isSuccess = false;
+   let isSuccess = false;
 
-//    try {
-//       let employee = await Employee.findOne({ fingerprintId: idNum });
+   try {
+      let employee = await Employee.findOne({ fingerprintId: fprintIDNum });
 
-//       // if employee does not exist, return an error
-//       if (!employee) {
-//           console.log("No record in Employees");
-//       }
-
-//       else{
-//          console.log('Employee found')
-//       }
-
-//       // if employee doesn't have any latest log
-//       if (!employee.latestLog) {
-
-//           let employeeLog = new EmployeeLog({
-//               employee: employee._id,
-//               employeeId: employee.employeeId
-//           });
-
-//           // update employee's latest log
-//           employee.latestLog = {
-//               reference: employeeLog._id,
-//               date: dateNow
-//           }
-
-//           await employee.save();
-
-//           console.log('employeeLog', {
-//               reference: employeeLog._id,
-//               employee: employee.firstName,
-//               status: 'in',
-//               message: `${employee.firstName} ${employee.lastName} checked in at ${dateNow.toLocaleDateString()}.`
-//           });
-
-//       }
-
-//       else { // get the employee's latestLog
-//           let employeeLatestLog = await EmployeeLog.findById(employee.latestLog.reference);
-
-//           // if employee's latestLog is not found (deleted) create a new one
-//           if (!employeeLatestLog) {
-
-//               let employeeLog = new EmployeeLog({
-//                   employee: employee._id,
-//                   employeeId: employee.employeeId,
-//               });
-
-//               employee.latestLog = {
-//                   reference: employeeLog._id,
-//                   date: dateNow
-//               }
-
-//               await employee.save();
-
-//               console.log('employeeLog', {
-//                   reference: employeeLog._id,
-//                   employee: employee.firstName,
-//                   status: 'in',
-//                   message: `Log not found (deleted) \n${employee.firstName} ${employee.lastName} checked in at ${dateNow.toLocaleDateString()}.`
-//               });
-
-//           }
-//       }
-
-//       return isSucess;
-
-//   } catch (error) {
-//       console.error(`Server Error: \n${error.message}`);
-//   }
-// } // endfunction
-
-// ---------------------------------------------------------------
-
-// GENERATE DATA HERE
-
-
-//let num = 0;
-
-async function start(){
-
-   try{
-      await createDBConnection(process.env.DB_NAME, process.env.DB_PORT);
-
-      let employees = 10; // number of employee and logs
-      console.log(`Number of entries: ${employees}\n`);
-
-      for (i = 1; i <= employees; ++i){
-
-         // Create Employee
-         let randomID = faker.random.uuid();
-         let randomFname = faker.name.firstName();
-         let randomLname = faker.name.lastName();
-         let randomEmail = faker.internet.email();
-         let gender = randomGender();
-         let status = Math.floor(Math.random() * 2);
-         let department = faker.commerce.department();
-         let jobTitle = faker.name.jobTitle();
-         let photoURL = faker.image.imageUrl();
-         let fingerprintID = i;
-         //let fid       = i;
-
-         let employee_message = 'Success';
-         //let log_message = 'Success';
-
-         let inputEmployee = createEmployee(randomID, randomFname,    randomLname, randomEmail, gender, status, department, jobTitle, photoURL, fingerprintID);
-
-         let name = `${randomFname} ${randomLname}`;
-
-         if(inputEmployee == false){
-            employee_message = 'Failed';
-         }
-
-         console.log(`Employee:  ${name} = ${i}`);
-         console.log(`Status: ${employee_message}\n`);
+      // if employee does not exist, return an error
+      if (!employee) {
+         return new Error('Employee does not exist');
       }
-   }  catch(err){
-      console.log(err);
+
+      console.log('Employee found')
+
+      let clockIn = new EmployeeLog({
+         employeeRef: employee._id
+      });
+
+      await clockIn.save();
+
+      // clockIn.save((err) => {
+      //    if(err){
+      //       console.log("Error or Duplicate Record. Unable to register new employee.");
+      //       //console.error(err);
+      //       //success = false
+      //    } else{
+      //       console.log(`Clock In Recorded: ${employee.fingerprintId}`);
+      //       ++checker;
+      //    }
+      // });
+
+      employee.latestLog = {
+         reference: clockIn._id,
+         date: clockIn.in
+      }
+
+      await employee.save();
+
+      // employee.save((err) => {
+      //    if(err){
+      //       console.log("Error or Duplicate Record. Unable to register new employee.");
+      //       //console.error(err);
+      //       //success = false
+      //    } else{
+      //       console.log(`Clock In Saved: ${employee.firstName}: ${employee.fingerprintId}`);
+      //       ++checker;
+      //    }
+      // });
+
+      success = true;
+
+      } catch (error) {
+         console.error(`Server Error: \n${error.message}`);
+      }
    }
 
-}
+   async function start(){
 
-start();
-console.log('DONE');
+      try{
+         await createDBConnection(process.env.DB_NAME, process.env.DB_PORT);
+
+         let employees = 10; // number of employee and logs
+         console.log(`Number of entries: ${employees}\n`);
+
+         for (let iterator = 1; iterator <= employees; ++iterator){
+
+            // Bind generated data to the object
+            let fakeData = {
+               randomID      : faker.random.uuid(),
+               randomFname   : faker.name.firstName(),
+               randomLname   : faker.name.lastName(),
+               randomEmail   : faker.internet.email(),
+               gender        : randomGender(),
+               status        : Math.floor(Math.random() * 2),   // random part time or full time
+               department    : randomDepartment(),
+               jobTitle      : faker.name.jobTitle(),
+               photoURL      : faker.image.imageUrl(),
+               fingerprintID : iterator,
+               terminated    : false,
+               latestlog     : null
+            }
+
+            let inputEmployee    = createEmployee(fakeData, iterator);
+            let employee_message = null;
+            let name             = null;
+
+            if(inputEmployee == true){
+               employee_message = 'Success';
+               name = `${fakeData.randomFname} ${fakeData.randomLname}`;
+               console.log(`Employee:  ${name} = ${iterator}`);
+               console.log(`Status: ${employee_message}\n`);
+
+               let logStatus = createEmployeeLog(iterator);
+
+               if (logStatus == false){
+                  console.log('Created Employee but failed on Employee Logs');
+               } else {
+                  console.log('Employee and Logs Successfully created');
+               }
+            }
+            else if (inputEmployee == false) {
+               employee_message = 'Failed';
+               console.log(`Employee: ${iterator}`);
+               console.log(`Status: ${employee_message}\n`);
+            }
+            else {
+               console('Some kind of error');
+            }
+         }
+
+         await closeDBConnection();
+
+      }  catch(err){
+         console.log(err);
+      }
+
+      console.log('DONE');
+   }
+
+   start();
+   //The following example deletes all documents from the employees collection:
+   // await db.collection('employees').deleteMany({});

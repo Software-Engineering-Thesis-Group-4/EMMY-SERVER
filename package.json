@@ -3,7 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon app.js"
+    "start": "nodemon app.js",
+    "generate": "node utility/dataGenerator.js",
+    "delete": "node utility/deleteAll_employees.js"
   },
   "dependencies": {
     "aes-js": "^3.1.2",
