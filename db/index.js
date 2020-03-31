@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+require('colors');
 
 exports.createDBConnection = (db_name, port) => {
    return new Promise(async (resolve, reject) => {
