@@ -1,9 +1,12 @@
+// TODO: Conver to typescript
+
 const faker = require('faker');
 const { createDBConnection, closeDBConnection } = require('../db/index.js');
 require('dotenv').config();
 
 // import models
 const { Employee } = require('../db/models/Employee');
+const { EmployeeLog } = require('../db/models/EmployeeLog');
 
 function randomGender() {
    let gender;
@@ -18,84 +21,125 @@ function randomGender() {
    return gender;
 }
 
+// TODO: Continue working on generating employeeLog dummy data
+async function createEmployeeLog(fprintIDNum) {
 
-// DONE
-async function createEmployee(id, fname, rlname, email, gender, status, department, jobTitle, photoPath, fid) {
-   let createStatus = true;
-   
+   let isSuccess = false;
+
    try {
+      let employee = await Employee.findOne({ fingerprintId: fprintIDNum });
 
-      const new_employee = new Employee({
-         employeeId: id,
-         firstName: fname,
-         lastName: rlname,
-         email: email,
-         isMale: gender,
-         employmentStatus: status,
-         department: department,
-         jobTitle: jobTitle,
-         photo: photoPath,
-         fingerprintId: fid,
-         terminated: false,
-         latestLog: null
+      // if employee does not exist, return an error
+      if (!employee) {
+         return new Error('Employee does not exist');
+      }
+
+      console.log('Employee found')
+
+      let clockIn = new EmployeeLog({
+         employeeRef: employee._id
       });
 
-      await new_employee.save();
-      console.log(`Record Saved: ${ new_employee.firstName }`);
+      await clockIn.save();
 
-      return createStatus;
+      // clockIn.save((err) => {
+      //    if(err){
+      //       console.log("Error or Duplicate Record. Unable to register new employee.");
+      //       //console.error(err);
+      //       //success = false
+      //    } else{
+      //       console.log(`Clock In Recorded: ${employee.fingerprintId}`);
+      //       ++checker;
+      //    }
+      // });
+
+      employee.latestLog = {
+         reference: clockIn._id,
+         date: clockIn.in
+      }
+
+      await employee.save();
+
+      // employee.save((err) => {
+      //    if(err){
+      //       //console.error(err);
+      //       //success = false
+      //    } else{
+      //       console.log(`Clock In Saved: ${employee.firstName}: ${employee.fingerprintId}`);
+      //       ++checker;
+      //    }
+      // });
+
+      success = true;
 
    } catch (error) {
-      console.error(error);
-      createStatus = false;
-      return createStatus;
-   }   
+      console.error(`Server Error: \n${error.message}`);
+   }
 }
 
 async function start() {
 
    try {
-      await createDBConnection("EMMY_TEST", 27017);
+      await createDBConnection(process.env.DB_NAME, process.env.DB_PORT);
 
       let employees = 10; // number of employee and logs
       console.log(`Number of entries: ${employees}\n`);
 
-      for (i = 1; i <= employees; ++i) {
+      for (let iterator = 1; iterator <= employees; ++iterator) {
 
-         // Create Employee
-         let randomID      = faker.random.uuid();
-         let randomFname   = faker.name.firstName();
-         let randomLname   = faker.name.lastName();
-         let randomEmail   = faker.internet.email();
-         let gender        = randomGender();
-         let status        = Math.floor(Math.random() * 2);
-         let department    = faker.commerce.department();
-         let jobTitle      = faker.name.jobTitle();
-         let photoURL      = faker.image.imageUrl();
-         let fingerprintID = i;
-
-         let employee_message = 'Success';
-
-         let CE_status = await createEmployee(randomID, randomFname, randomLname, randomEmail, gender, status, department, jobTitle, photoURL, fingerprintID);
-
-         let name = `${randomFname} ${randomLname}`;
-
-         if (CE_status == false) {
-            employee_message = 'Failed';
+         // Bind generated data to the object
+         let fakeData = {
+            randomID: faker.random.uuid(),
+            randomFname: faker.name.firstName(),
+            randomLname: faker.name.lastName(),
+            randomEmail: faker.internet.email(),
+            gender: randomGender(),
+            status: Math.floor(Math.random() * 2),   // random part time or full time
+            department: randomDepartment(),
+            jobTitle: faker.name.jobTitle(),
+            photoURL: faker.image.imageUrl(),
+            fingerprintID: iterator,
+            terminated: false,
+            latestlog: null
          }
 
-         console.log(`Employee:  ${name} = ${i}`);
-         console.log(`Status: ${employee_message}\n`);
+         let inputEmployee = createEmployee(fakeData, iterator);
+         let employee_message = null;
+         let name = null;
+
+         if (inputEmployee == true) {
+            employee_message = 'Success';
+            name = `${fakeData.randomFname} ${fakeData.randomLname}`;
+            console.log(`Employee:  ${name} = ${iterator}`);
+            console.log(`Status: ${employee_message}\n`);
+
+            let logStatus = createEmployeeLog(iterator);
+
+            if (logStatus == false) {
+               console.log('Created Employee but failed on Employee Logs');
+            } else {
+               console.log('Employee and Logs Successfully created');
+            }
+         }
+         else if (inputEmployee == false) {
+            employee_message = 'Failed';
+            console.log(`Employee: ${iterator}`);
+            console.log(`Status: ${employee_message}\n`);
+         }
+         else {
+            console('Some kind of error');
+         }
       }
 
-      // Close db connection to prevent continuous process
       await closeDBConnection();
-      console.log('DONE');
 
    } catch (err) {
       console.log(err);
    }
 
+   console.log('DONE');
 }
 
 start();
+//The following example deletes all documents from the employees collection:
+// await db.collection('employees').deleteMany({});

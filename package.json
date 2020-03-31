@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js"
+	 "dev": "nodemon app.js",
+	 "generate": "node utility/dataGenerator.js",
+    "delete": "node utility/deleteAll_employees.js"
   },
   "dependencies": {
     "aes-js": "^3.1.2",
