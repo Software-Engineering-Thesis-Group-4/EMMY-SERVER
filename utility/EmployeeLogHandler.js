@@ -3,10 +3,17 @@ const moment = require('moment');
 // IMPORT MODELS
 const { Employee } = require('../db/models/Employee.js');
 const { EmployeeLog } = require('../db/models/EmployeeLog.js');
+
+// Import Subutility
 const { isOverdue } = require('./OverdueEmployeeLog.js');
 
-
-
+/**
+ * Handles the attendance of the employee when after they scan their fingerprint.
+ * @param io - web socket
+ * @param fingerprintId - fingerprint number or "fingerprintId" field of the employee
+ * @returns "status code" and "status message"
+ * @author Nathaniel Saludes
+ */
 exports.handleEmployeeLog = (io, fingerprintId) => {
 
 	return new Promise(async (resolve, reject) => {
