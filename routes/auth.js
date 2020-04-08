@@ -7,7 +7,7 @@ const isOnline  = require('is-online');
 // import utilities
 const { encrypt, decrypter } = require('../utility/aes');
 const { createToken, createRefreshToken, removeRefreshToken } = require('../utility/jwt');
-const { resetPassMail } = require('../utility/mailer');
+const mailer = require('../utility/mailer');
 
 // import models
 const { User } = require("../db/models/User");
@@ -50,7 +50,7 @@ module.exports = (io) => {
 
 			// validate password
 			let passwordIsValid = await bcrypt.compare(password, user.password);
-
+			 
 			// if submitted password invalid, return an error
 			if (passwordIsValid) {
 
@@ -58,10 +58,10 @@ module.exports = (io) => {
 				let email = encrypt(user.email);
 
 				//create refresh token
-				createRefreshToken(user.email);
+				createRefreshToken(email);
 
 				// create access token
-				const access_token = createToken(email, process.env.TOKEN_DURATION);
+				const access_token = createToken({email}, process.env.TOKEN_DURATION);
 
 				// return user credentials and access token
 				return res.status(200).send({
@@ -78,6 +78,7 @@ module.exports = (io) => {
 
 			}
 		} catch (error) {
+			console.log(error)
 			return res.status(500).send({ message: 'Error on the server.' });
 		}
 	});
@@ -116,8 +117,7 @@ module.exports = (io) => {
 			// if user exists, verify access token
 			jwt.verify(token, process.env.JWT_KEY, async (err) => {
 
-				// if token is already expired check if refresh token is still valid
-				// refresh token is still valid, renew token
+				// if access token is already expired check if refresh token is still valid
 				if (err) {
 
 					let refreshToken = await RefreshToken.findOne({ email });
@@ -170,10 +170,9 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/logout', (req, res) => {
+	router.get('/logout', (req, res) => {
 		try {
-			let { token } = req.body;
-
+			let token = req.body.token;
 			jwt.verify(token, process.env.JWT_KEY, (err, payload) => {
 				if (err) {
 					return res.status(401).send('Invalid Token.');
@@ -205,46 +204,62 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/enroll', async (req, res) => {
 		try {
-			// Extract user information
-			let {
-				email,
-				firstname,
-				lastname,
-				password,
-				isAdmin } = req.body;
 
-			// data cleaning
-			email     = email.trim();
-			firstname = firstname.trim();
-			lastname  = lastname.trim();
-			isAdmin   = (isAdmin === "true") ? true : false;
+			// check if user has internet access
+			const netStatus = await isOnline();
 
-			// Find an existing user and return an error if one already exists.
-			let user = await User.findOne({ email });
-			if (user) return res.status(409).send("User already exists.");
+			if(netStatus){
+				// Extract user information
+				let {
+					email,
+					firstname,
+					lastname,
+					password,
+					isAdmin } = req.body;
 
-			// hash password
-			password = bcrypt.hashSync(password);
+				// data cleaning
+				email     = email.trim();
+				firstname = firstname.trim();
+				lastname  = lastname.trim();
+				isAdmin   = (isAdmin === "true") ? true : false;
 
-			// create a new User
-			let newUser = new User({
-				email: email,
-				firstname: firstname,
-				lastname: lastname,
-				username: `${firstname}${lastname}`,
-				password: password,
-				// isAdmin: (default value is "false" if not provided)
-			});
 
-			// if isAdmin is true, set isAdmin field
-			if (isAdmin) {
-				newUser.isAdmin = true;
+				// Find an existing user and return an error if one already exists.
+				let user = await User.findOne({ email });
+				if (user) return res.status(409).send("User already exists.");
+
+				// hash password
+				password = bcrypt.hashSync(password);
+
+				// create a new User
+				let newUser = ({
+					email: email,
+					firstname: firstname,
+					lastname: lastname,
+					username: `${firstname}${lastname}`,
+					password: password,
+					// isAdmin: (default value is "false" if not provided)
+				});
+
+				// if isAdmin is true, set isAdmin field
+				if (isAdmin) {
+					newUser.isAdmin = true;
+				}
+
+
+				// create token where payload is user details
+				// set expiration to 1h ----- (exp time still in discussion)
+				const token = createToken(newUser, '1h');
+				const enctok = encrypt(token);
+
+
+				// send email verification to user to verify if email exist before putting into database
+				mailer.verifyUserMail(newUser.email,newUser.username,enctok);
+
+				return res.status(200).json(`Succesfully sent verification email to ${newUser.username}`);
+			} else {
+				res.status(502).send('Please check your internet connection!');
 			}
-
-			// update user in database
-			await newUser.save();
-
-			return res.status(200).send(`Successfully registered a new user (${newUser.email})`);
 
 		} catch (error) {
 			console.log(error);
@@ -252,7 +267,44 @@ module.exports = (io) => {
 		}
 	});
 
+	/* ---------------------------------------------------------------------------------------------------------------------
+	Route:
+	GET /auth/enroll/verif-mail
 
+	Description:
+	This route is for verifying user account by sending link to email
+
+	Author:
+	Michael Ong
+	----------------------------------------------------------------------------------------------------------------------*/
+	
+	router.get('/enroll/verif-mail/:token', (req,res) =>{
+		
+		// get encrypted token from url
+		const token 	= req.params.token;
+		const decTok 	= decrypter(token);
+
+		jwt.verify(decTok, process.env.JWT_KEY, async(err, user) => {
+			if(err){
+				return res.status(401).send('Verification expired')
+			}
+
+			const newUser = new User ({
+				email		: user.email,
+				firstname	: user.firstname,
+				lastname	: user.lastname,
+				username	: `${user.firstname}${user.lastname}`,
+				password	: user.password,
+				// isAdmin: (default value is "false" if not provided)
+			});
+			
+			// put user in database if token is still valid
+			await newUser.save();
+			return res.status(200).send(`Successfully registered a new user (${newUser.email})`);
+			
+		})
+		
+	});
 
 
 	// FIX RESET PASSWORD PROCESS
@@ -284,20 +336,20 @@ module.exports = (io) => {
 
 					// gets last 7 char in token and makes it the verif key
 					const key = token.substring(token.length - 7)
-
+					
 					// send key to user email
-					resetPassMail(decr, username, key);
+					mailer.resetPassMail(decr, username, key);
 
 					// encrypt token before sending to user
 					const encTok = encrypt(token);
 
-					res.status(200).send({resetTok : encTok})
+					res.status(200).send({ resetTok : encTok })
 				}
 				else {
 					res.send('Email doesnt exist in database');
 				}
 			} else {
-				res.send('Please check your internet connection!');
+				res.status(502).send('Please check your internet connection!');
 			}
 		} catch (error) {
 			console.log(error)
@@ -326,24 +378,15 @@ module.exports = (io) => {
 			const decTok = decrypter(encTok);
 			
 
-			if(key == decTok.substring(decTok.length - 7)){
+			if(key === decTok.substring(decTok.length - 7)){
 				jwt.verify(decTok, process.env.JWT_KEY, async (err, payload) => {
 					if(err){
-
 						res.status(401).send('Key expired');
 
 					} else {
 
-					// if token is not expired and key is correct, reset password to 1234
-						const user = await User.findOneAndUpdate(
-							{ email: asd }, 
-							{ password: bcrypt.hashSync('1234', 8) }, 
-							{ new: true }
-						)
-
-						if(user){
-							res.status(200).send(`Succesfuly resetted password for ${payload.email}`);
-						}
+					// if token is not expired and key is correct, proceed to change password page
+						res.status(200).send({ user : payload.email })
 					}
 				})
 				
