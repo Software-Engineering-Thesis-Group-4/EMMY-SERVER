@@ -34,7 +34,7 @@ app.use(express.static(path.join(__dirname, 'client'))); // the directory for Vu
 app.use(cors());
 app.use(helmet());
 app.use(fileUpload({
-	debug: true
+	debug: false
 }));
 
 // IMPORT & CONFIGURE ROUTES ----------------------------------------------------------------------------------
@@ -70,6 +70,7 @@ app.use((err, req, res, next) => {
 // BOOSTRAPPER ------------------------------------------------------------------------------------------------
 async function bootstrap() {
 	try {
+		console.clear();
 		console.log("-------------------------------------------------------------------\n" + "SERVER STARTED".black.bgGreen);
 		await createDBConnection(DB_NAME, process.env.DB_PORT);
 
