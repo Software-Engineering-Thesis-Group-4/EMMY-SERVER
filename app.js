@@ -17,10 +17,10 @@ const io = socketIO(server);
 dotenv.config();
 
 
-const PORT = process.env.PORT || '3000';
-const { createDBConnection } = require('./db');
-const DB_NAME = process.env.DB_NAME || "Emmy";
-
+const PORT 							= process.env.PORT || '3000';
+const { createDBConnection } 		= require('./db');
+const DB_NAME 						= process.env.DB_NAME || "Emmy";
+const mode 							= process.env.MODE;
 
 // APPLICATION CONFIGURATIONS ---------------------------------------------------------------------------------
 app.set('views', path.join(__dirname, 'views'));
@@ -31,10 +31,9 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
 app.use(helmet());
-app.use(fileUpload({
-	// always runs every request dont know why :(
-	debug: true
-}));
+app.use(fileUpload((mode === 'dev' ? 
+	{ debug: true } : { debug: false })
+));
 
 // IMPORT & CONFIGURE ROUTES ----------------------------------------------------------------------------------
 const employeeLogsRoute = require('./routes/employee-logs')(io);
