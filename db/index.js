@@ -12,14 +12,14 @@ exports.createDBConnection = (db_name, port) => {
             useUnifiedTopology: true,
             useCreateIndex: true,
             useFindAndModify: false
-         });
-         console.log(`MongoDB Database: "${db_name}" ` + `(connected)`.green);
+			});
+			
+			console.clear();
          //console.timeEnd('Mongoose connection startup');
          resolve(connection);
 
       } catch (error) {
          reject(error.message);
-
       }
    });
 }
