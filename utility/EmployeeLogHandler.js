@@ -14,6 +14,8 @@ const { isOverdue } = require('./OverdueEmployeeLog.js');
  * @returns "status code" and "status message"
  * @author Nathaniel Saludes
  */
+
+// FIX: Remove promise but convert the whole handleEmployeeLog function as an asynchronous operation and return the necessary data for response.
 exports.handleEmployeeLog = (io, fingerprintId) => {
 
 	return new Promise(async (resolve, reject) => {

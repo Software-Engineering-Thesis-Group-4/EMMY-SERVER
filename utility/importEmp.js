@@ -11,6 +11,7 @@ const { encrypt, decrypter } = require('./aes')
 // import model
 const { Employee } = require('../db/models/Employee');
 
+// FIX: Avoid using request and response object inside utility modules
 const csvImport = (csvFile) => {
 
 	fs.createReadStream(csvFile)
@@ -50,7 +51,7 @@ const csvImport = (csvFile) => {
 		});
 }
 
-
+// FIX: Avoid using request and response object inside utility modules
 const isValidCsv = (csvFile, res) => {
 	const headerVal = 'employee_id,firstname,lastname,'
 		+ 'email,isMale,employment_status,'
