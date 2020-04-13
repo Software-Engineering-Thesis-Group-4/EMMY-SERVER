@@ -8,14 +8,13 @@
   "dependencies": {
     "aes-js": "^3.1.2",
     "bcryptjs": "^2.4.3",
+    "chunk": "0.0.2",
     "cors": "^2.8.5",
-    "csv-parser": "^2.3.2",
     "csv-writer": "^1.6.0",
     "debug": "~2.6.9",
     "dotenv": "^8.2.0",
     "ejs": "~2.6.1",
     "express": "^4.17.1",
-    "express-fileupload": "^1.1.6",
     "fs": "0.0.1-security",
     "helmet": "^3.21.3",
     "http-errors": "~1.6.3",
@@ -29,6 +28,7 @@
     "morgan": "~1.9.1",
     "node-cron": "^2.0.3",
     "nodemailer": "^6.4.5",
+    "replace-string": "^3.0.0",
     "socket.io": "^2.3.0"
   },
   "devDependencies": {
