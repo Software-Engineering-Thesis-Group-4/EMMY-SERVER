@@ -1,85 +1,60 @@
-const csv = require('csv-parser');
-const fs = require('fs');
-const path = require('path');
+const chunk         = require('chunk');
 
-// path to csv file ---- static public files
-const pathCsv = path.join(__dirname, '/../public');
-
-// import utility 
+// import util and model
 const { encrypt, decrypter } = require('./aes')
-
-// import model
 const { Employee } = require('../db/models/Employee');
 
-const csvImport = (csvFile) => {
 
-	fs.createReadStream(csvFile)
-		.pipe(csv({
-			strict: true
-		}))
-		.on('data', (data) => {
+const csvImport = async (stringData) => {
 
-			const empId = encrypt(data.employee_id);
-			const firstName = encrypt(data.firstname);
-			const lastName = encrypt(data.lastname);
-			const email = encrypt(data.email);
-			const fingerprintId = encrypt(parseInt(data.fingerprint_id))
+
+	const removeLast 	= (stringData.substring(0, stringData.length -1))
+	const arrData 		= removeLast.split(',');
+	const finalData 	= chunk(arrData, [ 9 ]);
+
+
+	const headerVal = 'EMPLOYEE_ID,FIRSTNAME,LASTNAME,EMAIL,'
+					+ 'GENDER,EMPLOYMENT_STATUS,DEPARTMENT,JOB_TITLE,FINGERPRINT_ID';
+		
+	let x = 1;
+		
+	if(finalData[0].toString().trim().toUpperCase() == headerVal) {
+
+		while(x != finalData.length - 1){
+			
+			// const empId 		= encrypt(finalData[x][0]);
+			// const firstName 	= encrypt(finalData[x][1]);
+			// const lastName 		= encrypt(finalData[x][2]);
+			// const email 		= encrypt(finalData[x][3]);
+			// const fingerprintId = encrypt(parseInt(finalData[x][8]))
+			const gender 		= finalData[x][4].toLowerCase() === 'm' ? true : false;
+			const empStat 		= finalData[x][5].toLowerCase() === 'full-time' ? true : false;
+			
 
 			const newEmp = new Employee({
-				employeeId: empId,
-				firstName: firstName,
-				lastName: lastName,
-				email: email,
-				isMale: data.isMale,
-				employmentStatus: parseInt(data.employment_status),
-				department: data.department,
-				jobTitle: data.job_title,
-				photo: data.photo,
-				fingerprintId: fingerprintId,
-				terminated: data.terminated
-			});
-
-			newEmp.save()
-				.then((emp) => {
-					console.log(`Added employee ${decrypter(emp.firstName)}`);
-				})
-				.catch(err => res.send("invalid value in csv"));
-		})
-		.on('end', () => {
-			console.log('Succesfully read csv file')
-		});
-}
-
-
-const isValidCsv = (csvFile, res) => {
-
-	const headerVal = 'employee_id,firstname,lastname,'
-					+ 'email,isMale,employment_status,'
-					+ 'department,job_title,photo,fingerprint_id,terminated';
-
-	fs.createReadStream(csvFile)
-		.pipe(csv({
-			strict: true
-		}))
-		.on('headers', (header) => {
-			// check if format of csv is correct
-			if (header.toString() === headerVal) {
-				csvImport(csvFile);
-				console.log('Imported csv file data')
+				employeeId		: finalData[x][0],
+				firstName		: finalData[x][1],
+				lastName		: finalData[x][2],
+				email			: finalData[x][3],
+				isMale			: gender,
+				employmentStatus: empStat,
+				department		: finalData[x][6],
+				jobTitle		: finalData[x][7],
+				fingerprintId	: finalData[x][8]
 				
-				// go to vue route
-				// dont know what to pass to vue
-				res.send('success')
-			} else {
-				res.send('Invalid csv format')
-			}
-		})
+			})
 
+			await newEmp.save();
+			x++;
+		}
+		return true;
+	} else {
+		console.log('invalid csv format');
+		return false;
+	}
 }
-
-
 
 
 module.exports = {
-	isValidCsv
+	csvImport
 }
