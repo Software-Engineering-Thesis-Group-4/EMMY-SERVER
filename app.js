@@ -7,10 +7,9 @@ const cors        = require('cors');
 const express     = require('express');
 const dotenv      = require('dotenv');
 const helmet      = require('helmet');
-const fileUpload  = require('express-fileupload');
-const app = express();
-const server = http.createServer(app);
-const io = socketIO(server);
+const app 		  = express();
+const server      = http.createServer(app);
+const io          = socketIO(server);
 
 
 // LOAD ENVIRONMENT VARIABLES ---------------------------------------------------------------------------------
@@ -31,20 +30,19 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
 app.use(helmet());
-app.use(fileUpload((mode === 'dev' ? 
-	{ debug: true } : { debug: false })
-));
 
 // IMPORT & CONFIGURE ROUTES ----------------------------------------------------------------------------------
 const employeeLogsRoute = require('./routes/employee-logs')(io);
 const employeeRoute = require('./routes/employee')(io);
 const utilityRoute = require('./routes/main')(io);
 const authRoute = require('./routes/auth')(io);
+const userRoute = require('./routes/user')(io);
 
 app.use('/auth', authRoute);									// localhost:3000/auth/
 app.use('/main', utilityRoute); 							// localhost:3000/utility
 app.use('/api/employees', employeeRoute); 				// localhost:3000/api/employees/
 app.use('/api/employeelogs', employeeLogsRoute); 		// localhost:3000/api/employeelogs/
+app.use('/api/users', userRoute)						// localhost:3000/api/employeelogs/
 
 // TODO: add route for servering a single page application (Vue)
 // code here...
