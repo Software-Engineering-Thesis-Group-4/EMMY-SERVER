@@ -11,6 +11,10 @@ module.exports = (io) => {
       res.sendFile(basePath + '/log_employee.html');
    });
    
+   router.get('/email-notif', (req,res) => {
+      res.sendFile(basePath + '/email_notif.html')
+   })
+
    router.get('/enroll-admin', (req, res) => {
       console.log(basePath);
       res.sendFile(basePath + '/enroll_user.html');

@@ -1,10 +1,10 @@
-const express = require('express')
-const router  = express.Router();
-const path    = require('path');
-
+const express        = require('express')
+const router         = express.Router();
+const path           = require('path');
+const replaceString	= require('replace-string');
 // import utility
 // const { encrypt, decrypt } = require('../utility/aes');
-const { isValidCsv } = require('../utility/importEmp');
+const { csvImport } = require('../utility/importEmp');
 const { toCsv } = require('../utility/export');
 
 // import models
@@ -96,39 +96,31 @@ module.exports = (io) => {
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/csv/import', async (req, res) => {
+      
+		try{
 
-      try{
-         const pathPublic = path.join(__dirname,'/../public/');
+			if(req.files){
+				const csvFile  = req.files.csvImport;
 
-         if(req.files){
-            const csvFile  = req.files.csvImport;
+				const rawData = req.files.csvImport.data;
+				// replace all \n and \r in csv file to coma
+				const stringData = replaceString(rawData.toString(), ('\n','\r'), ',');
 
-            // check if file is csv
-            if(csvFile.name.substring(csvFile.name.length, csvFile.name.length-3) != 'csv'){
+				// check if file is csv
+				if(csvFile.name.substring(csvFile.name.length, csvFile.name.length-3) != 'csv'){
+					res.status(415).send('must be csv file');
 
-               res.status(422).send('must be csv file');
-
-            } else {
-
-               await csvFile.mv(pathPublic + 'import.csv', (err) => {
-                  if(err){
-                     console.error(err);
-                     res.status(500).send('error on server'); 
-                  }
-
-                  isValidCsv(pathPublic + 'import.csv',res);
-                  
-                  // go to vue route after importing employees 
-                  // send employees to res?
-               })
-            }
-            
-         } else {
-            res.status(204).send('Not selected a file or file is empty! Please select a file');
-         }
-      } catch (error){
-         res.status(500).send('error on server');
-      }    
+				} else {
+					const isValid = await csvImport(stringData);
+					isValid == true ? res.status(200).send('Succesfully imported csv file') : res.status(422).send('Invalid csv format');
+				}	
+			} else {
+				res.status(204).send('Not selected a file or file is empty! Please select a file');
+			}
+		} catch (error){
+			console.log(error)
+			res.status(500).send('error on server');
+		}    
    });
 	
 	
