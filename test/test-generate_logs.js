@@ -1,5 +1,4 @@
 const faker = require("faker");
-// import faker from "faker";
 const { Employee } = require("../db/models/Employee");
 const { EmployeeLog } = require('../db/models/EmployeeLog');
 
@@ -46,8 +45,5 @@ exports.insertEmployeeLogs = async () => {
 		} catch (error) {
 			reject(error)
 		}
-
 	})
-
-
 }
