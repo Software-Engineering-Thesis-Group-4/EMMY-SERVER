@@ -26,7 +26,11 @@ const EmployeeLogSchema = Schema({
    dateCreated: {
       type: Date,
       default: Date.now
-   },
+	},
+	deleted: {
+		type: Boolean,
+		default: false
+	}
 });
 
 const EmployeeLog = mongoose.model('EmployeeLog', EmployeeLogSchema);
