@@ -153,11 +153,11 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.delete('/:id', (req, res) => {
+	router.delete('/:id', async (req, res) => {
 		try {
 			let id = req.params.id;
 
-			Employee.findByIdAndUpdate(
+			await Employee.findByIdAndUpdate(
 				id,
 				{ $set: { terminated: true } },
 				{ new: true }
