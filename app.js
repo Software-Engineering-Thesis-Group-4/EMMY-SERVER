@@ -1,23 +1,23 @@
 // const createError = require('http-errors');
-const http = require("http");
-const path = require("path");
-const logger = require("morgan");
-const socketIO = require("socket.io");
-const cors = require("cors");
-const express = require("express");
-const ip = require("ip");
-const dotenv = require("dotenv");
-const helmet = require("helmet");
+const http       = require("http");
+const path       = require("path");
+const logger     = require("morgan");
+const socketIO   = require("socket.io");
+const cors       = require("cors");
+const express    = require("express");
+const ip         = require("ip");
+const dotenv     = require("dotenv");
+const helmet     = require("helmet");
 const fileUpload = require("express-fileupload");
-const colors = require("colors");
+const colors     = require("colors");
 
 // LOAD ENVIRONMENT VARIABLES ---------------------------------------------------------------------------------
 const cfg = dotenv.config().parsed;
 
-const app = express();
+const app    = express();
 const server = http.createServer(app);
-const io = socketIO(server);
-const PORT = cfg.PORT || 3000;
+const io     = socketIO(server);
+const PORT   = cfg.PORT || 3000;
 colors.enable();
 
 const { createDBConnection } = require("./db");
@@ -60,7 +60,7 @@ app.get(/.*/, (req, res) => {
 // });
 
 // ERROR HANDLER ----------------------------------------------------------------------------------------------
-app.use((err, req, res, next) => {
+app.use((err, req, res) => {
 	// set locals, only providing error in development
 	res.locals.message = err.message;
 	res.locals.error = req.app.get("env") === "development" ? err : {};
