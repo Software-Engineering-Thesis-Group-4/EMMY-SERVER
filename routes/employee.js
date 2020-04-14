@@ -103,17 +103,21 @@ module.exports = (io) => {
 			if(req.files){
 				const csvFile  = req.files.csvImport;
 
-				const rawData = req.files.csvImport.data;
-				// replace all \n and \r in csv file to coma
-				const stringData = replaceString(rawData.toString(), ('\n','\r'), ',');
-
 				// check if file is csv
 				if(csvFile.name.substring(csvFile.name.length, csvFile.name.length-3) != 'csv'){
 					res.status(415).send('must be csv file');
 
 				} else {
+
+					const rawData = req.files.csvImport.data;
+					// replace all \n and \r in csv file to coma
+					const stringData = replaceString(rawData.toString(), ('\n','\r'), ',');
 					const isValid = await csvImport(stringData);
-					isValid == true ? res.status(200).send('Succesfully imported csv file') : res.status(422).send('Invalid csv format');
+
+					
+					isValid == true ? 
+					res.status(200).send('Succesfully imported csv file') : 
+					res.status(422).send('Invalid csv format');
 				}	
 			} else {
 				res.status(204).send('Not selected a file or file is empty! Please select a file');
