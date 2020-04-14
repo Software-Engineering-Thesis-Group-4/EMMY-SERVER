@@ -7,9 +7,10 @@ const cors        = require('cors');
 const express     = require('express');
 const dotenv      = require('dotenv');
 const helmet      = require('helmet');
+const fileUpload  = require('express-fileupload');
 const app 		  = express();
 const server      = http.createServer(app);
-const io          = socketIO(server);
+const io 		  = socketIO(server);
 
 
 // LOAD ENVIRONMENT VARIABLES ---------------------------------------------------------------------------------
@@ -30,6 +31,9 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
 app.use(helmet());
+app.use(fileUpload((mode === 'dev' ? 
+	{ debug: true } : { debug: false })
+));
 
 // IMPORT & CONFIGURE ROUTES ----------------------------------------------------------------------------------
 const employeeLogsRoute = require('./routes/employee-logs')(io);
