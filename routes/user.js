@@ -30,106 +30,51 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/enroll', async (req, res) => {
 		try {
+			// Extract user information
+			let {
+				email,
+				firstname,
+				lastname,
+				password,
+				isAdmin } = req.body;
 
-			// check if user has internet access
-			const netStatus = await isOnline();
+			// data cleaning
+			email     = email.trim();
+			firstname = firstname.trim();
+			lastname  = lastname.trim();
+			isAdmin   = (isAdmin === "true") ? true : false;
 
-			if(netStatus){
-				// Extract user information
-				let {
-					email,
-					firstname,
-					lastname,
-					password,
-					isAdmin } = req.body;
+			// Find an existing user and return an error if one already exists.
+			let user = await User.findOne({ email });
+			if (user) return res.status(409).send("User already exists.");
 
-				// data cleaning
-				email     = email.trim();
-				firstname = firstname.trim();
-				lastname  = lastname.trim();
-				isAdmin   = (isAdmin === "true") ? true : false;
+			// hash password
+			password = bcrypt.hashSync(password);
 
+			// create a new User
+			let newUser = new User({
+				email: email,
+				firstname: firstname,
+				lastname: lastname,
+				username: `${firstname}${lastname}`,
+				password: password,
+				// isAdmin: (default value is "false" if not provided)
+			});
 
-				// Find an existing user and return an error if one already exists.
-				let user = await User.findOne({ email });
-				if (user) return res.status(409).send("User already exists.");
-
-				// hash password
-				password = bcrypt.hashSync(password);
-
-				// create a new User
-				let newUser = ({
-					email: email,
-					firstname: firstname,
-					lastname: lastname,
-					username: `${firstname}${lastname}`,
-					password: password,
-					// isAdmin: (default value is "false" if not provided)
-				});
-
-				// if isAdmin is true, set isAdmin field
-				if (isAdmin) {
-					newUser.isAdmin = true;
-				}
-
-
-				// create token where payload is user details
-				// set expiration to 1h ----- (exp time still in discussion)
-				const token = createToken(newUser, '1h');
-				const enctok = encrypt(token);
-
-
-				// send email verification to user to verify if email exist before putting into database
-				mailer.verifyUserMail(newUser.email,newUser.username,enctok);
-
-				return res.status(200).json(`Succesfully sent verification email to ${newUser.username}`);
-			} else {
-				res.status(502).send('Please check your internet connection!');
+			// if isAdmin is true, set isAdmin field
+			if (isAdmin) {
+				newUser.isAdmin = true;
 			}
+
+			// update user in database
+			await newUser.save();
+
+			return res.status(200).send(`Successfully registered a new user (${newUser.email})`);
 
 		} catch (error) {
 			console.log(error);
 			return res.status(500).send("Server Error. Failed to register user.");
 		}
-	});
-
-	/* ---------------------------------------------------------------------------------------------------------------------
-	Route:
-	GET /api/enroll/verif-mail
-
-	Description:
-	This route is for verifying user account by sending link to email
-
-	Author:
-	Michael Ong
-	----------------------------------------------------------------------------------------------------------------------*/
-
-	router.get('/enroll/verif-mail/:token', (req,res) =>{
-		
-		// get encrypted token from url
-		const token 	= req.params.token;
-		const decTok 	= decrypter(token);
-
-		jwt.verify(decTok, process.env.JWT_KEY, async(err, user) => {
-			if(err){
-				return res.status(401).send('Verification expired or not prohibited')
-			}
-
-			const newUser = new User ({
-				email		: user.email,
-				firstname	: user.firstname,
-				lastname	: user.lastname,
-				username	: `${user.firstname}${user.lastname}`,
-				password	: user.password,
-				// isAdmin: (default value is "false" if not provided)
-			});
-			
-			// put user in database if token is still valid
-			await newUser.save();
-			return res.status(200).send(`Successfully registered a new user (${newUser.email})`);
-			
-		})
-		
 	});
 
 	/*----------------------------------------------------------------------------------------------------------------------

@@ -1,5 +1,4 @@
 const moment = require('moment');
-const mongoose = require('mongoose');
 const { createDBConnection } = require('../db/index.js');
 
 const { EmployeeLog } = require('../db/models/EmployeeLog');
@@ -13,7 +12,7 @@ const DB_NAME = "Emmy";
 async function main() {
    try {
       console.log(`Connecting to database...`);
-      await createDBConnection(DB_PORT, DB_NAME);
+      await createDBConnection(DB_NAME, DB_PORT);
 
       /* -------------------------------------------------------------------------------------------------------
       TEST: OVERDUE DATE
@@ -23,19 +22,20 @@ async function main() {
          days: 1,
          hours: 9
       });
+
+      let employee = await Employee.findOne({ email: "saludesnathaniel@gmail.com" });
+
+      console.log(employee)
       
       let employeeLog = new EmployeeLog({
-         employeeRef: "5e62ec3fc7fab75a78bd0519",
+         employeeRef: employee._id,
          in: yesterday.format(),
          dateCreated: yesterday.format()
       });
       
+      // save employee log
       employeeLog.save();
       console.log('employeeLog saved!');
-      
-      let employee = await Employee.findById({ _id: "5e49f35fa182182ea436b5b0" });
-      
-      console.log(employee)
       
       employee.latestLog = {
          reference: employeeLog._id,

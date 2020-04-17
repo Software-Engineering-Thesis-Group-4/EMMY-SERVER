@@ -1,12 +1,4 @@
 ##################################
-#PERSONAL
-
-# Ignore environment file
-.env
-
-launch.json
-
-##################################
 
 # Logs
 logs
@@ -115,3 +107,5 @@ dist
 
 # vscode
 .vscode/
+
+# client/
