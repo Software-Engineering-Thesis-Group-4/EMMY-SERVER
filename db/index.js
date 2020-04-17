@@ -3,7 +3,6 @@ require('colors');
 
 exports.createDBConnection = async (db_name, port) => {
 	try {
-		//console.time('Mongoose connection startup');
 		const connection = await mongoose.connect(`mongodb://localhost:${port}/${db_name}`, {
 			useNewUrlParser: true,
 			useUnifiedTopology: true,
@@ -12,10 +11,10 @@ exports.createDBConnection = async (db_name, port) => {
 		});
 
 		console.clear();
-		//console.timeEnd('Mongoose connection startup');
 		return connection;
 
 	} catch (error) {
+		console.clear();
 		return error.message;
 	}
 }
