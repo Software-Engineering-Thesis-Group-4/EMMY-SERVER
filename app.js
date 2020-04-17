@@ -62,7 +62,7 @@ app.use((err, req, res) => {
 });
 
 // BOOSTRAPPER ------------------------------------------------------------------------------------------------
-async function bootstrap() {
+async function start() {
 	try {
 		console.clear();
 		console.log("Starting Application...".black.bgGreen + "\nInitializing connection to database...");
@@ -96,4 +96,8 @@ async function bootstrap() {
 	}
 }
 
-bootstrap();
+
+
+
+
+start();
