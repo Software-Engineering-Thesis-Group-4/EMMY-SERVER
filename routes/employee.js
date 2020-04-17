@@ -107,12 +107,12 @@ module.exports = (io) => {
 				if(csvFile.name.substring(csvFile.name.length, csvFile.name.length-3) != 'csv'){
 					res.status(415).send('must be csv file');
 
-				} else {
+				} else { 
 
 					const rawData = req.files.csvImport.data;
 					// replace all \n and \r in csv file to coma
-					const stringData = replaceString(rawData.toString(), ('\n','\r'), ',');
-					const isValid = await csvImport(stringData);
+					const stringData 	= replaceString(rawData.toString(), ('\n','\r'), ',');
+					const isValid 		= await csvImport(stringData);
 
 					
 					isValid == true ? 
