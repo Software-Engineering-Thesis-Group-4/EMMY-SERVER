@@ -1,4 +1,3 @@
-// const createError = require('http-errors');
 const http       = require("http");
 const path       = require("path");
 const logger     = require("morgan");
@@ -48,16 +47,9 @@ app.use("/auth", authRoute); 								// localhost:3000/auth/
 app.use("/main", utilityRoute); 							// localhost:3000/utility
 app.use("/api/employees", employeeRoute); 			// localhost:3000/api/employees/
 app.use("/api/employeelogs", employeeLogsRoute); 	// localhost:3000/api/employeelogs/
-app.get(/.*/, (req, res) => {
-	// localhost:3000/* (for serving vue spa)
+app.get(/.*/, (req, res) => { 							// localhost:3000/* ----> (for serving vue spa)
 	res.sendFile(__dirname + "/client/index.html");
 });
-
-// CATCH 404 AND FORWARD REQUEST TO ERROR HANDLER -------------------------------------------------------------
-// REMOVE: Not sure if removing middleware will have serious side effects. will disable temporarily
-// app.use((req, res, next) => {
-// 	next(createError(404));
-// });
 
 // ERROR HANDLER ----------------------------------------------------------------------------------------------
 app.use((err, req, res) => {
@@ -95,7 +87,10 @@ async function bootstrap() {
 			);
 		});
 	} catch (error) {
-		console.log("INTERNAL SERVER ERROR (500)".bgRed);
+		console.log(
+			"INTERNAL SERVER ERROR (500)".bgRed + "\n" +
+			"Please restart the server..." + "\n"
+		);
 		console.error(error);
 		throw new Error(error);
 	}
