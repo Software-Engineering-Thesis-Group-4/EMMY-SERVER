@@ -76,7 +76,7 @@ async function start() {
 		);
 
 		const host_url = 'http://localhost:'.cyan + PORT.brightCyan;
-		const net_url = `http://:${ip.address()}:`.cyan + PORT.brightCyan;
+		const net_url = `http://${ip.address()}:`.cyan + PORT.brightCyan;
 
 		server.listen(PORT, () => {
 			console.log(
