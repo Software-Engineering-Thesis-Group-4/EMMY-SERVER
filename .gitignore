@@ -1,5 +1,8 @@
 ##################################
 
+db/backup/EmmyBackupDb/**
+uploads/**
+
 # Logs
 logs
 *.log
