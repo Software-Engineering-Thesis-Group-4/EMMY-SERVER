@@ -8,11 +8,108 @@ const replaceString	= require('replace-string');
 // const { encrypt, decrypt } = require('../utility/aes');
 const { csvImport } = require('../utility/importEmp');
 const { toCsv } = require('../utility/export');
+const dbBackup = require('../utility/dbBackup');
 
 // import models
 const { Employee } = require('../db/models/Employee');
 
 module.exports = (io) => {
+
+
+	/*----------------------------------------------------------------------------------------------------------------------
+	Route:
+	GET /api/employees/db-backup
+
+	Description:
+	
+	Makes backup of database using mongodump (bson format)
+
+	Author:
+	Michael Ong
+	----------------------------------------------------------------------------------------------------------------------*/
+	router.get('/db-backup', (req,res) => {
+		
+		const isTrue = dbBackup.dbAutoBackUp();
+		console.log(isTrue)
+		
+		isTrue === true ?
+		res.status(304).send('Successfully created database backup') :
+		res.status(500).send('Error on server');
+		
+	})
+
+	/*----------------------------------------------------------------------------------------------------------------------
+	Route:
+	GET /api/employees/db-backup-restore
+
+	Description:
+	
+	Restores backup of database using the files mongodump created
+
+	Author:
+	Michael Ong
+	----------------------------------------------------------------------------------------------------------------------*/
+	router.post('/db-backup-restore', async (req,res) => {
+		
+		try {
+
+			if(!req.files) {
+
+				res.status(204).send('Not selected a file or folder is empty! Please select a file');
+
+			} else {
+
+				const resFiles 	 = req.files.bsonFiles;
+				const folderPath = path.join(__dirname, '/../uploads/');
+
+				// clean uploads folder wether empty or not
+				dbBackup.cleanUploads();
+
+				let correctFormat = true;
+
+				resFiles.forEach(async element => {
+
+					if(element.name.substring(element.name.length, element.name.length - 4) != 'bson' 
+					&& element.name.substring(element.name.length, element.name.length - 4) != 'json') {
+
+						console.log('Invalid file format');
+						correctFormat = false;
+
+					} else {
+
+						if(element.name.substring(element.name.length, element.name.length - 4) === 'bson') {
+							
+							await element.mv(folderPath + element.name, err => {
+								if(err){
+									console.log(err)
+								} 
+							})
+						}
+					}
+				});
+				
+				if(correctFormat == false) {
+
+					dbBackup.cleanUploads();
+					res.status(415).send('Incorrect file type for one or more files!')
+					
+				} else {
+
+					const isTrue = await dbBackup.dbRestore();
+					
+					isTrue === true ?
+					res.status(200).send('Successfully restored database backup') :
+					res.status(500).send('Error on server');
+					
+					
+				}
+			}	
+		} catch (err) {
+			console.log(err)
+			res.status(500).send('Error on server');
+		}
+		
+	})
 
    /*----------------------------------------------------------------------------------------------------------------------
 	Route:
@@ -49,42 +146,42 @@ module.exports = (io) => {
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/enroll', async (req, res) => {
-      try {
-         let {
-            employee_id,
-            firstname,
-            lastname,
-            email,
-            isMale,
-            employment_status,
-            department,
-            job_title,
-            fingerprint_id
-			} = req.body;
+		try {
+			let {
+				employee_id,
+				firstname,
+				lastname,
+				email,
+				isMale,
+				employment_status,
+				department,
+				job_title,
+				fingerprint_id
+				} = req.body;
+				
+				employment_status = (employment_status === "Part-time" ? 0 : 1);
 			
-			employment_status = (employment_status === "Part-time" ? 0 : 1);
-         
-         const newEmployee = new Employee({
-            employeeId       : employee_id,
-            firstName        : firstname,
-            lastName         : lastname,
-            email            : email,
-            isMale           : isMale,
-            employmentStatus : employment_status,
-            department       : department,
-            jobTitle         : job_title,
-            fingerprintId    : fingerprint_id,
-         });
+			const newEmployee = new Employee({
+				employeeId       : employee_id,
+				firstName        : firstname,
+				lastName         : lastname,
+				email            : email,
+				isMale           : isMale,
+				employmentStatus : employment_status,
+				department       : department,
+				jobTitle         : job_title,
+				fingerprintId    : fingerprint_id,
+			});
 
-         await newEmployee.save();
+			await newEmployee.save();
 
-         return res.status(201).send("Successfully registered a new employee.")
+			return res.status(201).send("Successfully registered a new employee.")
 
-      } catch (error) {
+		} catch (error) {
 			console.log(error.message);
-         return res.status(500).send(`500 Internal Server Error. ${error.message}`);
-      }
-   });
+			return res.status(500).send(`500 Internal Server Error. ${error.message}`);
+		}
+	});
 
 
 
@@ -101,7 +198,9 @@ module.exports = (io) => {
 	router.post('/csv/import', async (req, res) => {
       
 		try{
-			if(req.files){
+			if(!req.files){
+				res.status(204).send('Not selected a file or file is empty! Please select a file');
+			} else {
 				const csvFile  = req.files.csvImport;
 
 				// check if file is csv
@@ -119,9 +218,8 @@ module.exports = (io) => {
 					isValid == true ? 
 					res.status(200).send('Succesfully imported csv file') : 
 					res.status(422).send('Invalid csv format');
-				}	
-			} else {
-				res.status(204).send('Not selected a file or file is empty! Please select a file');
+
+				}		
 			}
 		} catch (error){
 			console.log(error)

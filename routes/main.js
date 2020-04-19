@@ -7,6 +7,10 @@ module.exports = (io) => {
       res.redirect('/log_employee.html');
    });
    
+   router.get('/db-backup', (req,res) => {
+      res.redirect('/dbBackup.html')
+   })
+
    router.get('/register-admin', (req, res) => {
       res.redirect('/enroll_user.html');
    });

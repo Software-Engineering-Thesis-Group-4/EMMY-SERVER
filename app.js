@@ -38,12 +38,14 @@ app.use(fileUpload((mode === 'dev' ?
 	{ debug: true } : { debug: false })
 ));
 
+
 // IMPORT & CONFIGURE ROUTES ----------------------------------------------------------------------------------
 const employeeLogsRoute = require('./routes/employee-logs')(io);
 const employeeRoute = require('./routes/employee')(io);
 const utilityRoute = require('./routes/main')(io);
 const authRoute = require('./routes/auth')(io);
 const userRoute = require('./routes/user')(io);
+
 
 app.use('/auth', authRoute);									// localhost:3000/auth/
 app.use('/main', utilityRoute); 							// localhost:3000/utility
@@ -67,14 +69,14 @@ app.get(/.*/, (req, res) => {
 // });
 
 // ERROR HANDLER ----------------------------------------------------------------------------------------------
-app.use((err, req, res) => {
-	// set locals, only providing error in development
-	res.locals.message = err.message;
-	res.locals.error = req.app.get("env") === "development" ? err : {};
+// app.use((err, req, res) => {
+// 	// set locals, only providing error in development
+// 	res.locals.message = err.message;
+// 	res.locals.error = req.app.get("env") === "development" ? err : {};
 
-	res.status(err.status || 500);
-	res.render("error");
-});
+// 	res.status(err.status || 500);
+// 	res.render("error");
+// });
 
 // BOOSTRAPPER ------------------------------------------------------------------------------------------------
 async function bootstrap() {
