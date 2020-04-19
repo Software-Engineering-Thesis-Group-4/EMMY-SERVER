@@ -1,7 +1,10 @@
-# Setup and Deployment
-<!-- TODO: put the instructions or manual on how to setup the application configuration -->
+Documentation
 
-# Security Check 
+Development / Production
+
+Setup and Deployment Manual Here
+
+Security Check 
 [![Known Vulnerabilities](https://snyk.io/test/npm/{name}/badge.svg)]
 (https://snyk.io/test/npm/{name})
 
