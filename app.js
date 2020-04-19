@@ -1,41 +1,72 @@
-const http       = require("http");
-const path       = require("path");
-const logger     = require("morgan");
-const socketIO   = require("socket.io");
-const cors       = require("cors");
-const express    = require("express");
-const ip         = require("ip");
-const dotenv     = require("dotenv");
-const helmet     = require("helmet");
-const fileUpload = require("express-fileupload");
-const colors     = require("colors");
+// const createError = require('http-errors');
+const http = require('http');
+const path = require('path');
+const logger = require('morgan');
+const socketIO = require('socket.io');
+const cors = require('cors');
+const express = require('express');
+const ip = require('ip');
+const helmet = require('helmet');
+const fileUpload = require('express-fileupload');
+const colors = require('colors');
+const RateLimit = require('express-rate-limit');
+const MongoStore = require('rate-limit-mongo');
+//const dotenv      = require('dotenv');
 
 // LOAD ENVIRONMENT VARIABLES ---------------------------------------------------------------------------------
-const cfg = dotenv.config().parsed;
+//const cfg = dotenv.config().parsed;
+const cfg = require('./configs/dotenv');
 
-const app    = express();
+const app = express();
 const server = http.createServer(app);
-const io     = socketIO(server);
-const PORT   = cfg.PORT || 3000;
+const io = socketIO(server);
+const PORT = cfg.port || 3000;
 colors.enable();
-
-const { createDBConnection } = require("./db");
+const { createDBConnection } = require('./db');
 
 // APPLICATION CONFIGURATIONS ---------------------------------------------------------------------------------
-app.set("views", path.join(__dirname, "views"));
-app.set("view engine", "ejs");
-app.use(logger("dev"));
+app.use(RateLimit({
+	store: new MongoStore({
+		uri: `mongodb://localhost:${cfg.dbport}/${cfg.dbname}`,
+		collectionName: "expressRateLimitRecord"
+	}),
+	max: 100, //number of request threshold
+	windowMs: 15 * 60 * 1000, //15mins per 100request threshold
+	delayMs: 0
+}));
+
+app.use(helmet({
+	referrerPolicy: {
+		policy: 'same-origin'
+	},
+	contentSecurityPolicy: {
+		directives: {
+			defaultSrc: ["'self'"],
+			styleSrc: ["'self", "cdn.jsdelivr.net", "fonts.googleapis.com"],
+			scriptSrc: ["'self'", "cdn.jsdelivr.net"]
+		}
+	},
+	featurePolicy: {
+		features: {
+			fullscreen: ["'*'"],
+			vibrate: ["'none'"],
+			payment: ["'none'"],
+			camera: ["'none"],
+			geolocation: ["'none'"],
+			microphone: ["'none'"]
+		}
+	}
+}));
+
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.static(path.join(__dirname, "client"))); // the directory for Vue
 app.use(cors());
-app.use(helmet());
-app.use(
-	fileUpload({
-		debug: false,
-	})
-);
+app.use(fileUpload({ debug: false }));
 
 // IMPORT & CONFIGURE ROUTES ----------------------------------------------------------------------------------
 const employeeLogsRoute = require("./routes/employee-logs")(io);
@@ -50,6 +81,12 @@ app.use("/api/employeelogs", employeeLogsRoute); 	// localhost:3000/api/employee
 app.get(/.*/, (req, res) => { 							// localhost:3000/* ----> (for serving vue spa)
 	res.sendFile(__dirname + "/client/index.html");
 });
+
+// CATCH 404 AND FORWARD REQUEST TO ERROR HANDLER -------------------------------------------------------------
+// REMOVE: Not sure if removing middleware will have serious side effects. will disable temporarily
+// app.use((req, res, next) => {
+// 	next(createError(404));
+// });
 
 // ERROR HANDLER ----------------------------------------------------------------------------------------------
 app.use((err, req, res) => {
@@ -68,22 +105,25 @@ async function start() {
 		console.log("Starting Application...".black.bgGreen + "\nInitializing connection to database...");
 
 		// initialize database connection
-		let connection = await createDBConnection(cfg.DB_NAME, cfg.DB_PORT);
+		let connection = await createDBConnection(cfg.dbname, cfg.dbport);
 
 		console.log(
-			" SERVER RUNNING ".black.bgGreen + "\n" + 
-			"MongoDB Database: " + connection.connection.name + " (connected)".green
+			" SERVER RUNNING ".black.bgGreen + "\n" +
+			"\nMongoDB Database: " + connection.connection.name.green
 		);
 
+		// node always assume its dev environment
+		const environment = (cfg.env == 'development') ? "Development".green : "Production".black.bgWhite; //always false no matter what
 		const host_url = 'http://localhost:'.cyan + PORT.brightCyan;
 		const net_url = `http://${ip.address()}:`.cyan + PORT.brightCyan;
 
 		server.listen(PORT, () => {
 			console.log(
 				"--------------------------------------------------\n" +
-				"- local:   " + host_url + "\n" +
-				"- network: " + net_url + "\n" +
-				"--------------------------------------------------"
+				"- Environment: " + environment + "\n" +
+				"- local: " + host_url + "\n" +
+				"- network: " + net_url +
+				"\n--------------------------------------------------"
 			);
 		});
 	} catch (error) {
