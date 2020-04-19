@@ -82,12 +82,6 @@ app.get(/.*/, (req, res) => { 							// localhost:3000/* ----> (for serving vue 
 	res.sendFile(__dirname + "/client/index.html");
 });
 
-// CATCH 404 AND FORWARD REQUEST TO ERROR HANDLER -------------------------------------------------------------
-// REMOVE: Not sure if removing middleware will have serious side effects. will disable temporarily
-// app.use((req, res, next) => {
-// 	next(createError(404));
-// });
-
 // ERROR HANDLER ----------------------------------------------------------------------------------------------
 app.use((err, req, res) => {
 	// set locals, only providing error in development
