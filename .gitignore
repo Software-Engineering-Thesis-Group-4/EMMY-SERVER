@@ -1,7 +1,7 @@
 ##################################
 
-db/backup/EmmyBackupDb/**
-uploads/**
+db/backup/EmmyBackupDb/*
+uploads/*
 
 # Logs
 logs
