@@ -1,7 +1,11 @@
 ##################################
 
-db/backup/EmmyBackupDb/*
-uploads/*
+
+
+# exception to the rule
+!db/backup/EmmyBackupDb/.gitkeep
+!uploads/.gitkeep
+
 
 # Logs
 logs

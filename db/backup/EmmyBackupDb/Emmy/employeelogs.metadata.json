@@ -1,0 +1,1 @@
+{"options":{},"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_","ns":"Emmy.employeelogs"}],"uuid":"e22c65a879a7466caa0cfee5e9bcc1e0"}
