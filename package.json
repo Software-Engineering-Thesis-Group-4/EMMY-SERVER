@@ -3,8 +3,8 @@
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
-		"start": "node app.js",
-		"dev": "nodemon app.js"
+		"start": "set NODE_ENV=production && node app.js",
+		"dev": "set NODE_ENV=development && nodemon app.js"
 	},
 	"dependencies": {
 		"aes-js": "^3.1.2",
@@ -18,7 +18,6 @@
 		"express": "^4.17.1",
 		"express-fileupload": "^1.1.6",
 		"express-rate-limit": "^5.1.1",
-		"express-validator": "^6.4.0",
 		"fs": "0.0.1-security",
 		"helmet": "^3.21.3",
 		"http-errors": "~1.6.3",

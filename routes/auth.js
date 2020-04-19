@@ -7,11 +7,11 @@ const jwt = require('jsonwebtoken');
 const { encrypt, decrypter } = require('../utility/aes');
 const { createToken, createRefreshToken, removeRefreshToken } = require('../utility/jwt');
 const { resetPassMail } = require('../utility/mailer');
-const { loginValidationRules, registerValidationRules, resetPassValidationRules, resetKeyValidationRules, validate} = require("../utility/validator");
 
 // import models
 const { User } = require("../db/models/User");
 const { RefreshToken } = require("../db/models/RefreshToken");
+
 
 // start of route after middlewares
 module.exports = (io) => {
@@ -26,7 +26,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/login', loginValidationRules, validate, async (req, res) => {
+	router.post('/login', async (req, res) => {
 
 		try {
 			let {
@@ -190,8 +190,8 @@ module.exports = (io) => {
 	});
 
 
-
-   // DONE: Implement password length validation
+   
+   // TODO: Implement password length validation
 	/* ---------------------------------------------------------------------------------------------------------------------
 	Route:
 	POST /auth/enroll
@@ -202,16 +202,14 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/enroll', registerValidationRules, validate, async (req, res) => {
+	router.post('/enroll', async (req, res) => {
 		try {
 			// Extract user information
 			let {
 				email,
 				firstname,
 				lastname,
-				username,
 				password,
-				confirmPassword,
 				isAdmin } = req.body;
 
 			// data cleaning
@@ -260,14 +258,14 @@ module.exports = (io) => {
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
 	POST /auth/reset-password
-
+	
 	Description:
 	This is used for handling forgot password requests.
-
+	
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/reset-password', resetPassValidationRules, validate, async (req, res) => {
+	router.post('/reset-password', async (req, res) => {
 		try {
 			const email = encrypt(req.body.email);
 
@@ -300,18 +298,22 @@ module.exports = (io) => {
 		}
 	});
 
+
+
+
+
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
 	POST /auth/reset-password-key
-
+	
 	Description:
 	This route is used for handling the reset key to access reset password page.
-
+	
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 	// REFACTOR USING THE ASYNC SYNTAX
-	router.post('/reset-password-key', resetKeyValidationRules, validate, (req, res) => {
+	router.post('/reset-password-key', (req, res) => {
 
 		const key = req.body.key;
 
@@ -344,4 +346,4 @@ module.exports = (io) => {
 
 
 	return router;
-};
+}; 
