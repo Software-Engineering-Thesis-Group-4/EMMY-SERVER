@@ -17,7 +17,7 @@ const MongoStore 	= require('rate-limit-mongo');
 //const cfg = dotenv.config().parsed;
 const cfg = require('./configs/dotenv');
 
-const app = express();
+const app    = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 const PORT = cfg.port || 3000;
@@ -38,24 +38,30 @@ const limiter = new RateLimit({
 
 app.use(limiter);
 app.use(helmet());
-app.use(helmet.hidePoweredBy());
-//app.disable('x-powered-by');
-app.use(helmet.referrerPolicy({ policy: 'same-origin' }));
-app.use(helmet.contentSecurityPolicy({
-	directives: {
-	defaultSrc: ["'self'"]
+app.use(helmet.hidePoweredBy()); // OR app.disable('x-powered-by');
+app.use(helmet({
+	referrerPolicy: {
+		policy: 'same-origin'
+	},
+	contentSecurityPolicy: {
+		directives: {
+			defaultSrc: ["'self'"],
+			styleSrc: ["'self", "cdn.jsdelivr.net", "fonts.googleapis.com"],
+			scriptSrc: ["'self'", "cdn.jsdelivr.net"]
+		}
+	},
+	featurePolicy: {
+		features: {
+			fullscreen: ["'*'"],
+			vibrate: ["'none'"],
+			payment: ["'none'"],
+			camera: ["'none"],
+			geolocation: ["'none'"],
+			microphone: ["'none'"]
+		}
 	}
-}))
-app.use(helmet.featurePolicy({
-	features: {
-		fullscreen: ["'*'"],
-		vibrate: ["'none'"],
-		payment: ["'none'"],
-		camera: ["'none"],
-		geolocation: ["'none'"],
-		microphone: ["'none'"]
-	}
-}))
+}));
+
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.use(logger('dev'));
@@ -64,11 +70,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.static(path.join(__dirname, "client"))); // the directory for Vue
 app.use(cors());
-app.use(
-	fileUpload({
-		debug: false,
-	})
-);
+app.use( fileUpload({ debug: false }));
 
 // IMPORT & CONFIGURE ROUTES ----------------------------------------------------------------------------------
 const employeeLogsRoute = require("./routes/employee-logs")(io);
@@ -84,20 +86,24 @@ app.get(/.*/, (req, res) => {
 	// localhost:3000/* (for serving vue spa)
 	res.sendFile(__dirname + "/client/index.html");
 });
+
 // CATCH 404 AND FORWARD REQUEST TO ERROR HANDLER -------------------------------------------------------------
 // REMOVE: Not sure if removing middleware will have serious side effects. will disable temporarily
 // app.use((req, res, next) => {
 // 	next(createError(404));
 // });
-// ERROR HANDLER ---------------------------------------------------------------------------------------------
-app.use((err, req, res, next) => {
+
+// ERROR HANDLER ----------------------------------------------------------------------------------------------
+app.use((err, req, res) => {
 	// set locals, only providing error in development
 	res.locals.message = err.message;
-	res.locals.error = req.app.get('env') === 'development' ? err : {};
+	res.locals.error = req.app.get("env") === "development" ? err : {};
+
 	res.status(err.status || 500);
 	res.render("error");
 });
-// BOOSTRAPPER ---------------------------------------------------------------------------------------------	--
+
+// BOOSTRAPPER ------------------------------------------------------------------------------------------------
 async function bootstrap() {
 	try {
 		console.clear();

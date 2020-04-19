@@ -53,21 +53,21 @@ module.exports = (io) => {
             firstname,
             lastname,
             email,
-            gender,
+            isMale,
             employment_status,
             department,
             job_title,
             fingerprint_id
-         } = req.body;
-   
-         gender = (gender === "M") ? true : false;
+			} = req.body;
+			
+			employment_status = (employment_status === "Part-time" ? 0 : 1);
          
          const newEmployee = new Employee({
             employeeId       : employee_id,
             firstName        : firstname,
             lastName         : lastname,
             email            : email,
-            isMale           : gender,
+            isMale           : isMale,
             employmentStatus : employment_status,
             department       : department,
             jobTitle         : job_title,
@@ -79,7 +79,8 @@ module.exports = (io) => {
          return res.status(201).send("Successfully registered a new employee.")
 
       } catch (error) {
-         return res.status(500).send(`500 Internal Server Error. <br>${error.message}`);
+			console.log(error.message);
+         return res.status(500).send(`500 Internal Server Error. ${error.message}`);
       }
    });
 
@@ -152,11 +153,11 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.delete('/:id', (req, res) => {
+	router.delete('/:id', async (req, res) => {
 		try {
 			let id = req.params.id;
 
-			Employee.findByIdAndUpdate(
+			await Employee.findByIdAndUpdate(
 				id,
 				{ $set: { terminated: true } },
 				{ new: true }

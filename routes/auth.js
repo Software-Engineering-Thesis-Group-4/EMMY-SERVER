@@ -214,30 +214,11 @@ module.exports = (io) => {
 				confirmPassword,
 				isAdmin } = req.body;
 
-			// 1) data cleaning/sanitize
-			email     = email.trim().normalizeEmail();
+			// data cleaning
+			email     = email.trim();
 			firstname = firstname.trim();
 			lastname  = lastname.trim();
 			isAdmin   = (isAdmin === "true") ? true : false;
-			//clean/sanitize password?
-
-			// 2) data validation server-side
-			check('email').isEmpty().isEmail();
-			check('firstname').isEmpty().isAlpha();
-			check('lastname').isEmpty().isAlpha();
-			check('password')
-				.isEmpty()
-				.isAlphanumeric()
-				.isLength({ min: 6})
-				.equals('confirmPassword');
-
-			let errors = req.validationResult();
-			if (errors){
-				req.errors = errors;
-				console.log(errors);
-				//redirect to enroll page
-				return res.status(422).json({ errors: errors.array() });
-			}
 
 			// Find an existing user and return an error if one already exists.
 			let user = await User.findOne({ email });
