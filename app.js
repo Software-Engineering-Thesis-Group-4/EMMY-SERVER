@@ -25,20 +25,16 @@ colors.enable();
 const { createDBConnection } = require('./db');
 
 // APPLICATION CONFIGURATIONS ---------------------------------------------------------------------------------
-const limiter = new RateLimit({
+app.use(RateLimit({
 	store: new MongoStore({
-		//client: mongo,
-		uri: createDBConnection,
+		uri: `mongodb://localhost:${cfg.dbport}/${cfg.dbname}`,
 		collectionName: "expressRateLimitRecord"
-		}),
+	}),
 	max: 100, //number of request threshold
 	windowMs: 15 * 60 * 1000, //15mins per 100request threshold
 	delayMs: 0
-});
+}));
 
-app.use(limiter);
-app.use(helmet());
-app.use(helmet.hidePoweredBy()); // OR app.disable('x-powered-by');
 app.use(helmet({
 	referrerPolicy: {
 		policy: 'same-origin'
@@ -70,7 +66,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.static(path.join(__dirname, "client"))); // the directory for Vue
 app.use(cors());
-app.use( fileUpload({ debug: false }));
+app.use(fileUpload({ debug: false }));
 
 // IMPORT & CONFIGURE ROUTES ----------------------------------------------------------------------------------
 const employeeLogsRoute = require("./routes/employee-logs")(io);
