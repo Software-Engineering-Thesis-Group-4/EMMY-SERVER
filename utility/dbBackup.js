@@ -22,11 +22,10 @@ exports.dbAutoBackUp = () => {
 	
 	try {
 
-		const dbPath = path.join(__dirname, '/../db/backup')
-		const newBackupPath = dbPath + '\\EmmyBackupDb';
+		const dbPath = path.join(__dirname, '/../db/backup');
 		
 		// Command for mongodb dump process
-		let cmd = `mongodump --host ${dbOptions.host} --port ${dbOptions.port}  --db ${dbOptions.database} --out ${newBackupPath}`
+		let cmd = `mongodump --host ${dbOptions.host} --port ${dbOptions.port}  --db ${dbOptions.database} --out ${dbPath}`
 					
 		childProc.execSync(cmd,{
 			cwd: 'C:\\Program Files\\MongoDB\\Server\\4.2\\bin'
