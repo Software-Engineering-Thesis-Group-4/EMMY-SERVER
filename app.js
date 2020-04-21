@@ -17,7 +17,7 @@ const { createDBConnection } = require('./db');
 // LOAD ENVIRONMENT VARIABLES ---------------------------------------------------------------------------------
 const cfg = require('./configs/config.js');
 
-const app    = express();
+const app = express();
 const server = http.createServer(app);
 const io     = socketIO(server);
 const PORT   = cfg.PORT || 3000;
@@ -139,9 +139,6 @@ async function start() {
 		throw new Error(error);
 	}
 }
-
-
-
 
 
 start();
