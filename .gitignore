@@ -1,10 +1,11 @@
 ##################################
 
-
+db/backup/EmmyBackupDb/*
+downloadables/*
 
 # exception to the rule
 !db/backup/EmmyBackupDb/.gitkeep
-!uploads/.gitkeep
+!downloadables/.gitkeep
 
 
 # Logs

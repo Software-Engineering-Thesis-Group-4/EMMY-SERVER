@@ -27,14 +27,27 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/db-backup', (req,res) => {
+	router.get('/db-backup', async (req,res) => {
 		
-		const isTrue = dbBackup.dbAutoBackUp();
-		console.log(isTrue)
+		const isTrue = await dbBackup.dbAutoBackUp();
+
+		const downloadPath = path.join(__dirname+'/../downloadables/backup.zip');
 		
-		isTrue === true ?
-		res.status(304).send('Successfully created database backup') :
-		res.status(500).send('Error on server');
+		
+		if(isTrue) {
+
+			const noErr = await dbBackup.zipBackup();
+			console.log(noErr);
+			
+			
+			noErr ?
+			res.download(downloadPath).status(200).send('Successfully created database backup zip') :
+			res.status(500).send('Error Zipping folder');
+			
+
+		} else {
+			res.status(500).send('Error creating database backup');
+		}
 		
 	})
 

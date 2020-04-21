@@ -36,7 +36,7 @@ exports.resetPassMail = (sendToEmail, username, key) => {
 
 exports.sendEmailNotif = (sendToEmail, sender,mailBody) => {
 
-	const message = `Hello there! This is ${sender} for the HR department. ` + mailBody;
+	const message = `Hello there! This is ${sender} from the HR department. ` + mailBody;
 
 	gmail.sendMail({
 		from    : 'Emmy',

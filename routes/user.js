@@ -90,25 +90,28 @@ module.exports = (io) => {
 	
 	router.post('/email-notif', async (req,res) => {
  
-		//const { emailBod, sendToEmail, token } = req.body;
-		
-		// jwt.verify(token, process.env.JWT_KEY, async (err, payload) => {
-		// 	if(err){
-		// 		res.status(401).send('Unauthorized access')
-		// 	}
+
+		const { emailBod, sendToEmail, token } = req.body;
+		mailer.sendEmailNotif('mokiong1427@gmail.com','Moki@gmail.com', 'hi po');
+		res.send('hi')
+		// // jwt.verify(token, process.env.JWT_KEY, async (err, payload) => {
+		// // 	if(err){
+		// // 		res.status(401).send('Unauthorized access')
+		// // 	}
 			
-		// 	// look for email in db to get username
-		// 	const user = await User.find({ ema})
+		// // 	// look for email in db to get username
+		// // 	const user = await User.find({ ema})
 
-		// })
+		// // })
 
-		const user = await User.findOne({email : 'mokiasdong1427@gmail.com'})
-		if(user){
-			console.log('hi')
-		}
-		console.log(user)
-		res.send(user)
+		// const user = await User.findOne({email : 'mokiasdong1427@gmail.com'})
+		// if(user){
+		// 	console.log('hi')
+		// }
+		// console.log(user)
+		// res.send(user)
 
+		
 		// mailer.sendEmailNotif(sendToEmail, 'michael', emailBod)
 		// res.send('hi');
 

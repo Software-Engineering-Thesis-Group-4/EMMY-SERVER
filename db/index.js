@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 require('colors');
 
 // run automated database backup 
-require('../utility/cronScheduler');
+//require('../utility/cronScheduler');
 
 exports.createDBConnection = (db_name, port) => {
    return new Promise(async (resolve, reject) => {
