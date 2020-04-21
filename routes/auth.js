@@ -1,13 +1,11 @@
-const express 	= require('express');
-const router 	= express.Router();
-const bcrypt	= require('bcryptjs');
-const jwt 		= require('jsonwebtoken');
-const isOnline  = require('is-online');
+const express = require('express');
+const router  = express.Router();
+const bcrypt  = require('bcryptjs');
+const jwt     = require('jsonwebtoken');
 
 // import utilities
 const { encrypt, decrypter } = require('../utility/aes');
 const { createToken, createRefreshToken, removeRefreshToken } = require('../utility/jwt');
-const mailer = require('../utility/mailer');
 
 // import models
 const { User } = require("../db/models/User");
@@ -35,22 +33,18 @@ module.exports = (io) => {
 				password } = req.body;
 
 			if (!email) {
-				return res.status(401).send({
-					message: "No credentials provided."
-				})
+				return res.status(401).send("No credentials provided.");
 			}
 
 			let user = await User.findOne({ email });
 
 			if (!user) {
-				return res.status(401).send({
-					message: `Invalid email or password`
-				});
+				return res.status(401).send(`Invalid email or password`);
 			}
 
 			// validate password
 			let passwordIsValid = await bcrypt.compare(password, user.password);
-			 
+
 			// if submitted password invalid, return an error
 			if (passwordIsValid) {
 
@@ -61,7 +55,7 @@ module.exports = (io) => {
 				createRefreshToken(email);
 
 				// create access token
-				const access_token = createToken({email}, process.env.TOKEN_DURATION);
+				const access_token = createToken({ email }, process.env.TOKEN_DURATION);
 
 				// return user credentials and access token
 				return res.status(200).send({
@@ -72,14 +66,10 @@ module.exports = (io) => {
 				});
 
 			} else {
-				return res.status(401).send({
-					message: "Invalid email or password."
-				});
-
+				return res.status(401).send("Invalid email or password.");
 			}
 		} catch (error) {
-			console.log(error)
-			return res.status(500).send({ message: 'Error on the server.' });
+			return res.status(500).send('Error on the server.');
 		}
 	});
 
@@ -99,10 +89,11 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/verify', async (req, res) => {
+	router.post('/verify', async (req, res) => {
 		try {
 			// get token & email
-			let { token, email } = req.body;
+			let { access_token, email } = req.body;
+			console.dir(req.body);
 
 			// find user
 			let user = await User.findOne({ email });
