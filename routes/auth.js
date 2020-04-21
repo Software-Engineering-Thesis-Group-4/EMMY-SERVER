@@ -100,13 +100,11 @@ module.exports = (io) => {
 
 			// if user doesn't exist, return error
 			if (!user) {
-				return res.status(401).send({
-					message: `Unauthorized Access. Unknown user.`
-				})
+				return res.status(401).send(`Unauthorized Access. Unknown user.`)
 			}
 
 			// if user exists, verify access token
-			jwt.verify(token, process.env.JWT_KEY, async (err) => {
+			jwt.verify(access_token, process.env.JWT_KEY, async (err) => {
 
 				// if access token is already expired check if refresh token is still valid
 				if (err) {
@@ -115,9 +113,7 @@ module.exports = (io) => {
 
 					// refresh token does not exist
 					if (!refreshToken) {
-						return res.send(401).send({
-							message: `Unauthorized Access.`
-						})
+						return res.send(401).send(`Unauthorized Access.`);
 					}
 
 
