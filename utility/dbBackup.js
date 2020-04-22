@@ -13,7 +13,7 @@ const dbPassword = process.env.DB_PASSWORD;
 const dbOptions = {
 	user: false,                           // must have value for security, default to false for dev phase
 	pass: false,                           // must have value for security, default to false for dev phase
-	host: 'localhost',                    
+	host: 'localhost',
 	port: process.env.DB_PORT,
 	database: process.env.DB_NAME
 };
@@ -24,7 +24,7 @@ exports.dbAutoBackUp = () => {
 	try {
 
 		const dbPath = path.join(__dirname, '/../db/backup');
-		
+
 		// Command for mongodb dump process
 		let cmd = `mongodump --host ${dbOptions.host} --port ${dbOptions.port}  --db ${dbOptions.database} --out ${dbPath}`
 					
@@ -69,14 +69,14 @@ exports.zipBackup = async () => {
 
 // Restore database
 exports.dbRestore = async () => {
-	
+
 	try {
 		const uploadPath = path.join(__dirname, '/../uploads');
 
 		// Command for mongodb dump process
 		let cmd = `mongorestore --host ${dbOptions.host} --port ${dbOptions.port} --db ${dbOptions.database} ${uploadPath}`
 
-		childProc.exec(cmd,{
+		childProc.exec(cmd, {
 			cwd: 'C:\\Program Files\\MongoDB\\Server\\4.2\\bin'
 		})
 

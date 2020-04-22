@@ -11,10 +11,13 @@ const colors     = require('colors');
 const RateLimit  = require('express-rate-limit');
 const MongoStore = require('rate-limit-mongo');
 
-// LOAD ENVIRONMENT VARIABLES ---------------------------------------------------------------------------------
+const { createDBConnection } = require('./db');
+colors.enable();
+
+// LOAD ENVIRONMENT CONFIGURATIONS ----------------------------------------------------------------------------
 const cfg = require('./configs/config.js');
 
-const app = express();
+const app    = express();
 const server = http.createServer(app);
 const io     = socketIO(server);
 const PORT   = process.env.PORT || 3000;
@@ -23,7 +26,21 @@ const PORT   = process.env.PORT || 3000;
 colors.enable();
 const { createDBConnection } = require('./db');
 
+
+
 // APPLICATION CONFIGURATIONS ---------------------------------------------------------------------------------
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+app.use(logger('dev'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "client"))); // the directory for Vue
+app.use(cors());
+app.use(fileUpload((mode === 'dev' ?
+	{ debug: true } : { debug: false })
+));
+
 app.use(RateLimit({
 	store: new MongoStore({
 		uri: `mongodb://localhost:${cfg.DB_PORT}/${cfg.DB_NAME}`,
@@ -57,17 +74,7 @@ app.use(helmet({
 	}
 }));
 
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(express.static(path.join(__dirname, "public")));
-app.use(express.static(path.join(__dirname, "client"))); // the directory for Vue
-app.use(cors());
-app.use(fileUpload((process.env.NODE_ENV === 'development' ? 
-	{ debug: true } : { debug: false })
-));
+
 
 
 // IMPORT & CONFIGURE ROUTES ----------------------------------------------------------------------------------
@@ -84,13 +91,12 @@ app.use('/api/employees', employeeRoute); 				// localhost:3000/api/employees/
 app.use('/api/employeelogs', employeeLogsRoute); 		// localhost:3000/api/employeelogs/
 app.use('/api/users', userRoute)						// localhost:3000/api/employeelogs/
 
-app.use("/auth", authRoute); 								// localhost:3000/auth/
-app.use("/main", utilityRoute); 							// localhost:3000/utility
-app.use("/api/employees", employeeRoute); 			// localhost:3000/api/employees/
-app.use("/api/employeelogs", employeeLogsRoute); 	// localhost:3000/api/employeelogs/
-app.get(/.*/, (req, res) => { 							// localhost:3000/* ----> (for serving vue spa)
+
+// SERVE VUE APPLICATION --------------------------------------------------------------------------------------
+app.get(/.*/, (req, res) => {
 	res.sendFile(__dirname + "/client/index.html");
 });
+
 
 // ERROR HANDLER ----------------------------------------------------------------------------------------------
 // app.use((err, req, res) => {
@@ -101,6 +107,7 @@ app.get(/.*/, (req, res) => { 							// localhost:3000/* ----> (for serving vue 
 // 	res.status(err.status || 500);
 // 	res.render("error");
 // });
+
 
 // BOOSTRAPPER ------------------------------------------------------------------------------------------------
 async function start() {
@@ -138,9 +145,5 @@ async function start() {
 		throw new Error(error);
 	}
 }
-
-
-
-
 
 start();
