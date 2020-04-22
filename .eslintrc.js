@@ -13,6 +13,7 @@ module.exports = {
 	"parserOptions": {
 		"ecmaVersion": 2018
 	},
+	"ignorePatterns": ["node_modules/", "client/"],
 	"rules": {
 		"no-undef": 0
 	}
