@@ -3,14 +3,14 @@
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
-		"start": "node app.js",
-		"dev": "nodemon app.js"
+		"start": "set NODE_ENV=production && node app.js",
+		"dev": "set NODE_ENV=development && nodemon app.js"
 	},
 	"dependencies": {
 		"aes-js": "^3.1.2",
 		"bcryptjs": "^2.4.3",
+		"chunk": "0.0.2",
 		"cors": "^2.8.5",
-		"csv-parser": "^2.3.2",
 		"csv-writer": "^1.6.0",
 		"debug": "~2.6.9",
 		"dotenv": "^8.2.0",
@@ -23,6 +23,7 @@
 		"helmet": "^3.21.3",
 		"http-errors": "~1.6.3",
 		"ip": "^1.1.5",
+		"is-online": "^8.3.0",
 		"js-cookie": "^2.2.1",
 		"jsonwebtoken": "^8.5.1",
 		"lodash": "^4.17.15",
@@ -33,7 +34,10 @@
 		"node-cron": "^2.0.3",
 		"nodemailer": "^6.4.5",
 		"rate-limit-mongo": "^2.1.0",
-		"socket.io": "^2.3.0"
+		"replace-string": "^3.0.0",
+		"socket.io": "^2.3.0",
+		"zip-a-folder": "0.0.12",
+		"zlib": "^1.0.5"
 	},
 	"devDependencies": {
 		"colors": "^1.4.0",
