@@ -8,6 +8,7 @@ const { Employee } = require('../db/models/Employee');
 const csvImport = async (stringData) => {
 
 	try {
+
 		const removeLast 	= (stringData.substring(0, stringData.length -1))
 		const arrData 		= removeLast.split(',');
 		const finalData 	= chunk(arrData, [ 9 ]);
@@ -20,9 +21,9 @@ const csvImport = async (stringData) => {
 		let x = 1;
 			
 		if(finalData[0].toString().trim().toUpperCase() == headerVal) {
+			
+			while(x < finalData.length){
 
-			while(x != finalData.length - 1){
-				
 				// const empId 		= encrypt(finalData[x][0]);
 				// const firstName 	= encrypt(finalData[x][1]);
 				// const lastName 		= encrypt(finalData[x][2]);
@@ -31,7 +32,7 @@ const csvImport = async (stringData) => {
 				const gender 		= finalData[x][4].toLowerCase() === 'm' ? true : false;
 				const empStat 		= finalData[x][5].toLowerCase() === 'full-time' ? true : false;
 				
-
+				
 				const newEmp = new Employee({
 					employeeId		: finalData[x][0],
 					firstName		: finalData[x][1],
@@ -45,23 +46,34 @@ const csvImport = async (stringData) => {
 					
 				})
 
-				await newEmp.save();
+				await newEmp.save();	
 				x++;
 			}
 
 
 			return errMessage = { isErr : false, message : 'Successfully imported employees' };
-
 		} else {
 			console.log('invalid csv format');
 			return errMessage = { isErr : true, message : 'invalid csv format' };
 		}
 	} catch (err) {
+		
+		console.log(err.message);
+		
+		if(err.code === 11000){
+			return errMessage = { 
+				isErr 			: true, 
+				message 		: `ERROR : Duplicate value for ${err.keyValue}`,
+				duplicateValue	: err.keyValue
+			};
+		} else {
+			return errMessage = { 
+				isErr 			: true, 
+				message 		: 'Error importing employees, check if fields are correct and complete.'
+			};
+		}
 
-		console.log(err)
-		console.log('Error importing employees')
-
-		return errMessage = { isErr :true, message : 'Error importing employees' };
+		
 	}
 }
 

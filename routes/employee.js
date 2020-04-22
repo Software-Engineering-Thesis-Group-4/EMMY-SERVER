@@ -205,7 +205,8 @@ module.exports = (io) => {
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/csv/import', async (req, res) => {
-      
+	  
+		
 		try{
 			if(!req.files){
 				res.status(204).send('Not selected a file or file is empty! Please select a file');
@@ -217,17 +218,16 @@ module.exports = (io) => {
 					res.status(415).send('must be csv file');
 
 				} else { 
-
+				
 					const rawData = req.files.csvImport.data;
+					
 					// replace all \n and \r in csv file to coma
-					const stringData 	= replaceString(rawData.toString(), ('\n','\r'), ',');
+					const stringData 	= replaceString(rawData.toString(), ('\r\n'), ',');
 					const isValid 		= await csvImport(stringData);
 
-					
 					isValid.isErr ? 
-					res.status(422).send(isValid.message):
+					res.status(422).send({ message: isValid.message, duplicateValue: isValid.duplicateValue }) :
 					res.status(200).send(isValid.message);
-
 				}		
 			}
 		} catch (error){
