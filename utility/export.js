@@ -26,7 +26,7 @@ const csvWriter = createCsvWriter({
 
 });
 
-const toCsv = (data) => {
+exports.toCsv = (data) => {
 	if (fs.existsSync(pathCsv + '\\generated.csv')) {
 		childProc.execSync('del /f generated.csv', {
 			cwd: pathCsv
@@ -39,8 +39,4 @@ const toCsv = (data) => {
 			.then(() => console.log('The CSV file was written successfully'))
 			.catch(err => console.error(err));
 	}
-}
-
-module.exports = {
-	toCsv
 }

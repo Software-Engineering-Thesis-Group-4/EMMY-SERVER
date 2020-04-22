@@ -11,7 +11,6 @@ const colors     = require('colors');
 const RateLimit  = require('express-rate-limit');
 const MongoStore = require('rate-limit-mongo');
 
-const { createDBConnection } = require('./db');
 colors.enable();
 
 // LOAD ENVIRONMENT CONFIGURATIONS ----------------------------------------------------------------------------
@@ -37,7 +36,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.static(path.join(__dirname, "client"))); // the directory for Vue
 app.use(cors());
-app.use(fileUpload((mode === 'dev' ?
+app.use(fileUpload((process.env.NODE_ENV === 'development' ?
 	{ debug: true } : { debug: false })
 ));
 

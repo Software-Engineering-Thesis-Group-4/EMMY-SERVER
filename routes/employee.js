@@ -7,7 +7,7 @@ const replaceString	= require('replace-string');
 // import utility
 // const { encrypt, decrypt } = require('../utility/aes');
 const { csvImport } = require('../utility/importEmp');
-const { toCsv } = require('../utility/export');
+const exportDb = require('../utility/export');
 const dbBackup = require('../utility/dbBackup');
 
 // import models
@@ -224,15 +224,15 @@ module.exports = (io) => {
 					const isValid 		= await csvImport(stringData);
 
 					
-					isValid == true ? 
-					res.status(200).send('Succesfully imported csv file') : 
-					res.status(422).send('Invalid csv format');
+					isValid.isErr ? 
+					res.status(422).send(isValid.message):
+					res.status(200).send(isValid.message);
 
 				}		
 			}
 		} catch (error){
 			console.log(error)
-			res.status(500).send('error on server');
+			res.status(500).send('Error on server');
 		}    
    });
 	
@@ -245,7 +245,7 @@ module.exports = (io) => {
          Employee.find()
             .then(emp => {
                   emp = decrypt(emp);
-                  toCsv(emp);
+                  exportDb.toCsv(emp);
             })
             .catch(err => console.error(err));
 
