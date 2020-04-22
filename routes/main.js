@@ -6,7 +6,15 @@ module.exports = (io) => {
    router.get('/', (req, res) => {
       res.redirect('/log_employee.html');
    });
+
+   router.get('/email-notif', (req, res) => {
+      res.redirect('/email_notif.html');
+   });
    
+   router.get('/db-backup', (req,res) => {
+      res.redirect('/dbBackup.html')
+   })
+
    router.get('/register-admin', (req, res) => {
       res.redirect('/enroll_user.html');
    });

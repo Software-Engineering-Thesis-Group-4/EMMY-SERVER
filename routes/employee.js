@@ -1,16 +1,127 @@
 const express = require('express')
-const router  = express.Router();
-const path    = require('path');
+const router = express.Router();
+const path = require('path');
+const replaceString = require('replace-string');
+
 
 // import utility
-// const { encrypt, decrypt } = require('../utility/aes');
-const { isValidCsv } = require('../utility/importEmp');
+const { csvImport } = require('../utility/importEmp');
 const { toCsv } = require('../utility/export');
+const dbBackup = require('../utility/dbBackup');
 
 // import models
 const { Employee } = require('../db/models/Employee');
 
 module.exports = (io) => {
+
+
+	// FIX: move this to another route file dedicated for database backup
+	/*----------------------------------------------------------------------------------------------------------------------
+	Route:
+	GET /api/employees/db-backup
+
+	Description:
+	Makes backup of database using mongodump (bson format)
+
+	Author:
+	Michael Ong
+	----------------------------------------------------------------------------------------------------------------------*/
+	router.get('/db-backup', async (req, res) => {
+
+		const isTrue = await dbBackup.dbAutoBackUp();
+
+		const downloadPath = path.join(__dirname + '/../downloadables/backup.zip');
+
+
+		if (isTrue) {
+
+			const noErr = await dbBackup.zipBackup();
+			console.log(noErr);
+
+
+			noErr ?
+				res.download(downloadPath).status(200).send('Successfully created database backup zip') :
+				res.status(500).send('Error Zipping folder');
+
+
+		} else {
+			res.status(500).send('Error creating database backup');
+		}
+
+	})
+
+	// FIX: move this to another route file dedicated for database backup
+	/*----------------------------------------------------------------------------------------------------------------------
+	Route:
+	GET /api/employees/db-backup-restore
+
+	Description:
+	Restores backup of database using the files mongodump created
+
+	Author:
+	Michael Ong
+	----------------------------------------------------------------------------------------------------------------------*/
+	router.post('/db-backup-restore', async (req, res) => {
+
+		try {
+
+			if (!req.files) {
+
+				res.status(204).send('Not selected a file or folder is empty! Please select a file');
+
+			} else {
+
+				const resFiles = req.files.bsonFiles;
+				const folderPath = path.join(__dirname, '/../uploads/');
+
+				// clean uploads folder wether empty or not
+				dbBackup.cleanUploads();
+
+				let correctFormat = true;
+
+				resFiles.forEach(async element => {
+
+					if (element.name.substring(element.name.length, element.name.length - 4) != 'bson'
+						&& element.name.substring(element.name.length, element.name.length - 4) != 'json') {
+
+						console.log('Invalid file format');
+						correctFormat = false;
+
+					} else {
+
+						if (element.name.substring(element.name.length, element.name.length - 4) === 'bson') {
+
+							await element.mv(folderPath + element.name, err => {
+								if (err) {
+									console.log(err)
+								}
+							})
+						}
+					}
+				});
+
+				if (correctFormat == false) {
+
+					dbBackup.cleanUploads();
+					res.status(415).send('Incorrect file type for one or more files!')
+
+				} else {
+
+					const isTrue = await dbBackup.dbRestore();
+
+					isTrue === true ?
+						res.status(200).send('Successfully restored database backup') :
+						res.status(500).send('Error on server');
+
+
+				}
+			}
+		} catch (err) {
+			console.log(err)
+			res.status(500).send('Error on server');
+		}
+
+	})
 
    /*----------------------------------------------------------------------------------------------------------------------
 	Route:
@@ -47,42 +158,42 @@ module.exports = (io) => {
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/enroll', async (req, res) => {
-      try {
-         let {
-            employee_id,
-            firstname,
-            lastname,
-            email,
-            isMale,
-            employment_status,
-            department,
-            job_title,
-            fingerprint_id
+		try {
+			let {
+				employee_id,
+				firstname,
+				lastname,
+				email,
+				isMale,
+				employment_status,
+				department,
+				job_title,
+				fingerprint_id
 			} = req.body;
-			
+
 			employment_status = (employment_status === "Part-time" ? 0 : 1);
-         
-         const newEmployee = new Employee({
-            employeeId       : employee_id,
-            firstName        : firstname,
-            lastName         : lastname,
-            email            : email,
-            isMale           : isMale,
-            employmentStatus : employment_status,
-            department       : department,
-            jobTitle         : job_title,
-            fingerprintId    : fingerprint_id,
-         });
 
-         await newEmployee.save();
+			const newEmployee = new Employee({
+				employeeId: employee_id,
+				firstName: firstname,
+				lastName: lastname,
+				email: email,
+				isMale: isMale,
+				employmentStatus: employment_status,
+				department: department,
+				jobTitle: job_title,
+				fingerprintId: fingerprint_id,
+			});
 
-         return res.status(201).send("Successfully registered a new employee.")
+			await newEmployee.save();
 
-      } catch (error) {
+			return res.status(201).send("Successfully registered a new employee.")
+
+		} catch (error) {
 			console.log(error.message);
-         return res.status(500).send(`500 Internal Server Error. ${error.message}`);
-      }
-   });
+			return res.status(500).send(`500 Internal Server Error. ${error.message}`);
+		}
+	});
 
 
 
@@ -98,49 +209,50 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/csv/import', async (req, res) => {
 
-      try{
-         const pathPublic = path.join(__dirname,'/../public/');
-         console.log(req.files);
-         if(req.files){
-            console.log(req.files);
-            const csvFile  = req.files.csvImport;
-            // check if file is csv
-            if(csvFile.name.substring(csvFile.name.length, csvFile.name.length-3) != 'csv'){
-               res.status(422).send('must be csv file');
-            } else {
-               await csvFile.mv(pathPublic + 'import.csv', (err) => {
-                  if(err){
-                     console.error(err);
-                     res.status(500).send('error on server'); 
-                  }
-                  isValidCsv(pathPublic + 'import.csv',res);
-                  
-                  // go to vue route after importing employees 
-                  // send employees to res?
-               })
-            }
-         } else {
-            res.status(204).send('Not selected a file or file is empty! Please select a file');
-         }
-      } catch (error){
-         res.status(500).send('error on server');
-      }    
-   });
-	
-	
+		try {
+			if (!req.files) {
+				res.status(204).send('Not selected a file or file is empty! Please select a file');
+			} else {
+				const csvFile = req.files.csvImport;
+
+				// check if file is csv
+				if (csvFile.name.substring(csvFile.name.length, csvFile.name.length - 3) != 'csv') {
+					res.status(415).send('must be csv file');
+
+				} else {
+
+					const rawData = req.files.csvImport.data;
+					// replace all \n and \r in csv file to coma
+					const stringData = replaceString(rawData.toString(), ('\n', '\r'), ',');
+					const isValid = await csvImport(stringData);
+
+
+					isValid == true ?
+						res.status(200).send('Succesfully imported csv file') :
+						res.status(422).send('Invalid csv format');
+
+				}
+			}
+		} catch (error) {
+			console.log(error)
+			res.status(500).send('error on server');
+		}
+	});
+
+
 	/*----------------------------------------------------------------------------------------------------------------------
 	export report to csv file must be used in logs ---- used in employees for testing purposes 
 	----------------------------------------------------------------------------------------------------------------------*/
-   router.get('/csv/export', (req,res) => {
-      // decrypts every field and saves it to new database
-         Employee.find()
-            .then(emp => {
-                  emp = decrypt(emp);
-                  toCsv(emp);
-            })
-            .catch(err => console.error(err));
+	router.get('/csv/export', (req, res) => {
+		// decrypts every field and saves it to new database
+		Employee.find()
+			.then(emp => {
+				emp = decrypt(emp);
+				toCsv(emp);
+			})
+			.catch(err => console.error(err));
 
-   });
+	});
 
 
    /*----------------------------------------------------------------------------------------------------------------------
