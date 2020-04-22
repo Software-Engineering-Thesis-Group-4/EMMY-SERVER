@@ -3,11 +3,12 @@ const jwt = require('jsonwebtoken');
 // import model
 const { RefreshToken } = require("../db/models/RefreshToken");
 
-exports.createToken = (email) => {
-	return jwt.sign({ email }, process.env.JWT_KEY, {
-		expiresIn: process.env.TOKEN_DURATION
+exports.createToken = ( email , duration) => {
+	return jwt.sign( email , process.env.JWT_KEY, {
+		expiresIn: duration
 	});
 }
+
 
 
 exports.createRefreshToken = async (email) => {
