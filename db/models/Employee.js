@@ -26,8 +26,8 @@ const EmployeeSchema = Schema({
       required: true
    },
    email: {
-      type: String,
-      unique: true,
+		type: String,
+		unique: true,
       required: true
    },
    isMale: {
@@ -54,10 +54,6 @@ const EmployeeSchema = Schema({
       type: Number,
       unique: true,
       required: true
-   },
-   isVerified: {
-      type: Boolean,
-      default: false
    },
    terminated: {
       type: Boolean,
