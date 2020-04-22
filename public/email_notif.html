@@ -8,17 +8,15 @@
    <title>Reset Password</title>
 </head>
 <body>
-   <h1>Please Enter key</h1>
-   <form action="/api/users/reset-password-key" method="POST">
-      <label for="email">Key: </label><br>
-      <input type="text" name="key" id="key" placeholder="">
-      <br><br>
-      <label for="email">token: </label><br>
-      <input type="text" name="encTok" id="encTok" placeholder="">
+   <h1>Please Enter email body</h1>
+   <form action="/api/users/email-notif" method="POST">
+      <label for="email">Email: </label><br>
+      <textarea rows="4" cols="50" name="emailBod"></textarea>
       <br><br>
 
 
       <input type="submit" style="background-color:greenyellow; border: none; padding: 11px;" value="Submit">
-
+ 
    </form>
 </body>
+</html>

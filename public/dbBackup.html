@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta http-equiv="X-UA-Compatible" content="ie=edge">
+   <link rel="shortcut icon" href="/favicon.png">
+   <title>Db Backup Options</title>
+</head>
+<body>
+
+   <h1>DATABASE BACKUP</h1>
+   <a class="btn btn-secondary"  style="background-color:greenyellow; border: none; padding: 11px;" href="/api/employees/db-backup">Do backup</a>
+   
+   <h1>DATABASE RESTORE FOLDER</h1>
+   <!-- For uploading a whole folder and it contents-->
+   <form action="/api/employees/db-backup-restore" method="post"  enctype="multipart/form-data">
+         <label for="csvImport">Select files:</label>
+
+         
+         <input type="file" id="csvImport" name="bsonFiles" webkitdirectory><br><br>
+         <input type="submit" style="background-color:greenyellow; border: none; padding: 11px;" value="submit">
+         <input type="reset" style="background-color: #fff; border: 1px solid #cecece; padding: 10px;" value="Reset">
+   </form>
+   
+</body>
+</html>
