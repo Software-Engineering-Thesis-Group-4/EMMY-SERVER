@@ -29,24 +29,20 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.get('/db-backup', async (req,res) => {
 		
-		const isTrue = await dbBackup.dbAutoBackUp();
-
-		const downloadPath = path.join(__dirname+'/../downloadables/backup.zip');
-		
-		
-		if(isTrue) {
-
+		try {
+			
+			const downloadPath = path.join(__dirname+'/../downloadables/backup.zip');
 			const noErr = await dbBackup.zipBackup();
-			console.log(noErr);
-			
-			
-			noErr ?
-			res.download(downloadPath).status(200).send('Successfully created database backup zip') :
-			res.status(500).send('Error Zipping folder');
-			
 
-		} else {
-			res.status(500).send('Error creating database backup');
+			noErr ?
+				res.download(downloadPath) :
+				res.status(500).send('Error on downloading zip file');
+
+		} catch (err) {
+
+			console.log(err);
+			res.status(500).send('Error on server');
+
 		}
 		
 	})
@@ -100,7 +96,7 @@ module.exports = (io) => {
 						}
 					}
 				});
-				
+				console.log(correctFormat);
 				if(correctFormat == false) {
 
 					dbBackup.cleanUploads();
