@@ -3,23 +3,23 @@ const jwt = require('jsonwebtoken');
 // import model
 const { RefreshToken } = require("../db/models/RefreshToken");
 
-exports.createToken = ( email , duration) => {
-	return jwt.sign( email , process.env.JWT_KEY, {
+exports.createToken = (payload , duration) => {
+	return jwt.sign(payload , process.env.JWT_KEY, {
 		expiresIn: duration
 	});
 }
 
 
 
-exports.createRefreshToken = async (email) => {
-
+exports.createRefreshToken = async (payload) => {
+	
 	try {
-		const refToken = jwt.sign({ email }, process.env.REFRESH_KEY, {
+		const refToken = jwt.sign(payload , process.env.REFRESH_KEY, {
 			expiresIn: process.env.REFRESH_TOKEN_DURATION
 		});
 
 		// If token already exists, delete token to avoid duplicate
-		let tokenExists = await RefreshToken.findOneAndDelete({ email });
+		let tokenExists = await RefreshToken.findOneAndDelete({ email: payload.email });
 
 		// confirm is refresh token is deleted
 		if (tokenExists) {
@@ -28,7 +28,7 @@ exports.createRefreshToken = async (email) => {
 
 		// create a new refresh token
 		let db_refreshToken = new RefreshToken({
-			email: email,
+			email: payload.email,
 			token: refToken
 		});
 

@@ -52,10 +52,10 @@ module.exports = (io) => {
 				let email = encrypt(user.email);
 
 				//create refresh token
-				createRefreshToken(email);
+				createRefreshToken({email});
 
 				// create access token
-				const access_token = createToken({ email }, process.env.TOKEN_DURATION);
+				const access_token = createToken( {email} , process.env.TOKEN_DURATION);
 
 				// return user credentials and access token
 				return res.status(200).send({
@@ -69,6 +69,7 @@ module.exports = (io) => {
 				return res.status(401).send("Invalid email or password.");
 			}
 		} catch (error) {
+			console.log(error);
 			return res.status(500).send('Error on the server.');
 		}
 	});
