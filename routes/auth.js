@@ -54,6 +54,7 @@ module.exports = (io) => {
 				//create refresh token
 				createRefreshToken({email});
 
+				
 				// create access token
 				const access_token = createToken( {email} , process.env.TOKEN_DURATION);
 
