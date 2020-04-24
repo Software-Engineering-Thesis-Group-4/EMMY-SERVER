@@ -1,12 +1,13 @@
-const express = require('express');
-const router  = express.Router();
-const bcrypt  = require('bcryptjs');
-const jwt     = require('jsonwebtoken');
+const router = require('express').Router();
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+require('colors').enable();
 
 // import utilities
 const { encrypt, decrypter } = require('../utility/aes');
 const { createToken, createRefreshToken, removeRefreshToken } = require('../utility/jwt');
-const { loginValidationRules, validate } = require("../utility/validator");
+const { validateLogin } = require('../utility/validator');
+const { body, validationResult } = require('express-validator');
 
 // import models
 const { User } = require("../db/models/User");
@@ -14,10 +15,9 @@ const { RefreshToken } = require("../db/models/RefreshToken");
 
 // error messages
 const ERR_INVALID_CREDENTIALS = "Invalid email or password.";
-const ERR_EMPTY               = "No credentials provided.";
-const ERR_SERVER_ERROR        = "Internal Server Error.";
-const ERR_UNAUTHORIZED        = "Unauthorized Access.";
-const ERR_UNAUTHENTICATED     = "Unauthenticated.";
+const ERR_SERVER_ERROR = "Internal Server Error.";
+const ERR_UNAUTHORIZED = "Unauthorized Access.";
+const ERR_UNAUTHENTICATED = "Unauthenticated.";
 
 // start of route after middlewares
 module.exports = (io) => {
@@ -32,45 +32,52 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/login', loginValidationRules, validate, async (req, res) => {
-
+	router.post('/login', validateLogin, async (req, res) => {
 		try {
-			let { email, password } = req.body;
 
-			if (!email) {
-				return res.status(401).send(ERR_EMPTY)
-			}
-
-			let user = await User.findOne({ email });
-
-			if (!user) {
+			// data sanitization
+			let errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				console.error('Invalid Credentials Format.'.red);
 				return res.status(401).send(ERR_INVALID_CREDENTIALS);
 			}
 
+			// check if email exists in the database
+			const user = await User.findOne({ email: req.body.email });
+			if (!user) {
+				console.error('Invalid Email. User not found.'.red);
+				return res.status(401).send(ERR_INVALID_CREDENTIALS); // USER NOT FOUND
+			}
+
 			// validate password
-			let passwordIsValid = await bcrypt.compare(password, user.password);
+			let passwordIsValid = await bcrypt.compare(req.body.password, user.password);
 
 			// if submitted password invalid, return an error
 			if (passwordIsValid) {
 
 				// encrypt user credentials
-				let email = encrypt(user.email);
+				let encrypted_email = encrypt(user.email);
 
-				//create refresh token
+				//save new refresh token
 				createRefreshToken(user.email);
 
 				// create access token
-				const access_token = createToken(email, process.env.TOKEN_DURATION);
+				const access_token = createToken(encrypted_email, process.env.TOKEN_DURATION);
 
 				// return user credentials and access token
+				console.log('User Authenticated. Login Success'.green);
 				return res.status(200).send({
-					token: access_token,
-					email: user.email,
-					username: user.username,
-					isAdmin: user.isAdmin
+					token    : access_token,
+					email    : user.email,
+					username : user.username,
+					firstname: user.firstname,
+					lastname : user.lastname,
+					isAdmin  : user.isAdmin,
+					photo    : user.photo,
 				});
 
 			} else {
+				console.error('Invalid Password.'.red);
 				return res.status(401).send(ERR_INVALID_CREDENTIALS);
 			}
 
@@ -78,7 +85,6 @@ module.exports = (io) => {
 			console.log(error.message);
 			return res.status(500).send(ERR_SERVER_ERROR);
 		}
-
 	});
 
 
@@ -94,55 +100,85 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/verify', async (req, res) => {
-		try {
-			let { token, email } = req.body;
+	router.post('/verify',
+		[
+			body('access_token').notEmpty().isJWT(),
+			body('email').trim().notEmpty().isEmail()
+		],
+		async (req, res) => {
+			try {
+				const errors = validationResult(req);
 
-			let user = await User.findOne({ email });
-
-			if (!user) {
-				return res.status(404).send(ERR_UNAUTHORIZED)
-			}
-
-			// if user exists, verify access token
-			jwt.verify(token, process.env.JWT_KEY, async (err) => {
-
-				// if token is already expired check if refresh token is still valid
-				// refresh token is still valid, renew token
-				if (err) {
-
-					let refreshToken = await RefreshToken.findOne({ email });
-
-					// refresh token does not exist
-					if (!refreshToken) {
-						return res.send(401).send(ERR_UNAUTHORIZED)
-					}
-
-
-					// validate refresh token
-					jwt.verify(refreshToken, process.env.REFRESH_KEY, (err) => {
-
-						// refresh token expired. return error
-						if (err) {
-							removeRefreshToken(email);
-							return res.send(401).send(ERR_UNAUTHORIZED);
-						}
-
-						// renew token
-						let token = createToken(email, process.env.TOKEN_DURATION);
-						return res.status(200).send(token);
-					})
+				if (!errors.isEmpty()) {
+					console.error('Invalid Credentials.'.red);
+					return res.status(401).send(ERR_UNAUTHORIZED);
 				}
 
-				// token is valid and is authenticated
-				return res.sendStatus(200);
-			});
+				let { access_token, email } = req.body;
 
-		} catch (error) {
-			console.log(error.message);
-			return res.status(500).send(ERR_SERVER_ERROR)
+				let user = await User.findOne({ email });
+				if (!user) {
+					console.error('User not found'.red)
+					return res.status(401).send(ERR_UNAUTHENTICATED)
+				}
+
+				// if user exists, verify access token
+				jwt.verify(access_token, process.env.JWT_KEY, (err) => {
+
+					// if there are no errors...
+					if (!err) {
+						console.log('Valid Access Token. Verification Success.'.green)
+						return res.sendStatus(200);
+					}
+
+					if (err.name === 'JsonWebTokenError') {
+						console.error('Invalid Access Token.'.red)
+						return res.status(401).send(ERR_UNAUTHORIZED);
+					}
+
+					// if token is expired check, get refresh token of user
+					if (err.name === 'TokenExpiredError') {
+
+						// if refresh token is VALID, renew token
+						RefreshToken.findOne({ email }, (err, refresh_token) => {
+
+							if (err) {
+								console.error('Refresh Token Not Found.'.red);
+								return res.status(404).send(ERR_UNAUTHORIZED);
+							}
+
+							// validate refresh token
+							jwt.verify(refresh_token.token, process.env.REFRESH_KEY, (err) => {
+
+								// refresh token expired. return error
+								if (err.name === 'TokenExpiredError') {
+									removeRefreshToken(email);
+									console.error('Refresh Token Expired'.red)
+									return res.status(401).send(ERR_UNAUTHORIZED);
+								}
+
+								if (err.name === 'JsonWebTokenError') {
+									removeRefreshToken(email);
+									console.error('Invalid Refresh Token'.bgRed.black);
+									return res.status(401).send(ERR_UNAUTHORIZED);
+								}
+
+								console.log('Refresh Token Valid.'.green);
+								let token = createToken(email, process.env.TOKEN_DURATION);
+
+								console.log('Access Token Renewed'.green)
+								return res.status(200).send(token);
+							});
+						});
+					}
+				});
+
+			} catch (error) {
+				console.log(error.message);
+				return res.status(500).send(ERR_SERVER_ERROR);
+			}
 		}
-	})
+	);
 
 
 
@@ -157,21 +193,19 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/logout', (req, res) => {
+	router.post('/logout', body('email').trim().notEmpty().isEmail(), (req, res) => {
 		try {
-			let { token } = req.body;
+			const errors = validationResult(req);
 
-			jwt.verify(token, process.env.JWT_KEY, (err, payload) => {
-				if (err) {
-					return res.status(401).send(ERR_UNAUTHENTICATED);
-				}
+			if(!errors.isEmpty()) {
+				console.error('Invalid Credential Format.'.red);
+				return res.sendStatus(400);
+			}
 
-				let email = decrypter(payload.email);
-				removeRefreshToken(email);
-
-				return res.status(200).send('Logged out successfully.')
-			});
-
+			removeRefreshToken(req.body.email);
+			
+			return res.sendStatus(200);
+			
 		} catch (error) {
 			console.log(error.message);
 			return res.status(500).send(ERR_SERVER_ERROR);
