@@ -17,6 +17,7 @@ const {
 	resetKeyValidationRules,
 	validate
 } = require("../utility/validator");
+const { validationResult } = require('express-validator');
 
 // error messages
 const ERR_SERVER_ERROR = "Internal Server Error.";
@@ -25,9 +26,18 @@ const ERR_DUPLICATE = "Already Exists."
 
 module.exports = (io) => {
 
+	// TODO: Create api for fetching data of all users (to be used rendering list of accounts in the admin page)
+	// Assigned Person: Michael Ong
+	// Method: GET
+	// Route: /api/users/
+	// Description: get all user data except for sensitive information (i.e. password)
+
+
+	
+
 	/* ---------------------------------------------------------------------------------------------------------------------
 	Route:
-	POST /auth/enroll
+	POST /api/users/enroll
 
 	Description:
 	This route is for registering new users or accounts for Emmy
@@ -35,13 +45,24 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/enroll', registerValidationRules, validate, async (req, res) => {
+	router.post('/enroll', registerValidationRules, async (req, res) => {
 		try {
+			const errors = validationResult(req);
+
+			if(!errors.isEmpty()) {
+				return res.status(400).send(errors.errors.map(err => err.msg));
+			}
+
 			// Extract user information
-			let { email, firstname, lastname, username, password, isAdmin } = req.body;
+			let { email, firstname, lastname, username, password, confirmPassword, isAdmin } = req.body;
 
 			let user = await User.findOne({ email });
 			if (user) return res.status(409).send(ERR_DUPLICATE);
+
+			if(confirmPassword !== password) {
+				console.error('Confirm password does not match'.red);
+				return res.status(400).send('Confirm password does not match.');
+			}
 
 			// hash password
 			password = bcrypt.hashSync(password);
