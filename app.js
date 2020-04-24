@@ -17,11 +17,10 @@ colors.enable();
 // LOAD ENVIRONMENT CONFIGURATIONS ----------------------------------------------------------------------------
 const cfg = require('./configs/config.js');
 
-const app    = express();
+const app = express();
 const server = http.createServer(app);
-const io     = socketIO(server);
-const PORT   = cfg.PORT || 3000;
-const mode = cfg.MODE;
+const io = socketIO(server);
+const PORT = cfg.PORT || 3000;
 
 // APPLICATION CONFIGURATIONS ---------------------------------------------------------------------------------
 app.set('views', path.join(__dirname, 'views'));
@@ -33,7 +32,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(express.static(path.join(__dirname, "client"))); // the directory for Vue
 app.use(cors());
 app.use(helmet());
-app.use(fileUpload((mode === 'dev' ?
+app.use(fileUpload((process.env.NODE_ENV === 'development ' ?
 	{ debug: true } : { debug: false })
 ));
 
@@ -48,16 +47,25 @@ app.use(RateLimit({
 }));
 
 app.use(helmet({
+	xssFilter: {
+		setOnOldIE: true,
+		mode: null
+	},
+	noSniff: true,
 	referrerPolicy: {
 		policy: 'same-origin'
 	},
-	contentSecurityPolicy: {
-		directives: {
-			defaultSrc: ["'self'"],
-			styleSrc: ["'self", "cdn.jsdelivr.net", "fonts.googleapis.com"],
-			scriptSrc: ["'self'", "cdn.jsdelivr.net"]
-		}
-	},
+
+	// TODO: Temporarily disabled Content Security Policy Rules
+	// contentSecurityPolicy: {
+	// 	directives: {
+	// 		defaultSrc: ["'self'"],
+	// 		styleSrc: ["'self'", "'unsafe-inline'", "cdn.jsdelivr.net", "fonts.googleapis.com"],
+	// 		scriptSrc: ["'self'", "cdn.jsdelivr.net"],
+	// 	}
+	// },
+
+	// for reducing surface area of potential attacks
 	featurePolicy: {
 		features: {
 			fullscreen: ["'*'"],
@@ -67,6 +75,11 @@ app.use(helmet({
 			geolocation: ["'none'"],
 			microphone: ["'none'"]
 		}
+	},
+
+	// click jacking protection
+	frameguard: {
+		action: 'sameorigin'
 	}
 }));
 
