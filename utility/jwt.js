@@ -1,30 +1,33 @@
 const jwt = require('jsonwebtoken');
+require('colors');
 
 // import model
 const { RefreshToken } = require("../db/models/RefreshToken");
 
-exports.createToken = ( email , duration) => {
-	return jwt.sign( email , process.env.JWT_KEY, {
-		expiresIn: duration
-	});
+exports.createToken = (email, duration) => {
+	return jwt.sign(
+		{ email },
+		process.env.JWT_KEY,
+		{ expiresIn: duration }
+	);
 }
 
 
-
 exports.createRefreshToken = async (email) => {
-
 	try {
-		const refToken = jwt.sign({ email }, process.env.REFRESH_KEY, {
-			expiresIn: process.env.REFRESH_TOKEN_DURATION
-		});
-
-		// If token already exists, delete token to avoid duplicate
+		// Check If token already exists for the specific user, delete token to avoid duplicate
 		let tokenExists = await RefreshToken.findOneAndDelete({ email });
 
-		// confirm is refresh token is deleted
+		// confirm if refresh token is deleted
 		if (tokenExists) {
-			console.log('Deleted Refresh token');
+			console.log('Already Exists. Deleted refresh token'.yellow);
 		}
+
+		const refToken = jwt.sign(
+			{ email },
+			process.env.REFRESH_KEY,
+			{ expiresIn: process.env.REFRESH_TOKEN_DURATION }
+		);
 
 		// create a new refresh token
 		let db_refreshToken = new RefreshToken({
@@ -33,7 +36,7 @@ exports.createRefreshToken = async (email) => {
 		});
 
 		db_refreshToken.save();
-		console.log('Succesfully saved refresh token');
+		console.log('Succesfully saved new refresh token'.green);
 
 	} catch (error) {
 		console.error(error);
@@ -45,12 +48,12 @@ exports.removeRefreshToken = async (email) => {
 	try {
 		let deletedRT = await RefreshToken.findOneAndDelete({ email });
 
-		if(deletedRT) {
-			console.log('Succesfully removed/deleted refresh token');
+		if (deletedRT) {
+			console.log('Succesfully removed/deleted refresh token'.yellow);
 		}
 
-	} catch (error) {
-		console.log('Failed to removed/delete refresh token');
+	} catch ({ error }) {
+		console.log('Failed to removed/delete refresh token'.red);
 		throw new Error(error.message)
 	}
 }
