@@ -50,7 +50,7 @@ module.exports = (io) => {
 			const errors = validationResult(req);
 
 			if(!errors.isEmpty()) {
-				return res.status(400).send(errors.errors.map(err => err.msg));
+				return res.status(400).send(errors.errors);
 			}
 
 			// Extract user information
