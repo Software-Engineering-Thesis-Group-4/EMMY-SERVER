@@ -26,7 +26,8 @@ const EmployeeSchema = Schema({
       required: true
    },
    email: {
-      type: String,
+		type: String,
+		unique: true,
       required: true
    },
    isMale: {

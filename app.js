@@ -74,8 +74,6 @@ app.use(helmet({
 }));
 
 
-
-
 // IMPORT & CONFIGURE ROUTES ----------------------------------------------------------------------------------
 const employeeLogsRoute = require('./routes/employee-logs')(io);
 const employeeRoute = require('./routes/employee')(io);

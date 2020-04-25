@@ -6,11 +6,18 @@ const jwt     = require('jsonwebtoken');
 // import utilities
 const { encrypt, decrypter } = require('../utility/aes');
 const { createToken, createRefreshToken, removeRefreshToken } = require('../utility/jwt');
+const { loginValidationRules, validate } = require("../utility/validator");
 
 // import models
 const { User } = require("../db/models/User");
 const { RefreshToken } = require("../db/models/RefreshToken");
 
+// error messages
+const ERR_INVALID_CREDENTIALS = "Invalid email or password.";
+const ERR_EMPTY               = "No credentials provided.";
+const ERR_SERVER_ERROR        = "Internal Server Error.";
+const ERR_UNAUTHORIZED        = "Unauthorized Access.";
+const ERR_UNAUTHENTICATED     = "Unauthenticated.";
 
 // start of route after middlewares
 module.exports = (io) => {
@@ -25,21 +32,19 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/login', async (req, res) => {
+	router.post('/login', loginValidationRules, validate, async (req, res) => {
 
 		try {
-			let {
-				email,
-				password } = req.body;
+			let { email, password } = req.body;
 
 			if (!email) {
-				return res.status(401).send("No credentials provided.");
+				return res.status(401).send(ERR_EMPTY)
 			}
 
 			let user = await User.findOne({ email });
 
 			if (!user) {
-				return res.status(401).send(`Invalid email or password`);
+				return res.status(401).send(ERR_INVALID_CREDENTIALS);
 			}
 
 			// validate password
@@ -67,19 +72,18 @@ module.exports = (io) => {
 				});
 
 			} else {
-				return res.status(401).send("Invalid email or password.");
+				return res.status(401).send(ERR_INVALID_CREDENTIALS);
 			}
+
 		} catch (error) {
-			console.log(error);
-			return res.status(500).send('Error on the server.');
+			console.log(error.message);
+			return res.status(500).send(ERR_SERVER_ERROR);
 		}
+
 	});
 
 
 
-
-
-	// FIX VERIFICATION PROCESS
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
 	GET /auth/verify
@@ -91,31 +95,28 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/verify', async (req, res) => {
+	router.get('/verify', async (req, res) => {
 		try {
-			// get token & email
-			let { access_token, email } = req.body;
-			console.dir(req.body);
+			let { token, email } = req.body;
 
-			// find user
 			let user = await User.findOne({ email });
 
-			// if user doesn't exist, return error
 			if (!user) {
-				return res.status(401).send(`Unauthorized Access. Unknown user.`)
+				return res.status(404).send(ERR_UNAUTHORIZED)
 			}
 
 			// if user exists, verify access token
-			jwt.verify(access_token, process.env.JWT_KEY, async (err) => {
+			jwt.verify(token, process.env.JWT_KEY, async (err) => {
 
-				// if access token is already expired check if refresh token is still valid
+				// if token is already expired check if refresh token is still valid
+				// refresh token is still valid, renew token
 				if (err) {
 
 					let refreshToken = await RefreshToken.findOne({ email });
 
 					// refresh token does not exist
 					if (!refreshToken) {
-						return res.send(401).send(`Unauthorized Access.`);
+						return res.send(401).send(ERR_UNAUTHORIZED)
 					}
 
 
@@ -125,14 +126,12 @@ module.exports = (io) => {
 						// refresh token expired. return error
 						if (err) {
 							removeRefreshToken(email);
-							return res.send(401).send({
-								message: `Session Expired. Unauthorized Access.`
-							});
+							return res.send(401).send(ERR_UNAUTHORIZED);
 						}
 
 						// renew token
 						let token = createToken(email, process.env.TOKEN_DURATION);
-						return res.status(200).send({ token });
+						return res.status(200).send(token);
 					})
 				}
 
@@ -141,8 +140,8 @@ module.exports = (io) => {
 			});
 
 		} catch (error) {
-			console.log(error);
-			return res.status(500).send(`500 Internal Server Error. ${error.message}`)
+			console.log(error.message);
+			return res.status(500).send(ERR_SERVER_ERROR)
 		}
 	})
 
@@ -159,12 +158,13 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/logout', (req, res) => {
+	router.post('/logout', (req, res) => {
 		try {
-			let token = req.body.token;
+			let { token } = req.body;
+
 			jwt.verify(token, process.env.JWT_KEY, (err, payload) => {
 				if (err) {
-					return res.status(401).send('Invalid Token.');
+					return res.status(401).send(ERR_UNAUTHENTICATED);
 				}
 
 				let email = decrypter(payload.email);
@@ -174,10 +174,11 @@ module.exports = (io) => {
 			});
 
 		} catch (error) {
-			return res.status(500).send(`500 Server Error. ${error.message}`);
+			console.log(error.message);
+			return res.status(500).send(ERR_SERVER_ERROR);
 		}
 	});
 
 
 	return router;
-}; 
+};

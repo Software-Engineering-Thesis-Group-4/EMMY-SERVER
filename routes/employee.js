@@ -1,12 +1,12 @@
-const express        = require('express')
-const router         = express.Router();
-const path           = require('path');
-const replaceString	= require('replace-string');
+const express = require('express')
+const router = express.Router();
+const path = require('path');
+const replaceString = require('replace-string');
 
 
 // import utility
-// const { encrypt, decrypt } = require('../utility/aes');
 const { csvImport } = require('../utility/importEmp');
+const aes = require('../utility/aes');
 const exportDb = require('../utility/export');
 const dbBackup = require('../utility/dbBackup');
 
@@ -16,12 +16,12 @@ const { Employee } = require('../db/models/Employee');
 module.exports = (io) => {
 
 
+	// FIX: move this to another route file dedicated for database backup
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
 	GET /api/employees/db-backup
 
 	Description:
-	
 	Makes backup of database using mongodump (bson format)
 
 	Author:
@@ -44,31 +44,31 @@ module.exports = (io) => {
 			res.status(500).send('Error on server');
 
 		}
-		
+
 	})
 
+	// FIX: move this to another route file dedicated for database backup
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
 	GET /api/employees/db-backup-restore
 
 	Description:
-	
 	Restores backup of database using the files mongodump created
 
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/db-backup-restore', async (req,res) => {
-		
+	router.post('/db-backup-restore', async (req, res) => {
+
 		try {
 
-			if(!req.files) {
+			if (!req.files) {
 
 				res.status(204).send('Not selected a file or folder is empty! Please select a file');
 
 			} else {
 
-				const resFiles 	 = req.files.bsonFiles;
+				const resFiles = req.files.bsonFiles;
 				const folderPath = path.join(__dirname, '/../uploads/');
 
 				// clean uploads folder wether empty or not
@@ -78,46 +78,46 @@ module.exports = (io) => {
 
 				resFiles.forEach(async element => {
 
-					if(element.name.substring(element.name.length, element.name.length - 4) != 'bson' 
-					&& element.name.substring(element.name.length, element.name.length - 4) != 'json') {
+					if (element.name.substring(element.name.length, element.name.length - 4) != 'bson'
+						&& element.name.substring(element.name.length, element.name.length - 4) != 'json') {
 
 						console.log('Invalid file format');
 						correctFormat = false;
 
 					} else {
 
-						if(element.name.substring(element.name.length, element.name.length - 4) === 'bson') {
-							
+						if (element.name.substring(element.name.length, element.name.length - 4) === 'bson') {
+
 							await element.mv(folderPath + element.name, err => {
-								if(err){
+								if (err) {
 									console.log(err)
-								} 
+								}
 							})
 						}
 					}
 				});
-				console.log(correctFormat);
+				
 				if(correctFormat == false) {
 
 					dbBackup.cleanUploads();
 					res.status(415).send('Incorrect file type for one or more files!')
-					
+
 				} else {
 
 					const isTrue = await dbBackup.dbRestore();
-					
+
 					isTrue === true ?
-					res.status(200).send('Successfully restored database backup') :
-					res.status(500).send('Error on server');
-					
-					
+						res.status(200).send('Successfully restored database backup') :
+						res.status(500).send('Error on server');
+
+
 				}
-			}	
+			}
 		} catch (err) {
 			console.log(err)
 			res.status(500).send('Error on server');
 		}
-		
+
 	})
 
    /*----------------------------------------------------------------------------------------------------------------------
@@ -166,20 +166,20 @@ module.exports = (io) => {
 				department,
 				job_title,
 				fingerprint_id
-				} = req.body;
-				
-				employment_status = (employment_status === "Part-time" ? 0 : 1);
-			
+			} = req.body;
+
+			employment_status = (employment_status === "Part-time" ? 0 : 1);
+
 			const newEmployee = new Employee({
-				employeeId       : employee_id,
-				firstName        : firstname,
-				lastName         : lastname,
-				email            : email,
-				isMale           : isMale,
-				employmentStatus : employment_status,
-				department       : department,
-				jobTitle         : job_title,
-				fingerprintId    : fingerprint_id,
+				employeeId: employee_id,
+				firstName: firstname,
+				lastName: lastname,
+				email: email,
+				isMale: isMale,
+				employmentStatus: employment_status,
+				department: department,
+				jobTitle: job_title,
+				fingerprintId: fingerprint_id,
 			});
 
 			await newEmployee.save();
@@ -211,10 +211,10 @@ module.exports = (io) => {
 			if(!req.files){
 				res.status(204).send('Not selected a file or file is empty! Please select a file');
 			} else {
-				const csvFile  = req.files.csvImport;
+				const csvFile = req.files.csvImport;
 
 				// check if file is csv
-				if(csvFile.name.substring(csvFile.name.length, csvFile.name.length-3) != 'csv'){
+				if (csvFile.name.substring(csvFile.name.length, csvFile.name.length - 3) != 'csv') {
 					res.status(415).send('must be csv file');
 
 				} else { 
@@ -230,7 +230,7 @@ module.exports = (io) => {
 					res.status(200).send(isValid.message);
 				}		
 			}
-		} catch (error){
+		} catch (error) {
 			console.log(error)
 			res.status(500).send('Error on server');
 		}    
@@ -238,19 +238,40 @@ module.exports = (io) => {
 	
 	
 	/*----------------------------------------------------------------------------------------------------------------------
-	export report to csv file must be used in logs ---- used in employees for testing purposes 
+	export report must be used in logs ---- used in employees for testing purposes 
 	----------------------------------------------------------------------------------------------------------------------*/
-   router.get('/csv/export', (req,res) => {
-      // decrypts every field and saves it to new database
-         Employee.find()
-            .then(emp => {
-                  emp = decrypt(emp);
-                  exportDb.toCsv(emp);
-            })
-            .catch(err => console.error(err));
+   router.get('/export-csv', async (req,res) => {
+
+	try {
+		
+		const pathToDownload = path.join(__dirname, '/../downloadables/generated.csv')
+		let emp = await Employee.find();
+
+		await exportDb.toCsv(emp);
+		res.download(pathToDownload)
+	} catch (error) {
+		console.log(error.message);
+		res.send('error')
+	}
 
    });
 
+  /*----------------------------------------------------------------------------------------------------------------------
+	export report must be used in logs ---- used in employees for testing purposes 
+	----------------------------------------------------------------------------------------------------------------------*/
+	router.get('/export-pdf', async (req,res) => {
+
+		try {
+
+			exportDb.toPdf()
+			res.send('hi')
+		} catch (err) {
+			console.log(err)
+			res.send('error')
+		}
+		
+
+	});
 
    /*----------------------------------------------------------------------------------------------------------------------
 	Route:

@@ -54,7 +54,8 @@ const csvImport = async (stringData) => {
 			return errMessage = { isErr : false, message : 'Successfully imported employees' };
 		} else {
 			console.log('invalid csv format');
-			return errMessage = { isErr : true, message : 'invalid csv format' };
+			return errMessage = { isErr : true, message : `invalid csv format must follow this header format \n`
+														+ `${headerVal} (not case sensitive)` };
 		}
 	} catch (err) {
 		
