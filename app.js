@@ -16,7 +16,7 @@ colors.enable();
 // LOAD ENVIRONMENT CONFIGURATIONS ----------------------------------------------------------------------------
 const cfg = require('./configs/config.js');
 
-const app    = express();
+const app = express();
 const server = http.createServer(app);
 const io     = socketIO(server);
 const PORT   = process.env.PORT || 3000;
@@ -51,16 +51,25 @@ app.use(RateLimit({
 }));
 
 app.use(helmet({
+	xssFilter: {
+		setOnOldIE: true,
+		mode: null
+	},
+	noSniff: true,
 	referrerPolicy: {
 		policy: 'same-origin'
 	},
-	contentSecurityPolicy: {
-		directives: {
-			defaultSrc: ["'self'"],
-			styleSrc: ["'self", "cdn.jsdelivr.net", "fonts.googleapis.com"],
-			scriptSrc: ["'self'", "cdn.jsdelivr.net"]
-		}
-	},
+
+	// TODO: Temporarily disabled Content Security Policy Rules
+	// contentSecurityPolicy: {
+	// 	directives: {
+	// 		defaultSrc: ["'self'"],
+	// 		styleSrc: ["'self'", "'unsafe-inline'", "cdn.jsdelivr.net", "fonts.googleapis.com"],
+	// 		scriptSrc: ["'self'", "cdn.jsdelivr.net"],
+	// 	}
+	// },
+
+	// for reducing surface area of potential attacks
 	featurePolicy: {
 		features: {
 			fullscreen: ["'*'"],
@@ -70,6 +79,11 @@ app.use(helmet({
 			geolocation: ["'none'"],
 			microphone: ["'none'"]
 		}
+	},
+
+	// click jacking protection
+	frameguard: {
+		action: 'sameorigin'
 	}
 }));
 
@@ -80,13 +94,15 @@ const employeeRoute = require('./routes/employee')(io);
 const utilityRoute = require('./routes/main')(io);
 const authRoute = require('./routes/auth')(io);
 const userRoute = require('./routes/user')(io);
+const auditLogsRoute = require('./routes/audit-logs')(io);
 
 
 app.use('/auth', authRoute);									// localhost:3000/auth/
 app.use('/main', utilityRoute); 							// localhost:3000/utility
 app.use('/api/employees', employeeRoute); 				// localhost:3000/api/employees/
 app.use('/api/employeelogs', employeeLogsRoute); 		// localhost:3000/api/employeelogs/
-app.use('/api/users', userRoute)						// localhost:3000/api/employeelogs/
+app.use('/api/users', userRoute);						// localhost:3000/api/employeelogs/
+app.use('/api/auditlogs', auditLogsRoute);				// localhost:3000/api/auditlogs/
 
 
 // SERVE VUE APPLICATION --------------------------------------------------------------------------------------

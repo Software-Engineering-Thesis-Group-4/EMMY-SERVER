@@ -8,6 +8,7 @@ const isOnline = require('is-online');
 const { User } = require("../db/models/User");
 
 // import utilities
+const logger = require('../utility/logger');
 const { encrypt, decrypter } = require('../utility/aes');
 const { createToken } = require('../utility/jwt');
 const mailer = require('../utility/mailer');
@@ -17,17 +18,57 @@ const {
 	resetKeyValidationRules,
 	validate
 } = require("../utility/validator");
+const { validationResult } = require('express-validator');
 
 // error messages
 const ERR_SERVER_ERROR = "Internal Server Error.";
 const ERR_DUPLICATE = "Already Exists."
 
+/*/-----------------------------------------------------------------------------------------//
+			case 0  : audLog = 'Recently changed account settings'
+            case 1  : audLog = 'Changed password email sent'         
+            case 2  : audLog = 'Recently changed password'           
+
+            // admin privileges
+            case 3  : audLog = `Added a new user ${user}`                      
+            case 4  : audLog = `Deleted user ${user}`                          
+            case 5  : audLog = `Recently changed account settings for ${user}` 
+//-----------------------------------------------------------------------------------------/*/
 
 module.exports = (io) => {
 
 	/* ---------------------------------------------------------------------------------------------------------------------
 	Route:
-	POST /auth/enroll
+	POST /api/users/
+
+	Description:
+
+	Api for fetching data of all users (to be used rendering list of accounts in the admin page)
+	Gets all user data except for sensitive information (i.e. password)
+
+	Author:
+	Michael Ong
+	----------------------------------------------------------------------------------------------------------------------*/
+	router.get('/', async (req, res) => {
+
+		try {
+
+			let users = await User.find({},{'password': 0});
+
+			return res.status(200).send(users);
+
+		} catch (error) {
+			console.error(error);
+			return res.status(500).send('Server error. A problem occured when retrieving users');
+		}
+	});
+	
+
+	
+
+	/* ---------------------------------------------------------------------------------------------------------------------
+	Route:
+	POST /api/users/enroll
 
 	Description:
 	This route is for registering new users or accounts for Emmy
@@ -35,13 +76,26 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/enroll', registerValidationRules, validate, async (req, res) => {
+	router.post('/enroll', registerValidationRules, async (req, res) => {
 		try {
+			const errors = validationResult(req);
+
+			const userId = req.body.userId;
+
+			if(!errors.isEmpty()) {
+				return res.status(400).send(errors.errors);
+			}
+
 			// Extract user information
-			let { email, firstname, lastname, username, password, isAdmin } = req.body;
+			let { email, firstname, lastname, username, password, confirmPassword, isAdmin } = req.body;
 
 			let user = await User.findOne({ email });
 			if (user) return res.status(409).send(ERR_DUPLICATE);
+
+			if(confirmPassword !== password) {
+				console.error('Confirm password does not match'.red);
+				return res.status(400).send('Confirm password does not match.');
+			}
 
 			// hash password
 			password = bcrypt.hashSync(password);
@@ -57,6 +111,9 @@ module.exports = (io) => {
 			});
 
 			await newUser.save();
+
+			//---------------- log -------------------//
+			logger.userRelatedLog(userId,3,username);
 
 			return res.status(200).send(`Successfully registered a new user (${newUser.email})`);
 
@@ -132,7 +189,7 @@ module.exports = (io) => {
 				}
 				else {
 
-					const username = user.firstname + ' ' + user.lastname
+					const username = user.username;
 					const decr = user.email;
 
 					// create token with user info ------- 1 min lifespan
@@ -146,6 +203,10 @@ module.exports = (io) => {
 
 					// encrypt token before sending to user
 					const encTok = encrypt(token);
+
+
+					//---------------- log -------------------//
+					logger.userRelatedLog(user._id,1);
 
 					res.status(200).send({ resetTok: encTok })
 				}

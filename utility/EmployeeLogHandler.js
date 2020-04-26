@@ -33,7 +33,7 @@ exports.handleEmployeeLog = (io, fingerprintId) => {
 
 				reject({
 					status: 404,
-					message: `Empoyee not registered!`
+					message: `Employee not registered!`
 				});
 			}
 

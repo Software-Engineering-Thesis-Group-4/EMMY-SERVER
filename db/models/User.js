@@ -28,6 +28,16 @@ const UserSchema = Schema({
       type: Boolean,
       required: true,
       default: false
+	},
+	photo: {
+		type: String,
+		default: null,
+   },
+   
+
+   emp: {
+      type: Schema.Types.ObjectId,
+      ref: 'Employee'
    }
 });
 

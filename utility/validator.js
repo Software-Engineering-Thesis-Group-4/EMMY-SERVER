@@ -1,102 +1,91 @@
 const { body, validationResult } = require('express-validator')
 
 //Prevent Reflected XSS attack: request-based attack
-const loginValidationRules = () => {
-	return [
-		body('email')
-			.trim().not().isEmpty().withMessage('Email cannot be empty')
-			.isEmail().withMessage('Invalid email format'),
-		//FIX escape(does not work properly) unescape(),
-		body('password')
-			.not().isEmpty().withMessage('Password cannot be empty')
-			.isAlphanumeric().withMessage('letters and numbers only')
-	]
-}
+exports.validateLogin = [
+	body('email').trim().escape()
+		.notEmpty()
+		.isEmail(),
+
+	body('password').escape()
+		.notEmpty().isAlphanumeric()
+]
 
 // Prevent Stored/Database/Persistent XSS attack
-const registerValidationRules = () => {
-	return [
-		body('email')
-			.trim().not().isEmpty().withMessage('Email cannot be empty')
-			.isEmail().withMessage('Invalid Email Format'),
-		//FIX escape(does not work properly) unescape(),
+exports.registerValidationRules = [
+	body('email').trim().escape()
+		.notEmpty()
+		.withMessage('Email cannot be empty.')
 
-		body('firstname')
-			.trim().not().isEmpty().withMessage('Firstname cannot be empty')
-			.isAlpha().withMessage('Invalid Firstname'),
+		.isEmail()
+		.withMessage('Invalid Email Format.'),
 
-		body('lastname')
-			.trim().not().isEmpty().withMessage('Lastname cannot be empty')
-			.isAlpha().withMessage('Invalid Lastname'),
+	body('firstname').trim().escape()
+		.notEmpty()
+		.withMessage('Firstname cannot be empty.')
 
-		body('username')
-			.trim().not().isEmpty().withMessage('username cannot be empty')
-			.isAlphanumeric().withMessage('letters and numbers only'),
+		.isAlpha()
+		.withMessage('Invalid Firstname.'),
 
-		body('password')
-			.not().isEmpty().withMessage('Password cannot be empty')
-			.isAlphanumeric().withMessage('letters and numbers only')
-			.isLength({ min: 6 }).withMessage('Password must be a minimum of 6 characters'),
+	body('lastname').trim().escape()
+		.notEmpty()
+		.withMessage('Lastname cannot be empty.')
 
-		body('confirmPassword')
-			.not().isEmpty().withMessage('ConfirmPassword cannot be empty')
-			.isAlphanumeric().withMessage('letters and numbers only')
-			.isLength({ min: 6 }).withMessage('ConfirmPassword must be a minimum of 6 characters')
-			.equals('password').withMessage('ConfirmPassword value must be equal to the initial Password value'),
+		.isAlpha()
+		.withMessage('Invalid Lastname.'),
 
-		body('isAdmin')
-			.trim().not().isEmpty().withMessage('Cannot be empty')
-			.isBoolean().withMessage('Must be a boolean value')
-	]
-}
+	body('username').trim().escape()
+		.notEmpty()
+		.withMessage('Username cannot be empty.')
+
+		.isAlphanumeric()
+		.withMessage('Username can only contain numbers or letters'),
+
+	body('password').escape()
+		.notEmpty()
+		.withMessage('Password cannot be empty')
+
+		.isAlphanumeric()
+		.withMessage('Password must contain numbers or letters')
+
+		.isLength({ min: 6 })
+		.withMessage('Password must be a minimum of 6 characters'),
+
+	body('confirmPassword').escape()
+		.notEmpty()
+		.withMessage('Confirm password cannot be empty'),
+
+	body('isAdmin').trim()
+		.notEmpty()
+		.withMessage('Account role cannot be empty.')
+
+		.isBoolean()
+		.withMessage('Account role must be boolean.'),
+]
 
 // Prevent BOTH Reflected XSS and Stored/Persistent XSS attack
-const resetPassValidationRules = () => {
-	return [
-		// validate input code from sent email. 'Code' possibly alphanumeric only
-		body('email')
-			.trim().not().isEmpty().withMessage('Email cannot be empty')
-			.isEmail().withMessage('Invalid email input'),
-	]
-}
+exports.resetPassValidationRules = [
+	// validate input code from sent email. 'Code' possibly alphanumeric only
+	body('email')
+		.trim().notEmpty().withMessage('Email cannot be empty')
+		.isEmail().withMessage('Invalid email input'),
+]
 
-const resetKeyValidationRules = () => {
-	return [
-		// validate input code from sent email. 'Code' possibly alphanumeric only
-		body('key')
-			.trim().not().isEmpty().withMessage('Key cannot be empty')
-			.isEmail().withMessage('Invalid key data'),
-	]
-}
+exports.resetKeyValidationRules = [
+	// validate input code from sent email. 'Code' possibly alphanumeric only
+	body('key')
+		.trim().notEmpty().withMessage('Key cannot be empty')
+		.isEmail().withMessage('Invalid key data'),
+]
 
-// TODO
-//Still not sure how to implement verification
-// const verifyValidationRules = () => {
-//   return [
 
-// validate then sanitize
-// expected data to be received: password, 'code', email
+exports.validate = (req, res, next) => {
+	let errors = validationResult(req);
 
-//   ]
-// }
-
-const validate = (req, res, next) => {
-	const errors = validationResult(req)
-	if (errors.isEmpty()) {
+	if (!errors.isEmpty()) {
 		return next();
+	} else {
+		let errMessages = errors.errors.map(err => err.msg);
+		return res.status(422).json(errMessages);
 	}
-	const extractedErrors = []
-	errors.array().map(err => extractedErrors.push({ [err.param]: err.msg }))
 
-	return res.status(422).json({
-		errors: extractedErrors,
-	})
-}
-
-module.exports = {
-	loginValidationRules,
-	registerValidationRules,
-	resetPassValidationRules,
-	resetKeyValidationRules,
-	validate,
 }

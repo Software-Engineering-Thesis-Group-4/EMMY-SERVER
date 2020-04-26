@@ -30,6 +30,7 @@
 		"moment": "^2.24.0",
 		"mongodb": "^3.3.4",
 		"mongoose": "^5.7.12",
+		"mongoose-autopopulate": "^0.12.2",
 		"morgan": "~1.9.1",
 		"node-cron": "^2.0.3",
 		"nodemailer": "^6.4.5",

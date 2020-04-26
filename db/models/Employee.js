@@ -63,6 +63,7 @@ const EmployeeSchema = Schema({
       type: LatestLogSchema,
       default: null,
    },
+
 });
 
 const Employee = mongoose.model('Employee', EmployeeSchema);

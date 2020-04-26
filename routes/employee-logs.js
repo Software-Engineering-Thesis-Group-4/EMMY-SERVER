@@ -18,11 +18,13 @@ module.exports = (io) => {
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.get('/', async (req, res) => {
+		
 		try {
 			let employeeLogs = await EmployeeLog.find({}).populate('employeeRef');
 			return res.status(200).send(employeeLogs);
 
 		} catch (error) {
+			console.log(error)
 			return res.status(500).send('Server error. could not retrieve employee logs.');
 		}
 
@@ -63,11 +65,14 @@ module.exports = (io) => {
 		try {
 			let id = req.params.id;
 
-			await EmployeeLog.findByIdAndUpdate(
-				id,
-				{ $set: { deleted: true } },
-				{ new: true }
-			);
+			let log = await EmployeeLog.findById(id);
+
+			if(!log) {
+				return res.status(404).send('Log not found.');
+			}
+
+			log.deleted = true;
+			log.save();
 
 			res.status(200);
 		} catch (error) {

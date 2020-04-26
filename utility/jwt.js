@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+require('colors');
 
 // import model
 const { RefreshToken } = require("../db/models/RefreshToken");
@@ -21,10 +22,11 @@ exports.createRefreshToken = async (payload) => {
 		// If token already exists, delete token to avoid duplicate
 		let tokenExists = await RefreshToken.findOneAndDelete({ email: payload.email });
 
-		// confirm is refresh token is deleted
+		// confirm if refresh token is deleted
 		if (tokenExists) {
-			console.log('Deleted Refresh token');
+			console.log('Already Exists. Deleted refresh token'.yellow);
 		}
+
 
 		// create a new refresh token
 		let db_refreshToken = new RefreshToken({
@@ -33,7 +35,7 @@ exports.createRefreshToken = async (payload) => {
 		});
 
 		db_refreshToken.save();
-		console.log('Succesfully saved refresh token');
+		console.log('Succesfully saved new refresh token'.green);
 
 	} catch (error) {
 		console.error(error);
@@ -45,12 +47,12 @@ exports.removeRefreshToken = async (email) => {
 	try {
 		let deletedRT = await RefreshToken.findOneAndDelete({ email });
 
-		if(deletedRT) {
-			console.log('Succesfully removed/deleted refresh token');
+		if (deletedRT) {
+			console.log('Succesfully removed/deleted refresh token'.yellow);
 		}
 
-	} catch (error) {
-		console.log('Failed to removed/delete refresh token');
+	} catch ({ error }) {
+		console.log('Failed to removed/delete refresh token'.red);
 		throw new Error(error.message)
 	}
 }
