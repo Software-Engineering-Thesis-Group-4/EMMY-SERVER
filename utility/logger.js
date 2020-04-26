@@ -52,8 +52,8 @@ exports.employeeRelatedLog = (userId,log,emp) => {
             case 4  : audLog = `Deleted Employee ${emp}`    ; break;
             case 5  : audLog = `Updated Employee ${emp}`    ; break;
             case 6  : audLog = `Sent email to ${emp}`       ; break;
-            case 5  : audLog = 'Made database backup'       ; break;
-            case 6  : audLog = 'Restored database backup'   ; break;
+            case 7  : audLog = 'Made database backup'       ; break;
+            case 8  : audLog = 'Restored database backup'   ; break;
             default : audLog = 'Unknown log';                
         }
 
