@@ -24,16 +24,6 @@ const { validationResult } = require('express-validator');
 const ERR_SERVER_ERROR = "Internal Server Error.";
 const ERR_DUPLICATE = "Already Exists."
 
-/*/-----------------------------------------------------------------------------------------//
-			case 0  : audLog = 'Recently changed account settings'
-            case 1  : audLog = 'Changed password email sent'         
-            case 2  : audLog = 'Recently changed password'           
-
-            // admin privileges
-            case 3  : audLog = `Added a new user ${user}`                      
-            case 4  : audLog = `Deleted user ${user}`                          
-            case 5  : audLog = `Recently changed account settings for ${user}` 
-//-----------------------------------------------------------------------------------------/*/
 
 module.exports = (io) => {
 
@@ -78,9 +68,11 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/enroll', registerValidationRules, async (req, res) => {
 		try {
+
 			const errors = validationResult(req);
 
-			const userId = req.body.userId;
+			// extract logged in user information
+			const { userId, userUsername } = req.body;
 
 			if(!errors.isEmpty()) {
 				return res.status(400).send(errors.errors);
@@ -113,11 +105,16 @@ module.exports = (io) => {
 			await newUser.save();
 
 			//---------------- log -------------------//
-			logger.userRelatedLog(userId,3,username);
+			logger.userRelatedLog(userId,userUsername,4,username);
 
 			return res.status(200).send(`Successfully registered a new user (${newUser.email})`);
 
 		} catch (error) {
+
+			// error log
+			const { userId, userUsername } = req.body;
+			logger.userRelatedLog(userId,userUsername,4,undefined,error.message);
+
 			console.log(error);
 			return res.status(500).send(ERR_SERVER_ERROR);
 		}
@@ -206,7 +203,8 @@ module.exports = (io) => {
 
 
 					//---------------- log -------------------//
-					logger.userRelatedLog(user._id,1);
+					logger.serverRelatedLog(user.email,1);
+
 
 					res.status(200).send({ resetTok: encTok })
 				}
@@ -214,6 +212,11 @@ module.exports = (io) => {
 				res.status(502).send('Please check your internet connection!');
 			}
 		} catch (error) {
+
+			// DECRYPT EMAIL FIRST 
+			const email = req.body.email;
+			//---------------- log -------------------//
+			logger.serverRelatedLog(email,1,error.message);
 			console.log(error)
 			res.status(500).send('Error on server!')
 		}
@@ -235,8 +238,8 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/reset-password-key', resetKeyValidationRules, validate, async (req, res) => {
 		try {
-			const { key, encTok } = req.body;
-			const decTok = decrypter(encTok);
+			const { key, resetTok, userId } = req.body;
+			const decTok = decrypter(resetTok);
 
 			jwt.verify(decTok, process.env.JWT_KEY, async (err, payload) => {
 
@@ -244,8 +247,10 @@ module.exports = (io) => {
 					res.status(401).send('Invalid');
 				} else {
 					if (key === decTok.substring(decTok.length - 7)) {
+
 						// if token is not expired and key is correct, proceed to change password page
-						res.status(200).send({ user: payload.email })
+						res.status(200).send({ user: payload.email });
+
 					} else {
 						res.status(400).send('Invalid key');
 					}

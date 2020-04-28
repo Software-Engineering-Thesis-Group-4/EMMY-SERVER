@@ -9,6 +9,7 @@ const { csvImport } = require('../utility/importEmp');
 const aes = require('../utility/aes');
 const exportDb = require('../utility/export');
 const dbBackup = require('../utility/dbBackup');
+const logger = require('../utility/logger');
 
 // import models
 const { Employee } = require('../db/models/Employee');
@@ -31,15 +32,26 @@ module.exports = (io) => {
 		
 		try {
 			
+			const { userId, userUsername } = req.body;
+
 			const downloadPath = path.join(__dirname+'/../downloadables/backup.zip');
 			const noErr = await dbBackup.zipBackup();
 
-			noErr ?
-				res.download(downloadPath) :
-				res.status(500).send('Error on downloading zip file');
+			if(noErr) {
 
+				//---------------- log -------------------//
+				logger.employeeRelatedLog(userId,userUsername,7);
+				res.download(downloadPath);
+			} else {
+				//---------------- log -------------------//
+				logger.employeeRelatedLog(userId,userUsername,7,null,'Error on downloading zip file');
+				res.status(500).send('Error on downloading zip file');
+			}
 		} catch (err) {
 
+			//---------------- log -------------------//
+			logger.employeeRelatedLog(userId,userUsername,7,null,err.message);
+				
 			console.log(err);
 			res.status(500).send('Error on server');
 
@@ -61,6 +73,8 @@ module.exports = (io) => {
 	router.post('/db-backup-restore', async (req, res) => {
 
 		try {
+
+			const { userId, userUsername } = req.body;
 
 			if (!req.files) {
 
@@ -106,14 +120,26 @@ module.exports = (io) => {
 
 					const isTrue = await dbBackup.dbRestore();
 
-					isTrue === true ?
-						res.status(200).send('Successfully restored database backup') :
-						res.status(500).send('Error on server');
+					if(isTrue){
 
+						//---------------- log -------------------//
+						logger.employeeRelatedLog(userId,userUsername,8);
+						res.status(200).send('Successfully restored database backup');
+						
+					} else {
+						//---------------- log -------------------//
+						logger.employeeRelatedLog(userId,userUsername,8,null,'Error restoring database backup');
+						res.status(500).send('Error on server');
+					}
 
 				}
 			}
 		} catch (err) {
+
+			const { userId, userUsername } = req.body;
+			//---------------- log -------------------//
+			logger.employeeRelatedLog(userId,userUsername,8,null,err.message);
+						
 			console.log(err)
 			res.status(500).send('Error on server');
 		}
@@ -155,7 +181,12 @@ module.exports = (io) => {
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/enroll', async (req, res) => {
+
 		try {
+
+			const { userId, userUsername } = req.body;
+			
+
 			let {
 				employee_id,
 				firstname,
@@ -184,9 +215,17 @@ module.exports = (io) => {
 
 			await newEmployee.save();
 
+			//---------------- log -------------------//
+			logger.employeeRelatedLog(userId,userUsername,3,`${firstname} ${lastname}`);
+			
 			return res.status(201).send("Successfully registered a new employee.")
 
 		} catch (error) {
+
+			const { userId, userUsername } = req.body;
+			//---------------- log -------------------//
+			logger.employeeRelatedLog(userId,userUsername,3,undefined,error.message);
+			
 			console.log(error.message);
 			return res.status(500).send(`500 Internal Server Error. ${error.message}`);
 		}
@@ -208,6 +247,9 @@ module.exports = (io) => {
 	  
 		
 		try{
+
+			const { userId, userUsername } = req.body;
+
 			if(!req.files){
 				res.status(204).send('Not selected a file or file is empty! Please select a file');
 			} else {
@@ -225,12 +267,28 @@ module.exports = (io) => {
 					const stringData 	= replaceString(rawData.toString(), ('\r\n'), ',');
 					const isValid 		= await csvImport(stringData);
 
-					isValid.isErr ? 
-					res.status(422).send({ message: isValid.message, duplicateValue: isValid.duplicateValue }) :
-					res.status(200).send(isValid.message);
+					if(isValid.isErr){
+						//---------------- log -------------------//
+						logger.employeeRelatedLog(userId,userUsername,0,null, isValid.message);
+			
+						res.status(422).send({ message: isValid.message, duplicateValue: isValid.duplicateValue });
+					
+					} else {
+
+						//---------------- log -------------------//
+						logger.employeeRelatedLog(userId,userUsername,0);
+			
+						res.status(200).send(isValid.message);
+					}
 				}		
 			}
 		} catch (error) {
+
+			const { userId, userUsername } = req.body;
+
+			//---------------- log -------------------//
+			logger.employeeRelatedLog(userId,userUsername,0,null, error.message);
+			
 			console.log(error)
 			res.status(500).send('Error on server');
 		}    
@@ -285,17 +343,27 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.delete('/:id', async (req, res) => {
 		try {
+
+			
+			const { userId, userUsername } = req.body;
 			let id = req.params.id;
 
-			await Employee.findByIdAndUpdate(
+			const emp = await Employee.findByIdAndUpdate(
 				id,
 				{ $set: { terminated: true } },
 				{ new: true }
 			);
 
-			res.status(200);
+			//---------------- log -------------------//
+			logger.employeeRelatedLog(userId,userUsername,4,emp);
+			
+			res.status(200).send('Successfully deleted employee');
 
 		} catch (error) {
+
+			const { userId, userUsername } = req.body;
+			//---------------- log -------------------//
+			logger.employeeRelatedLog(userId,userUsername,4,null, error.message);
 			res.status(500).send('Server error. Unable to delete employee.');
 		}
 	});

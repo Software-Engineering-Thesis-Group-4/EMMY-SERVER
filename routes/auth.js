@@ -8,6 +8,7 @@ const { encrypt, decrypter } = require('../utility/aes');
 const { createToken, createRefreshToken, removeRefreshToken } = require('../utility/jwt');
 const { validateLogin } = require('../utility/validator');
 const { body, validationResult } = require('express-validator');
+const logger = require('../utility/logger');
 
 // import models
 const { User } = require("../db/models/User");
@@ -34,6 +35,7 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/login', validateLogin, async (req, res) => {
 		try {
+
 
 			// data sanitization
 			let errors = validationResult(req);
@@ -65,6 +67,13 @@ module.exports = (io) => {
 				// create access token
 				const access_token = createToken( {email} , process.env.TOKEN_DURATION);
 
+
+				
+				//---------------- log -------------------//
+				logger.userRelatedLog(user._id,user.username,2);
+
+
+
 				// return user credentials and access token
 				console.log('User Authenticated. Login Success'.green);
 				return res.status(200).send({
@@ -75,6 +84,7 @@ module.exports = (io) => {
 					lastname : user.lastname,
 					isAdmin  : user.isAdmin,
 					photo    : user.photo,
+					userId   : user._id
 				});
 
 			} else {
@@ -83,6 +93,11 @@ module.exports = (io) => {
 			}
 
 		} catch (error) {
+			
+			const user = await User.findOne({ email: req.body.email });
+			//---------------- log -------------------//
+			logger.userRelatedLog(user._id,user.username,2,null,error.message);
+
 			console.log(error.message);
 			return res.status(500).send(ERR_SERVER_ERROR);
 		}
@@ -198,6 +213,8 @@ module.exports = (io) => {
 		try {
 			const errors = validationResult(req);
 
+			const {userUsername, userId} = req.body;
+
 			if(!errors.isEmpty()) {
 				console.error('Invalid Credential Format.'.red);
 				return res.sendStatus(400);
@@ -205,9 +222,18 @@ module.exports = (io) => {
 
 			removeRefreshToken(req.body.email);
 			
+			//---------------- log -------------------//
+			logger.userRelatedLog(userId,userUsername,3);
+
+
 			return res.sendStatus(200);
 			
 		} catch (error) {
+
+			const {userUsername, userId} = req.body;
+			//---------------- log -------------------//
+			logger.userRelatedLog(userId,userUsername,3,null,error.message);
+
 			console.log(error.message);
 			return res.status(500).send(ERR_SERVER_ERROR);
 		}

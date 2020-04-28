@@ -72,20 +72,28 @@ module.exports = (io) => {
 	});
 
 
-////////////////////////////// FOR TESTING ONLY ////////////////////////////////////
+////////////////////////////// FOR PURPOSES TESTING ONLY ////////////////////////////////////
 	router.post('/add-log', async (req,res) => {
 
+		try{
 		const {userID, log} = req.body;
 		console.log({userID, log})
 		const newLog = new AuditLog({
 			message: log.trim(),
-			user: null
+			user: userID
 
 		})
 		
 		newLog.save();
 		res.send("done")
-	})
+		res.send("done")
+		} catch (err) {
+			console.log(err.message)
+			const {userID, log} = req.body;	
+		console.log({userID, log})
+		
+	}})
 
 	return router;
 }
+
