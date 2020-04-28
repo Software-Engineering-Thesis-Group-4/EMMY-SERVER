@@ -41,11 +41,11 @@ module.exports = (io) => {
 	router.post('/', async (req, res) => {
 		try {
 			const fingerprintNumber = req.body.enrollNumber;
-			let response = await handleEmployeeLog(io, fingerprintNumber);
-			return res.status(response.status).send(response.message);
-
-		} catch ({ status, message }) {
+			let { status, message } = await handleEmployeeLog(io, fingerprintNumber);
 			return res.status(status).send(message);
+
+		} catch (error) {
+			return res.status(error.status).send(error.message);
 		}
 	})
 
