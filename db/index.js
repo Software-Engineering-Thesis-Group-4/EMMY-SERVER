@@ -17,7 +17,8 @@ exports.createDBConnection = async (db_name, port) => {
 
 	} catch (error) {
 		console.clear();
-		return error.message;
+		console.log('Failed to initialize connection from MongoDB'.bgRed);
+		throw new Error(error);
 	}
 }
 

@@ -1,0 +1,27 @@
+<svg id="user_Avatar" data-name="user Avatar" xmlns="http://www.w3.org/2000/svg" width="30.239" height="30.239" viewBox="0 0 30.239 30.239">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #66a9df;
+      }
+
+      .cls-2 {
+        fill: #4f84cf;
+      }
+
+      .cls-3 {
+        fill: #d6f3fe;
+      }
+
+      .cls-4 {
+        fill: #bdecfc;
+      }
+    </style>
+  </defs>
+  <path id="Path_10" data-name="Path 10" class="cls-1" d="M15.119,30.239A15.119,15.119,0,1,1,30.239,15.119,15.117,15.117,0,0,1,15.119,30.239Zm0,0"/>
+  <path id="Path_11" data-name="Path 11" class="cls-2" d="M256,0V30.239a14.874,14.874,0,0,0,14.619-15.119A14.867,14.867,0,0,0,256,0Zm0,0" transform="translate(-240.381 0)"/>
+  <path id="Path_12" data-name="Path 12" class="cls-3" d="M70.354,316a14.52,14.52,0,0,0-11.772,5.88,15.7,15.7,0,0,0,23.652-.127C80.732,320.323,77.351,316,70.354,316Zm0,0" transform="translate(-55.237 -296.954)"/>
+  <path id="Path_13" data-name="Path 13" class="cls-4" d="M267.378,321.753A14.581,14.581,0,0,1,256,327.193V316C262.7,316,265.94,320.323,267.378,321.753Zm0,0" transform="translate(-240.381 -296.954)"/>
+  <path id="Path_14" data-name="Path 14" class="cls-3" d="M171.14,72.992a5.145,5.145,0,0,1-5.14-5.14V66.14a5.14,5.14,0,1,1,10.279,0v1.713A5.146,5.146,0,0,1,171.14,72.992Zm0,0" transform="translate(-156.02 -57.516)"/>
+  <path id="Path_15" data-name="Path 15" class="cls-4" d="M256,61V72.992a5.145,5.145,0,0,0,5.14-5.14V66.14A5.145,5.145,0,0,0,256,61Zm0,0" transform="translate(-240.774 -57.516)"/>
+</svg>
