@@ -54,9 +54,9 @@ exports.employeeRelatedLog = (logerId,logUsername,log,emp,errMessage) => {
 
      /*/======================================//
         
-        DONE LOGS : 5/8
+        DONE LOGS : 6/8
         
-        0,3,4,7,8
+        0,3,4,6,7,8
 
     //======================================/*/
 
@@ -71,12 +71,12 @@ exports.employeeRelatedLog = (logerId,logUsername,log,emp,errMessage) => {
             case 2  : audLog = `${logUsername} exported PDF file.`          ; break;
             
             // admin privileges 
-            case 3  : audLog = `${logUsername} added Employee ${emp}.`              ; break;
-            case 4  : audLog = `${logUsername} deleted Employee (marks as terminated) ${emp}.`            ; break;
-            case 5  : audLog = `${logUsername} updated Employee ${emp}.`            ; break;
-            case 6  : audLog = `${logUsername} sent email to ${emp}.`               ; break;
-            case 7  : audLog = `${logUsername} downloaded database backup.`         ; break;
-            case 8  : audLog = `${logUsername} restored database backup.`           ; break;
+            case 3  : audLog = `${logUsername} added Employee ${emp}.`                          ; break;
+            case 4  : audLog = `${logUsername} deleted Employee (marks as terminated) ${emp}.`  ; break;
+            case 5  : audLog = `${logUsername} updated Employee ${emp}.`                        ; break;
+            case 6  : audLog = `${logUsername} sent an email to ${emp}.`                        ; break;
+            case 7  : audLog = `${logUsername} downloaded database backup.`                     ; break;
+            case 8  : audLog = `${logUsername} restored database backup.`                       ; break;
             default : audLog = 'Unknown employee related log.';                
         }
 
@@ -121,8 +121,9 @@ exports.serverRelatedLog = (logMail,log,errMessage) => {
 
      /*/======================================//
         
-        DONE LOGS : 1/2
-        1
+        DONE LOGS : 2/2
+        
+        DONE
 
     //======================================/*/
 

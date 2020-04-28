@@ -134,30 +134,39 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/email-notif', async (req, res) => {
 
+		try{
 
-		const { emailBod, sendToEmail, token } = req.body;
-		mailer.sendEmailNotif('mokiong1427@gmail.com', 'Moki@gmail.com', 'hi po');
-		res.send('hi')
-		// // jwt.verify(token, process.env.JWT_KEY, async (err, payload) => {
-		// // 	if(err){
-		// // 		res.status(401).send('Unauthorized access')
-		// // 	}
+			// user credentials
+			const { userId, userUsername} = req.body;
 
-		// // 	// look for email in db to get username
-		// // 	const user = await User.find({ ema})
+			const { emailBod, empEmail } = req.body;
 
-		// // })
+			const netStatus = await isOnline();
 
-		// const user = await User.findOne({email : 'mokiasdong1427@gmail.com'})
-		// if(user){
-		// 	console.log('hi')
-		// }
-		// console.log(user)
-		// res.send(user)
+			if(netStatus){
+
+				mailer.sendEmailNotif(empEmail, userUsername, emailBod);
+			
+				logger.employeeRelatedLog(userId,userUsername,6,empEmail);
+				res.status(200).send({ resetTok: encTok });
+
+			}
 
 
-		// mailer.sendEmailNotif(sendToEmail, 'michael', emailBod)
-		// res.send('hi');
+			logger.employeeRelatedLog(userId,userUsername,6,empEmail,'CONNECTION ERROR: Check internet connection!');
+				
+			res.status(502).send('Please check your internet connection!');
+			
+
+		} catch (err) {
+			
+			const { userId, userUsername} = req.body;
+			logger.employeeRelatedLog(userId,userUsername,6,undefined,err.message);
+		
+			console.log(err);
+			return res.status(500).send(ERR_SERVER_ERROR);
+		}
+		
 	})
 
 
@@ -206,7 +215,7 @@ module.exports = (io) => {
 					logger.serverRelatedLog(user.email,1);
 
 
-					res.status(200).send({ resetTok: encTok })
+					res.status(200).send({ resetTok: encTok });
 				}
 			} else {
 				res.status(502).send('Please check your internet connection!');
