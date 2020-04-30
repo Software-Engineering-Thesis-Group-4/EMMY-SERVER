@@ -67,13 +67,13 @@ module.exports = (io) => {
 				// return user credentials and access token
 				console.log('User Authenticated. Login Success'.green);
 				return res.status(200).send({
-					token    : access_token,
-					email    : user.email,
-					username : user.username,
+					token: access_token,
+					email: user.email,
+					username: user.username,
 					firstname: user.firstname,
-					lastname : user.lastname,
-					isAdmin  : user.isAdmin,
-					photo    : user.photo,
+					lastname: user.lastname,
+					isAdmin: user.isAdmin,
+					photo: user.photo,
 				});
 
 			} else {
@@ -148,7 +148,15 @@ module.exports = (io) => {
 							}
 
 							// validate refresh token
-							jwt.verify(refresh_token.token, process.env.REFRESH_KEY, (err) => {
+							jwt.verify(refresh_token.token, process.env.REFRESH_KEY, (err, decoded) => {
+
+								if (!err) {
+									console.log('Refresh Token Valid.'.green);
+									let token = createToken(email, process.env.TOKEN_DURATION);
+
+									console.log('Access Token Renewed'.green)
+									return res.status(200).send(token);
+								}
 
 								// refresh token expired. return error
 								if (err.name === 'TokenExpiredError') {
@@ -162,12 +170,6 @@ module.exports = (io) => {
 									console.error('Invalid Refresh Token'.bgRed.black);
 									return res.status(401).send(ERR_UNAUTHORIZED);
 								}
-
-								console.log('Refresh Token Valid.'.green);
-								let token = createToken(email, process.env.TOKEN_DURATION);
-
-								console.log('Access Token Renewed'.green)
-								return res.status(200).send(token);
 							});
 						});
 					}
@@ -197,15 +199,15 @@ module.exports = (io) => {
 		try {
 			const errors = validationResult(req);
 
-			if(!errors.isEmpty()) {
+			if (!errors.isEmpty()) {
 				console.error('Invalid Credential Format.'.red);
 				return res.sendStatus(400);
 			}
 
 			removeRefreshToken(req.body.email);
-			
+
 			return res.sendStatus(200);
-			
+
 		} catch (error) {
 			console.log(error.message);
 			return res.status(500).send(ERR_SERVER_ERROR);
