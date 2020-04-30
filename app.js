@@ -32,8 +32,8 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(express.static(path.join(__dirname, "client"))); // the directory for Vue
 app.use(cors());
 app.use(helmet());
-app.use(fileUpload((process.env.NODE_ENV === 'development ' ?
-	{ debug: true } : { debug: false })
+app.use(fileUpload(/* (process.env.NODE_ENV === 'development ' ?
+	{ debug: true } : { debug: false }) */
 ));
 
 app.use(RateLimit({
