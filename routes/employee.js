@@ -35,17 +35,17 @@ module.exports = (io) => {
 			const { userId, userUsername } = req.body;
 
 			const downloadPath = path.join(__dirname+'/../downloadables/backup.zip');
-			const noErr = await dbBackup.zipBackup();
+			const isErr = await dbBackup.zipBackup();
 
-			if(noErr) {
+			if(isErr.value) {
 
+				//---------------- log -------------------//
+				logger.employeeRelatedLog(userId,userUsername,7,null,isErr.message);
+				res.status(500).send('Error on downloading zip file');	
+			} else {
 				//---------------- log -------------------//
 				logger.employeeRelatedLog(userId,userUsername,7);
 				res.download(downloadPath);
-			} else {
-				//---------------- log -------------------//
-				logger.employeeRelatedLog(userId,userUsername,7,null,'Error on downloading zip file');
-				res.status(500).send('Error on downloading zip file');
 			}
 		} catch (err) {
 
@@ -118,18 +118,19 @@ module.exports = (io) => {
 
 				} else {
 
-					const isTrue = await dbBackup.dbRestore();
+					const isErr = await dbBackup.dbRestore();
 
-					if(isTrue){
+					if(isErr.value){
 
+						//---------------- log -------------------//
+						logger.employeeRelatedLog(userId,userUsername,8,null,isErr.message);
+						res.status(500).send('Error restoring database backup');
+						
+					} else {
 						//---------------- log -------------------//
 						logger.employeeRelatedLog(userId,userUsername,8);
 						res.status(200).send('Successfully restored database backup');
 						
-					} else {
-						//---------------- log -------------------//
-						logger.employeeRelatedLog(userId,userUsername,8,null,'Error restoring database backup');
-						res.status(500).send('Error on server');
 					}
 
 				}
@@ -354,10 +355,16 @@ module.exports = (io) => {
 				{ new: true }
 			);
 
-			//---------------- log -------------------//
-			logger.employeeRelatedLog(userId,userUsername,4,emp);
+			if(emp){
+				//---------------- log -------------------//
+				logger.employeeRelatedLog(userId,userUsername,4,`${emp.firstName} ${emp.lastName}`);
+				res.status(200).send('Successfully deleted employee');
+			} else {
+				//---------------- log -------------------//
+				logger.employeeRelatedLog(userId,userUsername,4,`${emp.firstName} ${emp.lastName}`,'Error in deleting employee');
+				res.send(500).send('Error in deleting employee');
+			}
 			
-			res.status(200).send('Successfully deleted employee');
 
 		} catch (error) {
 

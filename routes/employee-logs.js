@@ -6,6 +6,7 @@ const { EmployeeLog } = require('../db/models/EmployeeLog');
 
 // import utilities
 const { handleEmployeeLog } = require('../utility/EmployeeLogHandler.js');
+const logger = require('../utility/logger');
 
 module.exports = (io) => {
 	/*----------------------------------------------------------------------------------------------------------------------
@@ -61,24 +62,85 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.delete('/:id', async (req, res) => {
+	router.delete('delete/:id', async (req, res) => {
+
 		try {
+
+			//user credentials
+			const { userUsername,userId } = req.body;
+
 			let id = req.params.id;
 
-			let log = await EmployeeLog.findById(id);
+			const empLog = await EmployeeLog.findByIdAndUpdate(
+				id,
+				{ $set: { deleted: true } },
+				{ new: true }
+			);
 
-			if(!log) {
+			if(!empLog) {
+				logger.employeelogsRelatedLog(userId,userUsername,0,undefined,'Log not found.');
 				return res.status(404).send('Log not found.');
 			}
 
-			log.deleted = true;
-			log.save();
-
+			
+			logger.employeelogsRelatedLog(userId,userUsername,0,empLog._id);
 			res.status(200);
+
 		} catch (error) {
+			
+			const { userUsername,userId } = req.body;
+			logger.employeelogsRelatedLog(userId,userUsername,1,undefined,error.message);
+
+			console.log(error.message);
 			res.status(500).send('Server error. Unable to delete employee log.');
 		}
 	})
+
+
+	/*----------------------------------------------------------------------------------------------------------------------
+	-> POST /api/employeelogs/edit/id:
+   
+	Description: 
+	Fingerprint scanner endpoint 
+
+	Author:
+	Michael Ong
+	----------------------------------------------------------------------------------------------------------------------*/
+	router.post('/edit/:id', async (req, res) => {
+
+		try {
+			
+			//user credentials
+			const { userUsername,userId } = req.body;
+
+			const logId = req.params.id;
+			const { emotionIn,emotionOut } = req.body;
+
+			const empLog = await EmployeeLog.findByIdAndUpdate(
+				logId,
+				{ $set: { emotionIn, emotionOut} },
+				{ new: true }
+			);
+
+			if(!empLog) {
+				logger.employeelogsRelatedLog(userId,userUsername,1,undefined,'Log not found');
+				return res.status(404).send('Log not found.');
+			}
+
+
+			logger.employeelogsRelatedLog(userId,userUsername,1,empLog._id);
+			res.status(200).send('Successfully edited employee log');
+
+		} catch (error) {
+
+			const { userUsername,userId } = req.body;
+			logger.employeelogsRelatedLog(userId,userUsername,1,undefined,error.message);
+
+			res.status(500).send(error.message);
+		}
+	});
+
+
 
 
 	/*----------------------------------------------------------------------------------------------------------------------

@@ -1,9 +1,9 @@
-const express 	= require('express');
-const router 	= express.Router();
+const router 	=  require('express').Router();
 
-// import models
-const { AuditLog } 	= require('../db/models/AuditLog');
-const { User } 		= require('../db/models/User');
+const dbQuery = require('../utility/dbQueries');
+
+
+
 
 
 module.exports = (io) => {
@@ -21,25 +21,28 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.get('/', async (req, res) => {
 
+	
 		try {
 
 			const userId = req.body.userId
-			const auditLogs = await AuditLog.find({ user : userId }).populate({
-												path	: 'user' , 
-												select	: {password: 0}
-											});
+			const auditLogs = await dbQuery.findAllByFieldPopulate(
+				`AuditLog`,
+				{ user : "5eaa786ef7b22714a0dde94b" },
+				{ path	: 'user' , select	: {password: 0}
+			});
 
 
-			return res.status(200).send(auditLogs);
+			if (auditLogs.value){
+				return res.send(500).send(auditLogs.message)
+			}
+
+			return res.status(200).send(auditLogs.output);
 
 		} catch (error) {
 			console.error(error);
 			return res.status(500).send('Server error. A problem occured when retrieving the audit logs');
 		}
 
-
-
-		
 	});
     
 
@@ -55,15 +58,20 @@ module.exports = (io) => {
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.get('/admin', async (req, res) => {
+		
 		try {
 
-			// get all employees
-			const auditLogs = await AuditLog.find().populate({
-											path	: 'user' , 
-											select	: {password: 0}
-										});
-										
-			return res.status(200).send(auditLogs);
+			
+			let auditLogs = await dbQuery.findAllPopulate(`AuditLog`,{
+												path	: 'user' , 
+												select	: {password: 0}
+											});
+			
+			if (auditLogs.value){
+				return res.send(500).send(auditLogs.message)
+			}
+
+			return res.status(200).send(auditLogs.output);
 
 		} catch (error) {
 			console.error(error);
@@ -79,20 +87,19 @@ module.exports = (io) => {
 		const {userID, log} = req.body;
 		console.log({userID, log})
 		const newLog = new AuditLog({
-			message: log.trim(),
-			user: userID
-
+			description: log.trim(),
+			user: userID,
+			action: 'creae'
 		})
 		
 		newLog.save();
 		res.send("done")
-		res.send("done")
 		} catch (err) {
 			console.log(err.message)
 			const {userID, log} = req.body;	
-		console.log({userID, log})
-		
-	}})
+			console.log({userID, log})
+		}
+	})
 
 	return router;
 }

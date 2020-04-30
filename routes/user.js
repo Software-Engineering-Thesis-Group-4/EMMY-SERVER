@@ -140,24 +140,28 @@ module.exports = (io) => {
 			const { userId, userUsername} = req.body;
 
 			const { emailBod, empEmail } = req.body;
-
+			
+			
 			const netStatus = await isOnline();
 
 			if(netStatus){
 
-				mailer.sendEmailNotif(empEmail, userUsername, emailBod);
-			
-				logger.employeeRelatedLog(userId,userUsername,6,empEmail);
-				res.status(200).send({ resetTok: encTok });
+				const isErr = await mailer.sendEmailNotif(empEmail, userUsername, emailBod);
+				
+				if(isErr.value){
+					logger.employeeRelatedLog(userId,userUsername,6,empEmail,isErr.message);
+					res.status(500).send('Error sending email');
+				} else {
+					logger.employeeRelatedLog(userId,userUsername,6,empEmail);
+					res.status(200).send("Successfully sent notification email");
+				}
 
+			} else {
+				logger.employeeRelatedLog(userId,userUsername,6,empEmail,'CONNECTION ERROR: Check internet connection!');	
+				res.status(502).send('Please check your internet connection!');
 			}
 
-
-			logger.employeeRelatedLog(userId,userUsername,6,empEmail,'CONNECTION ERROR: Check internet connection!');
-				
-			res.status(502).send('Please check your internet connection!');
 			
-
 		} catch (err) {
 			
 			const { userId, userUsername} = req.body;
@@ -204,20 +208,26 @@ module.exports = (io) => {
 					// gets last 7 char in token and makes it the verif key
 					const key = token.substring(token.length - 7)
 
-					// send key to user email
-					mailer.resetPassMail(decr, username, key);
-
 					// encrypt token before sending to user
 					const encTok = encrypt(token);
 
+					// send key to user email
+					const isErr = await mailer.resetPassMail(decr, username, key);
 
-					//---------------- log -------------------//
-					logger.serverRelatedLog(user.email,1);
 
+					if(isErr.value){
+						logger.serverRelatedLog(email,1,isErr.message);
+						res.status(500).send('Error sending email!');
+					} else {
+						//---------------- log -------------------//
+						logger.serverRelatedLog(user.email,1);
 
-					res.status(200).send({ resetTok: encTok });
+						res.status(200).send({ resetTok: encTok });
+					}
+
 				}
 			} else {
+				logger.serverRelatedLog(email,1,`CONNECTION ERROR: Check internet connection!`);
 				res.status(502).send('Please check your internet connection!');
 			}
 		} catch (error) {
@@ -227,7 +237,7 @@ module.exports = (io) => {
 			//---------------- log -------------------//
 			logger.serverRelatedLog(email,1,error.message);
 			console.log(error)
-			res.status(500).send('Error on server!')
+			res.status(500).send('Error on server!');
 		}
 	});
 
