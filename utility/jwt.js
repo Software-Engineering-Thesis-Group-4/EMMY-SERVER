@@ -51,7 +51,7 @@ exports.removeRefreshToken = async (email) => {
 			console.log('Succesfully removed/deleted refresh token'.yellow);
 		}
 
-	} catch ({ error }) {
+	} catch (error) {
 		console.log('Failed to removed/delete refresh token'.red);
 		throw new Error(error.message)
 	}

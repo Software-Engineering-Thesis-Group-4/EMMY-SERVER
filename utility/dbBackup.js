@@ -21,6 +21,8 @@ const dbOptions = {
 // backup database
 exports.dbAutoBackUp = () => {
 	
+	let isErr = {};
+
 	try {
 
 		const dbPath = path.join(__dirname, '/../db/backup');
@@ -32,43 +34,47 @@ exports.dbAutoBackUp = () => {
 			cwd: 'C:\\Program Files\\MongoDB\\Server\\4.2\\bin'
 		})
 		console.log('Succesfully created backup databases!');
-		return true;
+		return isErr = { value : false };
 
 	} catch (err) {
 		console.log(err);
-		return false
+		return isErr = { value : true, message : err.message };
 	}
 
 };
 
 exports.zipBackup = async () => {
 
+	let isErr = {};
+
 	try {
 
 		const zipPath 	= path.join(__dirname + '/../downloadables/backup.zip');
 		const dbPath 	= path.join(__dirname, '/../db/backup/Emmy'); 
 
-		const noErr = this.dbAutoBackUp();
+		const err = this.dbAutoBackUp();
 
-		if(noErr) {
+		if(!err.value) {
 
 			await zipFold.zip(dbPath, zipPath);
 			console.log('Succesfully zipped backup folder');
-			return true;
+			return isErr = { value: false };
 
 		} else {
 			console.log('Error on making database backup');
-			return false;
+			return isErr = { value: true, message : err.message };
 		}
 
 	} catch (err) {
 		console.log(err);
-		return false;
+		return isErr = { value: true, message : err.message };
 	}
 }
 
 // Restore database
 exports.dbRestore = async () => {
+
+	let isErr = {};
 
 	try {
 		const uploadPath = path.join(__dirname, '/../uploads');
@@ -80,11 +86,10 @@ exports.dbRestore = async () => {
 			cwd: 'C:\\Program Files\\MongoDB\\Server\\4.2\\bin'
 		})
 
-		return true
-
+		return isErr = { value : false };
 	} catch (err) {
 		console.log(err)
-		return false
+		return isErr = { value : true, message : err.message };
 	}
 };
 
