@@ -7,6 +7,10 @@ module.exports = (io) => {
       res.redirect('/log_employee.html');
    });
 
+   router.get('/logs', (req, res) => {
+      res.redirect('/user_log.html');
+   })
+
    router.get('/email-notif', (req, res) => {
       res.redirect('/email_notif.html');
    });

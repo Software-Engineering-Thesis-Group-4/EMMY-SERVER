@@ -1,13 +1,7 @@
-const fs        = require('fs');
-const _         = require('lodash');
+const fs = require('fs');
 const childProc = require('child_process');
-const path      = require('path');
-const zipFold   = require('zip-a-folder');
-
-
-const dbUsername = process.env.DB_USERNAME;
-const dbPassword = process.env.DB_PASSWORD;
-
+const path = require('path');
+const zipFold = require('zip-a-folder');
 
 
 const dbOptions = {
@@ -18,28 +12,8 @@ const dbOptions = {
 	database: process.env.DB_NAME
 };
 
-
-exports.zipBackup = async () => {
-
-	try {
-
-		const zipPath = path.join(__dirname + '/../downloadables/backup.zip');
-		const dbPath = path.join(__dirname, '/../db/backup/Emmy');
-
-		await zipFold.zip(dbPath, zipPath)
-
-		console.log('Succesfully zipped backup folder');
-		return true;
-
-	} catch (err) {
-		console.log(err);
-		return false;
-	}
-}
-
-
 // backup database
-exports.dbAutoBackUp = async () => {
+exports.dbAutoBackUp = () => {
 
 	try {
 
@@ -48,10 +22,9 @@ exports.dbAutoBackUp = async () => {
 		// Command for mongodb dump process
 		let cmd = `mongodump --host ${dbOptions.host} --port ${dbOptions.port}  --db ${dbOptions.database} --out ${dbPath}`
 
-		childProc.exec(cmd, {
+		childProc.execSync(cmd, {
 			cwd: 'C:\\Program Files\\MongoDB\\Server\\4.2\\bin'
 		})
-
 		console.log('Succesfully created backup databases!');
 		return true;
 
@@ -61,6 +34,32 @@ exports.dbAutoBackUp = async () => {
 	}
 
 };
+
+exports.zipBackup = async () => {
+
+	try {
+
+		const zipPath = path.join(__dirname + '/../downloadables/backup.zip');
+		const dbPath = path.join(__dirname, '/../db/backup/Emmy');
+
+		const noErr = this.dbAutoBackUp();
+
+		if (noErr) {
+
+			await zipFold.zip(dbPath, zipPath);
+			console.log('Succesfully zipped backup folder');
+			return true;
+
+		} else {
+			console.log('Error on making database backup');
+			return false;
+		}
+
+	} catch (err) {
+		console.log(err);
+		return false;
+	}
+}
 
 // Restore database
 exports.dbRestore = async () => {
@@ -86,7 +85,7 @@ exports.dbRestore = async () => {
 exports.cleanUploads = () => {
 
 	const uploadPath = path.join(__dirname, '/../uploads')
-	console.log('hi')
+
 	if (fs.existsSync(uploadPath)) {
 		childProc.execSync('del /s /q ' + uploadPath);
 		console.log('Succesfully cleaned uploads folder');

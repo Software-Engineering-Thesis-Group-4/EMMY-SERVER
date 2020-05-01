@@ -3,6 +3,8 @@ require('colors');
 
 exports.createDBConnection = async (db_name, port) => {
 	try {
+		// scheduled backup
+		// require('../utility/cronScheduler');
 		const connection = await mongoose.connect(`mongodb://localhost:${port}/${db_name}`, {
 			useNewUrlParser: true,
 			useUnifiedTopology: true,
