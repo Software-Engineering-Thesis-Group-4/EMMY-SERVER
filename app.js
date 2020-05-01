@@ -90,13 +90,15 @@ const employeeRoute = require('./routes/employee')(io);
 const utilityRoute = require('./routes/main')(io);
 const authRoute = require('./routes/auth')(io);
 const userRoute = require('./routes/user')(io);
+const auditLogsRoute = require('./routes/audit-logs')(io);
 
 
 app.use('/auth', authRoute);									// localhost:3000/auth/
-app.use('/main', utilityRoute); 							// localhost:3000/utility
+app.use('/main', utilityRoute); 								// localhost:3000/utility
 app.use('/api/employees', employeeRoute); 				// localhost:3000/api/employees/
 app.use('/api/employeelogs', employeeLogsRoute); 		// localhost:3000/api/employeelogs/
-app.use('/api/users', userRoute)						// localhost:3000/api/employeelogs/
+app.use('/api/users', userRoute);							// localhost:3000/api/employeelogs/
+app.use('/api/auditlogs', auditLogsRoute);				// localhost:3000/api/auditlogs/
 
 
 // SERVE VUE APPLICATION --------------------------------------------------------------------------------------
