@@ -4,10 +4,10 @@ const jwt = require('jsonwebtoken');
 require('colors').enable();
 
 // import utilities
-const { encrypt, decrypter } = require('../utility/aes');
-const { createToken, createRefreshToken, removeRefreshToken } = require('../utility/jwt');
+const { createAccessToken, createRefreshToken, removeRefreshToken } = require('../utility/jwt');
 const { validateLogin } = require('../utility/validator');
 const { body, validationResult } = require('express-validator');
+const logger = require('../utility/logger');
 
 // import models
 const { User } = require("../db/models/User");
@@ -35,6 +35,7 @@ module.exports = (io) => {
 	router.post('/login', validateLogin, async (req, res) => {
 		try {
 
+
 			// data sanitization
 			let errors = validationResult(req);
 			if (!errors.isEmpty()) {
@@ -55,14 +56,14 @@ module.exports = (io) => {
 			// if submitted password invalid, return an error
 			if (passwordIsValid) {
 
-				// encrypt user credentials
-				let encrypted_email = encrypt(user.email);
-
-				//save new refresh token
-				createRefreshToken(user.email);
+				//create refresh token
+				createRefreshToken({ email: user.email });
 
 				// create access token
-				const access_token = createToken(encrypted_email, process.env.TOKEN_DURATION);
+				const access_token = createAccessToken();
+
+				//---------------- log -------------------//
+				logger.userRelatedLog(user._id, user.username, 2);
 
 				// return user credentials and access token
 				console.log('User Authenticated. Login Success'.green);
@@ -74,6 +75,7 @@ module.exports = (io) => {
 					lastname: user.lastname,
 					isAdmin: user.isAdmin,
 					photo: user.photo,
+					userId: user._id
 				});
 
 			} else {
@@ -82,6 +84,11 @@ module.exports = (io) => {
 			}
 
 		} catch (error) {
+
+			const user = await User.findOne({ email: req.body.email });
+			//---------------- log -------------------//
+			logger.userRelatedLog(user._id, user.username, 2, null, error.message);
+
 			console.log(error.message);
 			return res.status(500).send(ERR_SERVER_ERROR);
 		}
@@ -107,12 +114,15 @@ module.exports = (io) => {
 		],
 		async (req, res) => {
 			try {
+
+				// validate of errors exists in data sanitization +++++++++++++++++++++++++++++
 				const errors = validationResult(req);
 
 				if (!errors.isEmpty()) {
 					console.error('Invalid Credentials.'.red);
 					return res.status(401).send(ERR_UNAUTHORIZED);
 				}
+				// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 				let { access_token, email } = req.body;
 
@@ -152,7 +162,7 @@ module.exports = (io) => {
 
 								if (!err) {
 									console.log('Refresh Token Valid.'.green);
-									let token = createToken(email, process.env.TOKEN_DURATION);
+									let token = createAccessToken(email);
 
 									console.log('Access Token Renewed'.green)
 									return res.status(200).send(token);
@@ -204,11 +214,23 @@ module.exports = (io) => {
 				return res.sendStatus(400);
 			}
 
+			const { userUsername, userId } = req.body;
+
 			removeRefreshToken(req.body.email);
+
+			//---------------- log -------------------//
+			logger.userRelatedLog(userId, userUsername, 3);
+
 
 			return res.sendStatus(200);
 
 		} catch (error) {
+
+			const { userUsername, userId } = req.body;
+
+			//---------------- log -------------------//
+			logger.userRelatedLog(userId, userUsername, 3, null, error.message);
+
 			console.log(error.message);
 			return res.status(500).send(ERR_SERVER_ERROR);
 		}
