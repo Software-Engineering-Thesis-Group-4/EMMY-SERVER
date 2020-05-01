@@ -37,6 +37,7 @@ module.exports = (io) => {
 
 			// data sanitization
 			let errors = validationResult(req);
+
 			if (!errors.isEmpty()) {
 				console.error('Invalid Credentials Format.'.red);
 				return res.status(401).send(ERR_INVALID_CREDENTIALS);
@@ -67,13 +68,13 @@ module.exports = (io) => {
 				// return user credentials and access token
 				console.log('User Authenticated. Login Success'.green);
 				return res.status(200).send({
-					token    : access_token,
-					email    : user.email,
-					username : user.username,
+					token: access_token,
+					email: user.email,
+					username: user.username,
 					firstname: user.firstname,
-					lastname : user.lastname,
-					isAdmin  : user.isAdmin,
-					photo    : user.photo,
+					lastname: user.lastname,
+					isAdmin: user.isAdmin,
+					photo: user.photo,
 				});
 
 			} else {
@@ -143,6 +144,11 @@ module.exports = (io) => {
 						RefreshToken.findOne({ email }, (err, refresh_token) => {
 
 							if (err) {
+								console.error('Refresh Token Retrieval Error.'.red);
+								return res.status(500).send(ERR_SERVER_ERROR);
+							}
+
+							if (!refresh_token) {
 								console.error('Refresh Token Not Found.'.red);
 								return res.status(404).send(ERR_UNAUTHORIZED);
 							}
@@ -150,17 +156,23 @@ module.exports = (io) => {
 							// validate refresh token
 							jwt.verify(refresh_token.token, process.env.REFRESH_KEY, (err) => {
 
-								// refresh token expired. return error
-								if (err.name === 'TokenExpiredError') {
-									removeRefreshToken(email);
-									console.error('Refresh Token Expired'.red)
-									return res.status(401).send(ERR_UNAUTHORIZED);
-								}
+								if (err) {
+									switch (err.name) {
+										case 'TokenExpiredError':
+											removeRefreshToken(email);
+											console.error('Refresh Token Expired'.red)
+											return res.status(401).send(ERR_UNAUTHORIZED);
 
-								if (err.name === 'JsonWebTokenError') {
-									removeRefreshToken(email);
-									console.error('Invalid Refresh Token'.bgRed.black);
-									return res.status(401).send(ERR_UNAUTHORIZED);
+										case 'JsonWebTokenError':
+											removeRefreshToken(email);
+											console.error('Invalid Refresh Token'.red)
+											return res.status(401).send(ERR_UNAUTHORIZED);
+
+										default:
+											removeRefreshToken(email);
+											console.error('Invalid Refresh Token'.red)
+											return res.status(401).send(ERR_UNAUTHORIZED);
+									}
 								}
 
 								console.log('Refresh Token Valid.'.green);
@@ -197,15 +209,15 @@ module.exports = (io) => {
 		try {
 			const errors = validationResult(req);
 
-			if(!errors.isEmpty()) {
+			if (!errors.isEmpty()) {
 				console.error('Invalid Credential Format.'.red);
 				return res.sendStatus(400);
 			}
 
 			removeRefreshToken(req.body.email);
-			
+
 			return res.sendStatus(200);
-			
+
 		} catch (error) {
 			console.log(error.message);
 			return res.status(500).send(ERR_SERVER_ERROR);
