@@ -57,7 +57,7 @@ module.exports = (io) => {
 			if (passwordIsValid) {
 
 				//create refresh token
-				createRefreshToken({ email: user.email });
+				createRefreshToken(user.email);
 
 				// create access token
 				const access_token = createAccessToken();
