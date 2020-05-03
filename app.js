@@ -132,7 +132,7 @@ async function start() {
 			"\nMongoDB Database: " + connection.name.brightCyan
 		);
 
-		const environment = (process.env.NODE_ENV === 'development ') ? 'Development'.black.bgYellow : 'Production'.brightCyan;
+		const environment = (process.env.NODE_ENV === 'development ') ? 'Development'.black.bgYellow : 'Production'.black.bgCyan;
 		const host_url = 'http://localhost:'.cyan + PORT.brightCyan;
 		const net_url = `http://${ip.address()}:`.cyan + PORT.brightCyan;
 
