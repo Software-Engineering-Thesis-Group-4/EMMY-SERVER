@@ -65,7 +65,7 @@ module.exports = (io) => {
 
 			let log = await EmployeeLog.findById(id);
 
-			if(!log) {
+			if (!log) {
 				return res.status(404).send('Log not found.');
 			}
 
