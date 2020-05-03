@@ -1,4 +1,6 @@
 const http       = require('http');
+const https 	  = require('https');
+const fs 		  = require('fs');
 const path       = require('path');
 const logger     = require('morgan');
 const socketIO   = require('socket.io');
@@ -18,7 +20,22 @@ colors.enable();
 const cfg = require('./configs/config.js');
 
 const app = express();
-const server = http.createServer(app);
+
+// or listen to both HTTP and HTTPS by creating another server with HTTP
+let server = undefined;
+if (process.env.NODE_ENV == 'production'){
+	const keyPath = "/srv/www/keys/my-site-key.pem";
+	const certPath = "/srv/www/keys/chain.pem";
+	const options = {
+		key: fs.readFileSync(keyPath),
+		cert: fs.readFileSync(certPath)
+	};
+	server = https.createServer(options, app);
+}else {
+	server = http.createServer(app);
+}
+
+
 const io = socketIO(server);
 const PORT = cfg.PORT || 3000;
 
