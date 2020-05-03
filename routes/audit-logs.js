@@ -1,13 +1,16 @@
 const router 	=  require('express').Router();
 
-const dbQuery = require('../utility/dbQueries');
+const dbQuery = require('../utility/dbAgnostics');
 
+const { AuditLog} = require('../db/models/AuditLog')
 
-
+const mailer = require('../utility/mailer')
 
 
 module.exports = (io) => {
 	
+
+
 	/* ---------------------------------------------------------------------------------------------------------------------
 	Route:
 	POST /api/auditlogs
@@ -27,7 +30,7 @@ module.exports = (io) => {
 			const userId = req.body.userId
 			const auditLogs = await dbQuery.findAllByFieldPopulate(
 				`AuditLog`,
-				{ user : "5eaa786ef7b22714a0dde94b" },
+				{ user : userId },
 				{ path	: 'user' , select	: {password: 0}
 			});
 
@@ -48,7 +51,7 @@ module.exports = (io) => {
 
 	/* ---------------------------------------------------------------------------------------------------------------------
 	Route:
-	POST /api/auditlogs
+	GET /api/auditlogs
 
 	Description:
 
@@ -60,7 +63,6 @@ module.exports = (io) => {
 	router.get('/admin', async (req, res) => {
 		
 		try {
-
 			
 			let auditLogs = await dbQuery.findAllPopulate(`AuditLog`,{
 												path	: 'user' , 
@@ -77,10 +79,11 @@ module.exports = (io) => {
 			console.error(error);
 			res.status(500).send('Server error. A problem occured when retrieving the audit logs');
 		}
+
 	});
 
 
-////////////////////////////// FOR PURPOSES TESTING ONLY ////////////////////////////////////
+////////////////////////////// FOR TESTING PURPOSES  ONLY ////////////////////////////////////
 	router.post('/add-log', async (req,res) => {
 
 		try{
@@ -98,6 +101,30 @@ module.exports = (io) => {
 			console.log(err.message)
 			const {userID, log} = req.body;	
 			console.log({userID, log})
+		}
+	})
+
+
+	/////////////////////////TODO:  will move this route not yet done ///////////////////////////////
+	router.post('/edit/extreme-emotions-options', async (req,res) => {
+
+		
+		try{
+
+			Date
+			console.log(asdmonth)
+			const { maxEmotionPoints, days, months} = req.body;
+			extremeEmoOptions = {
+				date : new Date(),
+				maxEmotionPoints,
+				day : extremeEmoOptions.days + days,
+				month : extremeEmoOptions.months + months
+			}
+			
+			
+			res.send(extremeEmoOptions)
+		} catch (err) {
+			
 		}
 	})
 

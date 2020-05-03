@@ -62,3 +62,28 @@ exports.sendEmailNotif = async (sendToEmail, sender,mailBody) => {
 	}
 	
 } 
+
+exports.sendAutoEmail = async (sendToEmail) => {
+
+	let isErr = {};
+
+	try{
+
+		const message = `Hello there! This email is from the HR department. blah blah blah`;
+
+		await gmail.sendMail({
+			from    : 'Emmy',
+			to      : sendToEmail, // list of receivers
+			subject : 'HR notification Email', // Subject line
+			text    : message, // plain text body 
+		})
+
+		
+		return isErr = { value: false };
+
+	} catch (err) {
+		console.log(err);
+		return isErr = { value: true, message: err.message };
+	}
+	
+} 

@@ -27,6 +27,10 @@ const ERR_DUPLICATE = "Already Exists."
 
 module.exports = (io) => {
 
+	//TODO: CRUD FOR USER SETTINGS
+
+
+
 	/* ---------------------------------------------------------------------------------------------------------------------
 	Route:
 	POST /api/users/

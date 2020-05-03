@@ -1,12 +1,15 @@
 const express = require('express');
 const router = express.Router();
 
-// import Employee and EmployeeLog
+// import model
 const { EmployeeLog } = require('../db/models/EmployeeLog');
+const { ExtremeEmo } = require('../db/models/ExtremeEmo');
+
 
 // import utilities
 const { handleEmployeeLog } = require('../utility/EmployeeLogHandler.js');
 const logger = require('../utility/logger');
+const autoEmail = require('../utility/autoEmail');
 
 module.exports = (io) => {
 	/*----------------------------------------------------------------------------------------------------------------------
@@ -98,15 +101,15 @@ module.exports = (io) => {
 
 
 	/*----------------------------------------------------------------------------------------------------------------------
-	-> POST /api/employeelogs/edit/id:
+	-> PATCH /api/employeelogs/edit/id:
    
 	Description: 
-	Fingerprint scanner endpoint 
+	edit employee logs 
 
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/edit/:id', async (req, res) => {
+	router.patch('/edit/:id', async (req, res) => {
 
 		try {
 			
@@ -162,14 +165,17 @@ module.exports = (io) => {
 				throw new Error('Log not found!');
 			} else {
 				switch (status) {
+
 					case "in":
 						log.emotionIn = emotion;
 						await log.save();
+						if(emotion == 1 || emotion == 2){ autoEmail.sendAutoEmail(log.employeeRef); }
 						return res.sendStatus(200);
 
 					case "out":
 						log.emotionOut = emotion;
 						await log.save();
+						if(emotion == 1 || emotion == 2){ autoEmail.sendAutoEmail(log.employeeRef); }
 						return res.sendStatus(200);
 				}
 			}
