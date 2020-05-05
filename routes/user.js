@@ -124,7 +124,7 @@ module.exports = (io) => {
 
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
-	POST /api/user/email-notif
+	POST /api/users/email-notif
 	
 	Description:
 	This route is used for sending email through the HR manager or users.
@@ -173,7 +173,7 @@ module.exports = (io) => {
 
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
-	POST /api/reset-password
+	POST /api/users/reset-password
 	
 	Description:
 	This is used for handling forgot password requests.

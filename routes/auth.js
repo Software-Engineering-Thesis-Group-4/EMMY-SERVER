@@ -149,6 +149,7 @@ module.exports = (io) => {
 
 					// if token is expired check, get refresh token of user
 					if (err.name === 'TokenExpiredError') {
+						console.log('Access Token Expired.'.yellow);
 
 						// if refresh token is VALID, renew token
 						RefreshToken.findOne({ email }, (err, refresh_token) => {
@@ -171,27 +172,26 @@ module.exports = (io) => {
 									let token = createAccessToken(email);
 
 									console.log('Access Token Renewed'.green)
-									return res.status(200).send(token);
+									return res.status(200).send({ token });
 								}
 
-								if (err) {
-									switch (err.name) {
-										case 'TokenExpiredError':
-											removeRefreshToken(email);
-											console.error('Refresh Token Expired'.red)
-											return res.status(401).send(ERR_UNAUTHORIZED);
+								switch (err.name) {
+									case 'TokenExpiredError':
+										removeRefreshToken(email);
+										console.error('Refresh Token Expired'.red)
+										return res.status(401).send(ERR_UNAUTHORIZED);
 
-										case 'JsonWebTokenError':
-											removeRefreshToken(email);
-											console.error('Invalid Refresh Token'.red)
-											return res.status(401).send(ERR_UNAUTHORIZED);
+									case 'JsonWebTokenError':
+										removeRefreshToken(email);
+										console.error('Invalid Refresh Token'.red)
+										return res.status(401).send(ERR_UNAUTHORIZED);
 
-										default:
-											removeRefreshToken(email);
-											console.error('Invalid Refresh Token'.red)
-											return res.status(401).send(ERR_UNAUTHORIZED);
-									}
+									default:
+										removeRefreshToken(email);
+										console.error('Invalid Refresh Token'.red)
+										return res.status(401).send(ERR_UNAUTHORIZED);
 								}
+								
 							});
 						});
 					}

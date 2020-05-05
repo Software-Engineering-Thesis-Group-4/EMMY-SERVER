@@ -40,36 +40,32 @@ function randomDepartment() {
 	return selected;
 }
 
-exports.insertRandomEmployees = (numberOfEmployees) => {
+exports.insertRandomEmployees = async (numberOfEmployees) => {
 
 	console.log('\ninsertRandomEmployees()');
+	try {
+		for (let i = 0; i < numberOfEmployees; ++i) {
+			let employee = new Employee({
+				employeeId: faker.random.uuid(),
+				firstName: faker.name.firstName(),
+				lastName: faker.name.lastName(),
+				email: faker.internet.email(),
+				isMale: randomGender(),
+				employmentStatus: Math.floor(Math.random() * 2),   // random part time or full time
+				department: randomDepartment(),
+				jobTitle: faker.name.jobTitle(),
+				fingerprintId: i,
+				terminated: false,
+				latestLog: null
+			});
 
-	return new Promise(async (resolve, reject) => {
-		try {
-
-			for (let i = 0; i < numberOfEmployees; ++i) {
-				let employee = new Employee({
-					employeeId       : faker.random.uuid(),
-					firstName        : faker.name.firstName(),
-					lastName         : faker.name.lastName(),
-					email            : faker.internet.email(),
-					isMale           : randomGender(),
-					employmentStatus : Math.floor(Math.random() * 2),   // random part time or full time
-					department       : randomDepartment(),
-					jobTitle         : faker.name.jobTitle(),
-					fingerprintId    : i,
-					terminated       : false,
-					latestLog        : null
-				});
-
-				await employee.save();
-				console.log(`Employee saved (${i+1})`);
-			}
-			
-			resolve(true); // return true if success
-
-		} catch (error) {
-			reject(error) // return false if error
+			await employee.save();
+			console.log(`Employee saved (${i + 1})`);
 		}
-	})
+
+		return true; // return true if success
+
+	} catch (error) {
+		return false; // return false if error
+	}
 }
