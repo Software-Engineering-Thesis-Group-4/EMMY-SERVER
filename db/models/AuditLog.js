@@ -10,6 +10,8 @@ const AuditLogSchema = Schema({
    isServer       : { type : Boolean, default : false }
 });
 
+
+
 const AuditLog = mongoose.model('AuditLog', AuditLogSchema);
 
 module.exports = {

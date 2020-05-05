@@ -10,6 +10,8 @@ const ExtremeEmoSchema = Schema({
    
 });
 
+
+  
 ExtremeEmoSchema.plugin(require('mongoose-autopopulate'));
 
 const ExtremeEmo = mongoose.model('ExtremeEmotion', ExtremeEmoSchema);

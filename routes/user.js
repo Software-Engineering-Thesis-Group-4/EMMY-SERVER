@@ -27,8 +27,32 @@ const ERR_DUPLICATE = "Already Exists."
 
 module.exports = (io) => {
 
-	//TODO: CRUD FOR USER SETTINGS
+	/* ---------------------------------------------------------------------------------------------------------------------
+	Route:
+	POST /api/users/
 
+	Description:
+
+	Api for fetching data of all users (to be used rendering list of accounts in the admin page)
+	Gets all user data except for sensitive information (i.e. password)
+
+	Author:
+	Michael Ong
+	----------------------------------------------------------------------------------------------------------------------*/
+	router.get('/', async (req, res) => {
+
+		try {
+
+			let users = await User.find({},{'password': 0});
+
+			return res.status(200).send(users);
+
+		} catch (error) {
+			console.error(error);
+			return res.status(500).send('Server error. A problem occured when retrieving users');
+		}
+	});
+	
 
 
 	/* ---------------------------------------------------------------------------------------------------------------------

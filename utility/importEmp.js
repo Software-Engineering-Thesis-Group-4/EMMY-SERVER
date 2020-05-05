@@ -1,19 +1,31 @@
 const chunk         = require('chunk');
+const replaceString = require('replace-string');
 
 // import util and model
 const { encrypt, decrypter } = require('./aes')
 const { Employee } = require('../db/models/Employee');
 
 
-const csvImport = async (stringData) => {
+const csvImport = async (csvFile) => {
 
 	try {
+
+		let isErr = {};
+
+		if (csvFile.name.substring(csvFile.name.length, csvFile.name.length - 3) != 'csv') {
+			return isErr = { value: true, message: 'Invalid file format, must be csv file' };
+
+		}
+		
+		const rawData = csvFile.data;
+			
+		// replace all \n and \r in csv file to coma
+		const stringData 	= replaceString(rawData.toString(), ('\r\n'), ',');
 
 		const removeLast 	= (stringData.substring(0, stringData.length -1))
 		const arrData 		= removeLast.split(',');
 		const finalData 	= chunk(arrData, [ 9 ]);
-
-		let errMessage = {};
+		
 
 		const headerVal = 'EMPLOYEE_ID,FIRSTNAME,LASTNAME,EMAIL,'
 						+ 'GENDER,EMPLOYMENT_STATUS,DEPARTMENT,JOB_TITLE,FINGERPRINT_ID';
@@ -51,26 +63,26 @@ const csvImport = async (stringData) => {
 			}
 
 
-			return errMessage = { isErr : false, message : 'Successfully imported employees' };
+			return isErr = { value : false, message : 'Successfully imported employees' };
 		} else {
 			console.log('invalid csv format');
-			return errMessage = { isErr : true, message : `invalid csv format must follow this header format \n`
+			return isErr = { value : true, message : `invalid csv format must follow this header format \n`
 														+ `${headerVal} (not case sensitive)` };
 		}
 	} catch (err) {
 		
-		console.log(err.message);
-		
+		console.log(err.message.red);
+
 		if(err.code === 11000){
-			return errMessage = { 
-				isErr 			: true, 
+			return isErr = { 
+				value 			: true, 
 				message 		: `ERROR : Duplicate value for ${err.keyValue}`,
 				duplicateValue	: err.keyValue
 			};
 		} else {
-			return errMessage = { 
-				isErr 			: true, 
-				message 		: 'Error importing employees, check if fields are correct and complete.'
+			return isErr = { 
+				value 			: true, 
+				message 		: err.message
 			};
 		}
 

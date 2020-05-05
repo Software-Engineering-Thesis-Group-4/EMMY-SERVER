@@ -4,50 +4,45 @@ const { Employee } = require("../db/models/Employee");
 const { EmployeeLog } = require('../db/models/EmployeeLog');
 
 exports.insertEmployeeLogs = async () => {
-
 	console.log('\ninsertEmployeeLogs()');
 
-	return new Promise(async (resolve, reject) => {
-		try {
+	try {
 
-			let employees = await Employee.find({});
+		let employees = await Employee.find({});
 
-			let index = 1;
-			let date = null;
+		let index = 1;
+		let date = null;
 
-			for(const employee of employees) {
-				date = faker.date.between('2020-01-01', '2020-12-31');
-				let employeeLog = new EmployeeLog({
-					employeeRef : employee._id,
-					in          : date,
-					dateCreated : date
-				});
+		for (const employee of employees) {
+			date = faker.date.between('2020-01-01', '2020-12-31');
+			let employeeLog = new EmployeeLog({
+				employeeRef: employee._id,
+				in: date,
+				dateCreated: date
+			});
 
-				let timeIn = new Date(employeeLog.in);
+			let timeIn = new Date(employeeLog.in);
 
-				employeeLog.out        = timeIn.setHours(timeIn.getHours() + 7);
-				employeeLog.emotionIn  = faker.random.number(5);
-				employeeLog.emotionOut = faker.random.number(5);
+			employeeLog.out = timeIn.setHours(timeIn.getHours() + 7);
+			employeeLog.emotionIn = faker.random.number(5);
+			employeeLog.emotionOut = faker.random.number(5);
 
-				await employeeLog.save();
+			await employeeLog.save();
 
-				employee.latestLog = {
-					reference: employeeLog._id,
-					date: employeeLog.dateCreated
-				}
+			employee.latestLog = {
+				reference: employeeLog._id,
+				date: employeeLog.dateCreated
+			}
 
-				await employee.save();
-				console.log(`Successfully inserted new employee log (${index} - ${employee.email})`);
-				++index;
-			};
-
-			resolve(true);
-
-		} catch (error) {
-			reject(error)
+			await employee.save();
+			console.log(`Successfully inserted new employee log (${index} - ${employee.email})`);
+			++index;
 		}
 
-	})
+		return true;
 
+	} catch (error) {
+		return false;
+	}
 
 }

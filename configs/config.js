@@ -4,6 +4,17 @@ const fs = require('fs')
 
 const prodPath = process.env.EMMY;
 
+function fileChecker(fpath){
+	try {
+		let checker = undefined;
+		(fs.existsSync(fpath)) ? checker = true : checker = false;
+		return checker;
+	} catch(err) {
+		console.error("FileChecker ERROR!\n " + err);
+	}
+}
+
+// DONE
 switch (process.env.NODE_ENV) {
 	case 'production ':
 
@@ -25,5 +36,6 @@ switch (process.env.NODE_ENV) {
 		dotenv.config({ path: path.resolve(__dirname, './EMMY_DEV.env') })
 		break;
 }
+
 
 module.exports = { ...process.env };

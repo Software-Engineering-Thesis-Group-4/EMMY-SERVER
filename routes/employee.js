@@ -1,7 +1,6 @@
 const express = require('express')
 const router = express.Router();
 const path = require('path');
-const replaceString = require('replace-string');
 
 
 // import utility
@@ -78,62 +77,33 @@ module.exports = (io) => {
 
 			if (!req.files) {
 
-				res.status(204).send('Not selected a file or folder is empty! Please select a file');
+				//---------------- log -------------------//
+				logger.employeeRelatedLog(userId,userUsername,8,null,'Not selected a folder or folder is empty! Please select a new folder');
+				return res.status(204).send('Not selected a folder or folder is empty! Please select a new folder!');
 
-			} else {
+			} 
 
-				const resFiles = req.files.bsonFiles;
-				const folderPath = path.join(__dirname, '/../uploads/');
-
-				// clean uploads folder wether empty or not
-				dbBackup.cleanUploads();
-
-				let correctFormat = true;
-
-				resFiles.forEach(async element => {
-
-					if (element.name.substring(element.name.length, element.name.length - 4) != 'bson'
-						&& element.name.substring(element.name.length, element.name.length - 4) != 'json') {
-
-						console.log('Invalid file format');
-						correctFormat = false;
-
-					} else {
-
-						if (element.name.substring(element.name.length, element.name.length - 4) === 'bson') {
-
-							await element.mv(folderPath + element.name, err => {
-								if (err) {
-									console.log(err)
-								}
-							})
-						}
-					}
-				});
+			const resFiles = req.files.bsonFiles;
 				
-				if(correctFormat == false) {
+			// clean uploads folder wether empty or not
+			dbBackup.cleanUploads();
 
-					dbBackup.cleanUploads();
-					res.status(415).send('Incorrect file type for one or more files!')
 
-				} else {
+			const isErr = await dbBackup.dbRestore(resFiles);
 
-					const isErr = await dbBackup.dbRestore();
+			if(isErr.value){
 
-					if(isErr.value){
-
-						//---------------- log -------------------//
-						logger.employeeRelatedLog(userId,userUsername,8,null,isErr.message);
-						res.status(500).send('Error restoring database backup');
+				dbBackup.cleanUploads();
+				//---------------- log -------------------//
+				logger.employeeRelatedLog(userId,userUsername,8,null,isErr.message);
+				return res.status(500).send(isErr.message);
 						
-					} else {
-						//---------------- log -------------------//
-						logger.employeeRelatedLog(userId,userUsername,8);
-						res.status(200).send('Successfully restored database backup');
+			} else {
+				//---------------- log -------------------//
+				logger.employeeRelatedLog(userId,userUsername,8);
+				console.log('Successfully restored database backup');
+				return res.status(200).send('Successfully restored database backup');
 						
-					}
-
-				}
 			}
 		} catch (err) {
 
@@ -142,7 +112,7 @@ module.exports = (io) => {
 			logger.employeeRelatedLog(userId,userUsername,8,null,err.message);
 						
 			console.log(err)
-			res.status(500).send('Error on server');
+			return res.status(500).send('Error on server');
 		}
 
 	})
@@ -252,37 +222,25 @@ module.exports = (io) => {
 			const { userId, userUsername } = req.body;
 
 			if(!req.files){
-				res.status(204).send('Not selected a file or file is empty! Please select a file');
+				return res.status(204).send('Not selected a file or file is empty! Please select a file');
+			} 
+			
+			const csvFile = req.files.csvImport;
+			const isErr = await csvImport(csvFile);
+
+			if(isErr.value){
+				//---------------- log -------------------//
+				logger.employeeRelatedLog(userId,userUsername,0,null, isErr.message);
+				return res.status(422).send({ message: isErr.message, duplicateValue: isErr.duplicateValue });
+					
 			} else {
-				const csvFile = req.files.csvImport;
-
-				// check if file is csv
-				if (csvFile.name.substring(csvFile.name.length, csvFile.name.length - 3) != 'csv') {
-					res.status(415).send('must be csv file');
-
-				} else { 
-				
-					const rawData = req.files.csvImport.data;
-					
-					// replace all \n and \r in csv file to coma
-					const stringData 	= replaceString(rawData.toString(), ('\r\n'), ',');
-					const isValid 		= await csvImport(stringData);
-
-					if(isValid.isErr){
-						//---------------- log -------------------//
-						logger.employeeRelatedLog(userId,userUsername,0,null, isValid.message);
-			
-						res.status(422).send({ message: isValid.message, duplicateValue: isValid.duplicateValue });
-					
-					} else {
-
-						//---------------- log -------------------//
-						logger.employeeRelatedLog(userId,userUsername,0);
-			
-						res.status(200).send(isValid.message);
-					}
-				}		
+				console.log('Successfully imported csv file!'.green)
+				//---------------- log -------------------//
+				logger.employeeRelatedLog(userId,userUsername,0);
+				return res.status(200).send(isErr.message);
 			}
+						
+			
 		} catch (error) {
 
 			const { userId, userUsername } = req.body;
@@ -291,7 +249,7 @@ module.exports = (io) => {
 			logger.employeeRelatedLog(userId,userUsername,0,null, error.message);
 			
 			console.log(error)
-			res.status(500).send('Error on server');
+			return res.status(500).send('Error on server');
 		}    
    });
 	
@@ -358,11 +316,11 @@ module.exports = (io) => {
 			if(emp){
 				//---------------- log -------------------//
 				logger.employeeRelatedLog(userId,userUsername,4,`${emp.firstName} ${emp.lastName}`);
-				res.status(200).send('Successfully deleted employee');
+				return res.status(200).send('Successfully deleted employee');
 			} else {
 				//---------------- log -------------------//
 				logger.employeeRelatedLog(userId,userUsername,4,`${emp.firstName} ${emp.lastName}`,'Error in deleting employee');
-				res.send(500).send('Error in deleting employee');
+				return res.send(500).send('Error in deleting employee');
 			}
 			
 
@@ -371,7 +329,7 @@ module.exports = (io) => {
 			const { userId, userUsername } = req.body;
 			//---------------- log -------------------//
 			logger.employeeRelatedLog(userId,userUsername,4,null, error.message);
-			res.status(500).send('Server error. Unable to delete employee.');
+			return res.status(500).send('Server error. Unable to delete employee.');
 		}
 	});
 

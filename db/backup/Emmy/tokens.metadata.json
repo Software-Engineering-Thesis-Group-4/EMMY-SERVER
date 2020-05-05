@@ -1,1 +1,0 @@
-{"options":{},"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_","ns":"Emmy.tokens"}],"uuid":"52f377b756954c7e865d06e98ff86913"}

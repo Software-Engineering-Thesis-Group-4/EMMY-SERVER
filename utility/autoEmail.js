@@ -78,11 +78,11 @@ exports.startEndDateChecker = async () => {
 }
 
 
-exports.sendAutoEmail = async (employeeId) => {
+exports.checkIfSendEmail = async (employeeId) => {
 
     try{
 
-        const emp = await ExtremeEmo.find({ employee : employeeId });
+        const emp = await ExtremeEmo.findOne({ employee : employeeId });
 
         // if employee is not yet in extreme emo database save employee into database
         if(!emp){
@@ -97,15 +97,15 @@ exports.sendAutoEmail = async (employeeId) => {
         } else {
 
             // check if employee exceedes extreme emotion cap and hasnt received an email yet
-            if(emp.negaEmoCnt >= maxNegativEmotions && emp.sentEmail == false)  {
+            if(emp.negaEmoCnt + 1 >= maxNegativEmotions && emp.sentEmail == false)  {
                 
-                emp.sentEmail = true;
-                await emp.save();
                 const emailErr = await mailer.sendAutoEmail(emp.employee.email);
                 
                 if(emailErr.value){
                     logger.serverRelatedLog(emp.employee.email,2,emailErr.message);
                 } else {
+                    emp.sentEmail = true;
+                    await emp.save();
                     logger.serverRelatedLog(emp.employee.email,2);    
                 }
             }
@@ -115,6 +115,7 @@ exports.sendAutoEmail = async (employeeId) => {
                 emp.negaEmoCnt = emp.negaEmoCnt + 1;
                 await emp.save();   
             }
+
 
             // if employee exceedes extreme emotion cap and sad sad emotion is still adding and email already sent
             if(emp.negaEmoCnt >= maxNegativEmotions && emp.sentEmail == true){

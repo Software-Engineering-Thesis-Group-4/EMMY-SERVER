@@ -1,11 +1,9 @@
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-require('colors').enable();
 
 // import utilities
-const { encrypt, decrypter } = require('../utility/aes');
-const { createToken, createRefreshToken, removeRefreshToken } = require('../utility/jwt');
+const { createAccessToken, createRefreshToken, removeRefreshToken } = require('../utility/jwt');
 const { validateLogin } = require('../utility/validator');
 const { body, validationResult } = require('express-validator');
 const logger = require('../utility/logger');
@@ -39,6 +37,7 @@ module.exports = (io) => {
 
 			// data sanitization
 			let errors = validationResult(req);
+
 			if (!errors.isEmpty()) {
 				console.error('Invalid Credentials Format.'.red);
 				return res.status(401).send(ERR_INVALID_CREDENTIALS);
@@ -77,9 +76,9 @@ module.exports = (io) => {
 				// return user credentials and access token
 				console.log('User Authenticated. Login Success'.green);
 				return res.status(200).send({
-					token    : access_token,
-					email    : user.email,
-					username : user.username,
+					token: access_token,
+					email: user.email,
+					username: user.username,
 					firstname: user.firstname,
 					lastname : user.lastname,
 					isAdmin  : user.isAdmin,
@@ -123,12 +122,15 @@ module.exports = (io) => {
 		],
 		async (req, res) => {
 			try {
+
+				// validate of errors exists in data sanitization +++++++++++++++++++++++++++++
 				const errors = validationResult(req);
 
 				if (!errors.isEmpty()) {
 					console.error('Invalid Credentials.'.red);
 					return res.status(401).send(ERR_UNAUTHORIZED);
 				}
+				// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 				let { access_token, email } = req.body;
 
@@ -154,36 +156,49 @@ module.exports = (io) => {
 
 					// if token is expired check, get refresh token of user
 					if (err.name === 'TokenExpiredError') {
+						console.log('Access Token Expired.'.yellow);
 
 						// if refresh token is VALID, renew token
 						RefreshToken.findOne({ email }, (err, refresh_token) => {
 
 							if (err) {
+								console.error('Refresh Token Retrieval Error.'.red);
+								return res.status(500).send(ERR_SERVER_ERROR);
+							}
+
+							if (!refresh_token) {
 								console.error('Refresh Token Not Found.'.red);
 								return res.status(404).send(ERR_UNAUTHORIZED);
 							}
 
 							// validate refresh token
-							jwt.verify(refresh_token.token, process.env.REFRESH_KEY, (err) => {
+							jwt.verify(refresh_token.token, process.env.REFRESH_KEY, (err, decoded) => {
 
-								// refresh token expired. return error
-								if (err.name === 'TokenExpiredError') {
-									removeRefreshToken(email);
-									console.error('Refresh Token Expired'.red)
-									return res.status(401).send(ERR_UNAUTHORIZED);
+								if (!err) {
+									console.log('Refresh Token Valid.'.green);
+									let token = createAccessToken(email);
+
+									console.log('Access Token Renewed'.green)
+									return res.status(200).send({ token });
 								}
 
-								if (err.name === 'JsonWebTokenError') {
-									removeRefreshToken(email);
-									console.error('Invalid Refresh Token'.bgRed.black);
-									return res.status(401).send(ERR_UNAUTHORIZED);
+								switch (err.name) {
+									case 'TokenExpiredError':
+										removeRefreshToken(email);
+										console.error('Refresh Token Expired'.red)
+										return res.status(401).send(ERR_UNAUTHORIZED);
+
+									case 'JsonWebTokenError':
+										removeRefreshToken(email);
+										console.error('Invalid Refresh Token'.red)
+										return res.status(401).send(ERR_UNAUTHORIZED);
+
+									default:
+										removeRefreshToken(email);
+										console.error('Invalid Refresh Token'.red)
+										return res.status(401).send(ERR_UNAUTHORIZED);
 								}
-
-								console.log('Refresh Token Valid.'.green);
-								let token = createToken(email, process.env.TOKEN_DURATION);
-
-								console.log('Access Token Renewed'.green)
-								return res.status(200).send(token);
+								
 							});
 						});
 					}
@@ -227,7 +242,7 @@ module.exports = (io) => {
 
 
 			return res.sendStatus(200);
-			
+
 		} catch (error) {
 
 			const {userUsername, userId} = req.body;

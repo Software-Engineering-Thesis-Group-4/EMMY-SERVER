@@ -16,7 +16,6 @@ module.exports = (io) => {
 	POST /api/auditlogs
 
 	Description:
-
 	Api for fetching audit logs of the user currently logged in
 
 	Author:
@@ -61,24 +60,26 @@ module.exports = (io) => {
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.get('/admin', async (req, res) => {
-		
-		try {
-			
-			let auditLogs = await dbQuery.findAllPopulate(`AuditLog`,{
-												path	: 'user' , 
-												select	: {password: 0}
-											});
-			
-			if (auditLogs.value){
-				return res.send(500).send(auditLogs.message)
-			}
 
-			return res.status(200).send(auditLogs.output);
+		const asd = await AuditLog.findOne({isServer: false});
+		res.send(asd)
+		// try {
+			
+		// 	let auditLogs = await dbQuery.findAllPopulate(`AuditLog`,{
+		// 										path	: 'user' , 
+		// 										select	: {password: 0}
+		// 									});
+			
+		// 	if (auditLogs.value){
+		// 		return res.send(500).send(auditLogs.message)
+		// 	}
 
-		} catch (error) {
-			console.error(error);
-			res.status(500).send('Server error. A problem occured when retrieving the audit logs');
-		}
+		// 	return res.status(200).send(auditLogs.output);
+
+		// } catch (error) {
+		// 	console.error(error);
+		// 	res.status(500).send('Server error. A problem occured when retrieving the audit logs');
+		// }
 
 	});
 

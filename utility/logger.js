@@ -89,7 +89,7 @@ exports.userRelatedLog = (loggerId,logUsername,log,inputUser,errMessage) => {
         })
         
         newLog.save();
-        console.log('Succesfully added log');
+        console.log('Succesfully added log'.grey);
 
     } catch (error) {
         console.log(error);
@@ -168,7 +168,7 @@ exports.employeeRelatedLog = (loggerId,logUsername,log,emp,errMessage) => {
         })
         
         newLog.save();
-        console.log('Succesfully added log');
+        console.log('Succesfully added log'.grey);
 
     } catch (error) {
         console.log(error);
@@ -220,7 +220,7 @@ exports.employeelogsRelatedLog = (loggerId,loggerUsername,log,employeeLogId,errM
         })
 
         newLog.save();
-        console.log('Succesfully added log');
+        console.log('Succesfully added log'.grey);
 
     } catch (error) {
         console.log(error);
@@ -283,7 +283,7 @@ exports.serverRelatedLog = (output,log,errMessage) => {
         })
         
         newLog.save();
-        console.log('Succesfully added log');
+        console.log('Succesfully added log'.grey);
 
     } catch (error) {
         console.log(error);

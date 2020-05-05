@@ -72,21 +72,53 @@ exports.zipBackup = async () => {
 }
 
 // Restore database
-exports.dbRestore = async () => {
+exports.dbRestore = async (files) => {
+
 
 	let isErr = {};
 
-	try {
-		const uploadPath = path.join(__dirname, '/../uploads');
+	 try {
 
-		// Command for mongodb dump process
-		let cmd = `mongorestore --host ${dbOptions.host} --port ${dbOptions.port} --db ${dbOptions.database} ${uploadPath}`
+		const uploadPath = path.join(__dirname, '/../uploads/');
 
-		childProc.exec(cmd, {
-			cwd: 'C:\\Program Files\\MongoDB\\Server\\4.2\\bin'
-		})
+		let correctFormat = true;
 
-		return isErr = { value : false };
+		files.forEach(async element => {
+
+			if (element.name.substring(element.name.length, element.name.length - 4) != 'bson'
+				&& element.name.substring(element.name.length, element.name.length - 4) != 'json') {
+
+				console.log('Invalid file format');
+				correctFormat = false;
+
+			} else {
+
+				if (element.name.substring(element.name.length, element.name.length - 4) === 'bson') {
+
+					await element.mv(uploadPath + element.name, err => {
+						if (err) {
+							console.log(err)
+							return isErr = { value: true, message: err.message }
+						}
+					})
+				}
+			}
+		});
+
+		if(correctFormat == false) {
+			
+			return isErr = { value: true, message: 'Incorrect file type for one or more files' }
+		} else {
+
+			// Command for mongodb dump process
+			let cmd = `mongorestore --host ${dbOptions.host} --port ${dbOptions.port} --db ${dbOptions.database} ${uploadPath}`
+
+			childProc.exec(cmd, {
+				cwd: 'C:\\Program Files\\MongoDB\\Server\\4.2\\bin'
+			})
+
+			return isErr = { value : false };
+		}	
 	} catch (err) {
 		console.log(err)
 		return isErr = { value : true, message : err.message };
