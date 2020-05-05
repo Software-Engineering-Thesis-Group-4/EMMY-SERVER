@@ -59,7 +59,7 @@ module.exports = (io) => {
 				createRefreshToken(user.email);
 
 				// create access token
-				const access_token = createAccessToken(user.email);
+				const access_token = createAccessToken();
 
 				//---------------- log -------------------//
 				logger.userRelatedLog(user._id,user.username,2);

@@ -10,7 +10,7 @@ const { RefreshToken } = require("../db/models/RefreshToken");
  * @description used for creating "access tokens" for the user when requesting a resource access.
  */
 exports.createAccessToken = (payload) => {
-	const access_token = jwt.sign({ payload }, process.env.JWT_KEY, {
+	const access_token = jwt.sign({ ...payload }, process.env.JWT_KEY, {
 		expiresIn: process.env.TOKEN_DURATION
 	});
 
@@ -48,7 +48,7 @@ exports.createRefreshToken = async (email) => {
 
 		// create a new refresh token
 		let db_refreshToken = new RefreshToken({
-			email: payload.email,
+			email: email,
 			token: refToken
 		});
 

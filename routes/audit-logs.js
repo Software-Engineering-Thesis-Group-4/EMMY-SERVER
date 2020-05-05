@@ -5,6 +5,8 @@ const dbQuery = require('../utility/dbAgnostics');
 const { AuditLog} = require('../db/models/AuditLog')
 const { ExtremeEmo} = require('../db/models/ExtremeEmo')
 const mailer = require('../utility/mailer')
+const jwt = require('jsonwebtoken')
+const token = require('../utility/jwt')
 
 
 module.exports = (io) => {
@@ -61,12 +63,11 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.get('/admin', async (req, res) => {
 
-		const emo = new ExtremeEmo({
-			asd: 'asd',
-			adasd: '1112313'
+		jwt.verify('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyIwIjoibSIsIjEiOiJpIiwiMiI6ImMiLCIzIjoiaCIsIjQiOiJhIiwiNSI6ImUiLCI2IjoibCIsIjciOiJAIiwiOCI6ImciLCI5IjoibSIsIjEwIjoiYSIsIjExIjoiaSIsIjEyIjoibCIsIjEzIjoiLiIsIjE0IjoiYyIsIjE1IjoibyIsIjE2IjoibSIsImlhdCI6MTU4ODY5MDg0NSwiZXhwIjoxNTg4Njk0NDQ1fQ.zF6kfecB4_RL4OMff2cooaY5WRwN1pqVcR3KjLC2pnc',process.env.JWT_KEY,(err,doc) => {
+			console.log(doc.token)
+			res.send(doc.token)
 		})
-		await emo.save()
-		res.send('hi')
+		
 		// try {
 			
 		// 	let auditLogs = await dbQuery.findAllPopulate(`AuditLog`,{
