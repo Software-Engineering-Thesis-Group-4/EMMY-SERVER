@@ -56,18 +56,11 @@ module.exports = (io) => {
 			// if submitted password invalid, return an error
 			if (passwordIsValid) {
 
-				// encrypt user credentials
-				let encrypted_email = encrypt(user.email);
+				createRefreshToken(user.email);
 
-				//create refresh token
-				createRefreshToken({email});
-
-				
 				// create access token
-				const access_token = createToken( {email} , process.env.TOKEN_DURATION);
+				const access_token = createAccessToken(user.email);
 
-
-				
 				//---------------- log -------------------//
 				logger.userRelatedLog(user._id,user.username,2);
 

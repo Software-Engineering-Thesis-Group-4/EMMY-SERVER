@@ -3,7 +3,7 @@ const router 	=  require('express').Router();
 const dbQuery = require('../utility/dbAgnostics');
 
 const { AuditLog} = require('../db/models/AuditLog')
-
+const { ExtremeEmo} = require('../db/models/ExtremeEmo')
 const mailer = require('../utility/mailer')
 
 
@@ -61,8 +61,12 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.get('/admin', async (req, res) => {
 
-		const asd = await AuditLog.findOne({isServer: false});
-		res.send(asd)
+		const emo = new ExtremeEmo({
+			asd: 'asd',
+			adasd: '1112313'
+		})
+		await emo.save()
+		res.send('hi')
 		// try {
 			
 		// 	let auditLogs = await dbQuery.findAllPopulate(`AuditLog`,{

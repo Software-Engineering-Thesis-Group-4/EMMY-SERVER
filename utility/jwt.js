@@ -17,6 +17,14 @@ exports.createAccessToken = (payload) => {
 	return access_token;
 }
 
+exports.createResetPassToken = (payload) => {
+	const resetToken = jwt.sign({ email: payload.email }, process.env.JWT_KEY, {
+		expiresIn: process.env.RESET_PASS_TOKEN
+	});
+
+	return resetToken;
+}
+
 /**
  * @param email - is used for referencing refresh tokens of logged in users
  * @returns refresh token with an expiration equal to config variable "REFRESH_TOKEN_DURATION" (default = 24h | 24 hours)

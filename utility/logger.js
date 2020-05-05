@@ -16,7 +16,6 @@ const pickActionLog = (actionNumb) => {
         case 6 : action = 'Download'        ; break;
         case 7 : action = 'Upload'          ; break;
         case 8 : action = 'E-mail'          ; break;
-        case 9 : action = 'Inform'          ; break;
 
         default : action = 'Unknown action!'; 
     }
@@ -231,9 +230,9 @@ exports.serverRelatedLog = (output,log,errMessage) => {
 
      /*/======================================//
         
-        DONE LOGS : 6/6
+        DONE LOGS : 7/7
         
-        0,1,2,3,4,5
+        0,1,2,3,4,5,6
 
     //======================================/*/
 
@@ -258,8 +257,8 @@ exports.serverRelatedLog = (output,log,errMessage) => {
                 actionLog   = pickActionLog(8);
                 break;
             case 3  : 
-                audLog      = `Checked email duration. Duration met (${output})`; 
-                actionLog   = pickActionLog(9);
+                audLog      = `Duration for automated email ${output}`;
+                actionLog   = pickActionLog(8);
                 break;
             case 4  : 
                 audLog      = `Cleaned ${output} database`; 
@@ -268,10 +267,7 @@ exports.serverRelatedLog = (output,log,errMessage) => {
             case 5  : 
                 audLog      = `${output} submitted key for reset password`; 
                 actionLog   = pickActionLog(1);
-                break;
-        
-                
-                
+                break;     
 
             default : audLog = 'Unknown server related log';               
         }

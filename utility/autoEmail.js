@@ -14,7 +14,7 @@ let dayDuration = 7;
 endDate.setDate(endDate.getDate() + dayDuration);
 
 // max negativeEmotions default 7
-let maxNegativEmotions = 2;
+let maxNegativEmotions = 7;
  
 
 ////--------------------------------- GLOBAL VARIABLES ---------------------------------
@@ -59,16 +59,19 @@ exports.startEndDateChecker = async () => {
             endDate = new Date();
             endDate.setDate(endDate.getDate() + dayDuration);
 
-            const cleanDb = await ExtremeEmo.remove({});
+            const cleanDb = await ExtremeEmo.deleteMany({});
+            console.log('.............................cleaning collection'.blue)
 
+            
             if(cleanDb.ok){
                 logger.serverRelatedLog('Extreme Emotions',4);
             }
 
-            logger.serverRelatedLog(true,3);
-            console.log('Duration finished for automated email')
+            logger.serverRelatedLog('finished',3);
+            console.log('Duration finished for automated email.')
         } else {
             // run logger
+            logger.serverRelatedLog('not yet finished',3);
             console.log('Duration not yet finsihed for automated email')
         }
     } catch (err){

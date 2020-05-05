@@ -10,8 +10,9 @@ const { User } = require("../db/models/User");
 // import utilities
 const logger = require('../utility/logger');
 const { encrypt, decrypter } = require('../utility/aes');
-const { createToken } = require('../utility/jwt');
+const token = require('../utility/jwt');
 const mailer = require('../utility/mailer');
+
 const {
 	registerValidationRules,
 	resetPassValidationRules,
@@ -26,33 +27,6 @@ const ERR_DUPLICATE = "Already Exists."
 
 
 module.exports = (io) => {
-
-	/* ---------------------------------------------------------------------------------------------------------------------
-	Route:
-	POST /api/users/
-
-	Description:
-
-	Api for fetching data of all users (to be used rendering list of accounts in the admin page)
-	Gets all user data except for sensitive information (i.e. password)
-
-	Author:
-	Michael Ong
-	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/', async (req, res) => {
-
-		try {
-
-			let users = await User.find({},{'password': 0});
-
-			return res.status(200).send(users);
-
-		} catch (error) {
-			console.error(error);
-			return res.status(500).send('Server error. A problem occured when retrieving users');
-		}
-	});
-	
 
 
 	/* ---------------------------------------------------------------------------------------------------------------------
@@ -214,6 +188,7 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/reset-password', resetPassValidationRules, validate, async (req, res) => {
 		try {
+
 			const email = req.body.email;
 
 			// check if user has internet access
@@ -228,11 +203,11 @@ module.exports = (io) => {
 				}
 				
 
-				const username = user.username;
-				const decr = user.email;
+				const username 		= user.username;
+				const decryptUser 	= user.email;
 
 				// create token with user info ------- 1 min lifespan
-				const token = createToken({ email: user.email }, '1m');
+				const token = token.createResetPassToken({ email : user.email });
 
 				// gets last 7 char in token and makes it the verif key
 				const key = token.substring(token.length - 7)
@@ -241,7 +216,7 @@ module.exports = (io) => {
 				const encTok = encrypt(token);
 
 				// send key to user email
-				const isErr = await mailer.resetPassMail(decr, username, key);
+				const isErr = await mailer.resetPassMail(decryptUser, username, key);
 
 
 				if(isErr.value){
@@ -284,6 +259,7 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/reset-password-key', resetKeyValidationRules, validate, async (req, res) => {
 		try {
+
 			const { key, resetTok } = req.body;
 			const decTok = decrypter(resetTok);
 
