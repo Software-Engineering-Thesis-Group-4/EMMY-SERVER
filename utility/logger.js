@@ -231,9 +231,9 @@ exports.serverRelatedLog = (output,log,errMessage) => {
 
      /*/======================================//
         
-        DONE LOGS : 5/5
+        DONE LOGS : 6/6
         
-        0,1,2,3,4
+        0,1,2,3,4,5
 
     //======================================/*/
 
@@ -265,6 +265,11 @@ exports.serverRelatedLog = (output,log,errMessage) => {
                 audLog      = `Cleaned ${output} database`; 
                 actionLog   = pickActionLog(1);
                 break;
+            case 5  : 
+                audLog      = `${output} submitted key for reset password`; 
+                actionLog   = pickActionLog(1);
+                break;
+        
                 
                 
 

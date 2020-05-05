@@ -62,8 +62,8 @@ const csvImport = async (csvFile) => {
 				x++;
 			}
 
-
 			return isErr = { value : false, message : 'Successfully imported employees' };
+
 		} else {
 			console.log('invalid csv format');
 			return isErr = { value : true, message : `invalid csv format must follow this header format \n`

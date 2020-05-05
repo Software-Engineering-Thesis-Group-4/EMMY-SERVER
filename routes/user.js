@@ -166,9 +166,7 @@ module.exports = (io) => {
 
 			// user credentials
 			const { userId, userUsername} = req.body;
-
 			const { emailBod, empEmail } = req.body;
-			
 			
 			const netStatus = await isOnline();
 
@@ -178,6 +176,7 @@ module.exports = (io) => {
 				
 				if(isErr.value){
 					logger.employeeRelatedLog(userId,userUsername,6,empEmail,isErr.message);
+					console.log('Error sending email'.yellow);
 					res.status(500).send('Error sending email');
 				} else {
 					logger.employeeRelatedLog(userId,userUsername,6,empEmail);
@@ -221,42 +220,42 @@ module.exports = (io) => {
 			const netStatus = await isOnline();
 
 			if (netStatus) {
+
 				const user = await User.findOne({ email: email });
+
 				if (!user) {
-					res.send('Email doesnt exist');
+					return res.status(500).send('Email doesnt exist in database');
 				}
-				else {
+				
 
-					const username = user.username;
-					const decr = user.email;
+				const username = user.username;
+				const decr = user.email;
 
-					// create token with user info ------- 1 min lifespan
-					const token = createToken({ email: user.email }, '1m');
+				// create token with user info ------- 1 min lifespan
+				const token = createToken({ email: user.email }, '1m');
 
-					// gets last 7 char in token and makes it the verif key
-					const key = token.substring(token.length - 7)
+				// gets last 7 char in token and makes it the verif key
+				const key = token.substring(token.length - 7)
 
-					// encrypt token before sending to user
-					const encTok = encrypt(token);
+				// encrypt token before sending to user
+				const encTok = encrypt(token);
 
-					// send key to user email
-					const isErr = await mailer.resetPassMail(decr, username, key);
+				// send key to user email
+				const isErr = await mailer.resetPassMail(decr, username, key);
 
 
-					if(isErr.value){
-						logger.serverRelatedLog(email,1,isErr.message);
-						res.status(500).send('Error sending email!');
-					} else {
-						//---------------- log -------------------//
-						logger.serverRelatedLog(user.email,1);
-
-						res.status(200).send({ resetTok: encTok });
-					}
-
+				if(isErr.value){
+					logger.serverRelatedLog(email,1,isErr.message);
+					return res.status(500).send('Error sending email!');
+				} else {
+					//---------------- log -------------------//
+					logger.serverRelatedLog(user.email,1);
+					return res.status(200).send({ resetTok: encTok });
 				}
+
 			} else {
 				logger.serverRelatedLog(email,1,`CONNECTION ERROR: Check internet connection!`);
-				res.status(502).send('Please check your internet connection!');
+				return res.status(502).send('Please check your internet connection!');
 			}
 		} catch (error) {
 
@@ -264,7 +263,7 @@ module.exports = (io) => {
 			const email = req.body.email;
 			//---------------- log -------------------//
 			logger.serverRelatedLog(email,1,error.message);
-			console.log(error)
+			console.log(error.message)
 			res.status(500).send('Error on server!');
 		}
 	});
@@ -285,28 +284,48 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/reset-password-key', resetKeyValidationRules, validate, async (req, res) => {
 		try {
-			const { key, resetTok, userId } = req.body;
+			const { key, resetTok } = req.body;
 			const decTok = decrypter(resetTok);
 
 			jwt.verify(decTok, process.env.JWT_KEY, async (err, payload) => {
 
 				if (err) {
-					res.status(401).send('Invalid');
+
+					switch (err.name) {
+						
+						case 'TokenExpiredError':
+							console.error('Reset Password Token Expired'.red)
+							logger.serverRelatedLog(payload.email,5,err.name);
+							return res.status(401).send("Unauthorized Access.");
+
+						case 'JsonWebTokenError':
+							console.error('Reset Password Token'.red)
+							logger.serverRelatedLog(payload.email,5,err.name);
+							return res.status(401).send("Unauthorized Access.");
+
+						default:
+							console.error('Reset Password Token'.red)
+							logger.serverRelatedLog(payload.email,5,err.name);
+							return res.status(401).send("Unauthorized Access.");
+					}
 				} else {
 					if (key === decTok.substring(decTok.length - 7)) {
 
 						// if token is not expired and key is correct, proceed to change password page
+						logger.serverRelatedLog(payload.email,5);
 						res.status(200).send({ user: payload.email });
 
 					} else {
-						res.status(400).send('Invalid key');
+						logger.serverRelatedLog(payload.email,5,'Invalid reset password key');
+						res.status(400).send('Invalid reset password key');
 					}
 				}
 			})
 
 		} catch (error) {
-			console.log(error)
-			res.status(500).send('Error on server!')
+			console.log(error.message);
+			logger.serverRelatedLog(undefined,5,error.message);
+			return res.status(500).send('Error on server!');
 		}
 	});
 
