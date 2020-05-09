@@ -15,6 +15,7 @@ module.exports = {
 	},
 	"ignorePatterns": ["node_modules/", "client/"],
 	"rules": {
-		"no-undef": 0
+		"no-undef": 0,
+		"no-unused-vars": 1
 	}
 };
