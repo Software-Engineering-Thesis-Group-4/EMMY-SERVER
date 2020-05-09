@@ -63,6 +63,18 @@ const EmployeeSchema = Schema({
       type: LatestLogSchema,
       default: null,
    },
+   angryEmoCount : {
+      type : Number,
+      default: 0
+   },
+   leaderboardEmoCount : {
+      type : Number,
+      default: 0
+   },
+   sendAutoEmail : {
+      type : Boolean,
+      default : false
+   }
 
 });
 
