@@ -11,6 +11,7 @@ const colors     = require('colors');
 const RateLimit  = require('express-rate-limit');
 const MongoStore = require('rate-limit-mongo');
 
+const { createDBConnection } = require('./db');
 colors.enable();
 
 // LOAD ENVIRONMENT CONFIGURATIONS ----------------------------------------------------------------------------
@@ -18,13 +19,8 @@ const cfg = require('./configs/config.js');
 
 const app = express();
 const server = http.createServer(app);
-const io     = socketIO(server);
-const PORT   = process.env.PORT || 3000;
-
-
-const { createDBConnection } = require('./db');
-
-
+const io = socketIO(server);
+const PORT = cfg.PORT || 3000;
 
 // APPLICATION CONFIGURATIONS ---------------------------------------------------------------------------------
 app.set('views', path.join(__dirname, 'views'));
@@ -35,8 +31,9 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.static(path.join(__dirname, "client"))); // the directory for Vue
 app.use(cors());
-app.use(fileUpload((process.env.NODE_ENV === 'development' ?
-	{ debug: true } : { debug: false })
+app.use(helmet());
+app.use(fileUpload(/* (process.env.NODE_ENV === 'development ' ?
+	{ debug: true } : { debug: false }) */
 ));
 
 app.use(RateLimit({
@@ -100,7 +97,7 @@ app.use('/auth', authRoute);									// localhost:3000/auth/
 app.use('/main', utilityRoute); 								// localhost:3000/utility
 app.use('/api/employees', employeeRoute); 				// localhost:3000/api/employees/
 app.use('/api/employeelogs', employeeLogsRoute); 		// localhost:3000/api/employeelogs/
-app.use('/api/users', userRoute);						// localhost:3000/api/employeelogs/
+app.use('/api/users', userRoute);							// localhost:3000/api/employeelogs/
 app.use('/api/auditlogs', auditLogsRoute);				// localhost:3000/api/auditlogs/
 
 
@@ -135,7 +132,7 @@ async function start() {
 			"\nMongoDB Database: " + connection.name.brightCyan
 		);
 
-		const environment = (process.env.NODE_ENV === 'development ') ? 'Development'.black.bgYellow : 'Production'.brightCyan;
+		const environment = (process.env.NODE_ENV === 'development ') ? 'Development'.black.bgYellow : 'Production'.black.bgCyan;
 		const host_url = 'http://localhost:'.cyan + PORT.brightCyan;
 		const net_url = `http://${ip.address()}:`.cyan + PORT.brightCyan;
 
