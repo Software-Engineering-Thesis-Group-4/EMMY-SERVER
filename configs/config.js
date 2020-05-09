@@ -1,8 +1,6 @@
-const path 		= require('path');
-const dotenv 	= require('dotenv');
-const fs = require('fs')
-
-const prodPath = process.env.EMMY;
+const path = require('path');
+const dotenv = require('dotenv');
+const fs = require('fs');
 
 function fileChecker(fpath){
 	try {
@@ -16,26 +14,33 @@ function fileChecker(fpath){
 
 // DONE
 switch (process.env.NODE_ENV) {
-	case 'production ':
+	case 'production ': {
+		// if production mode, it will use the path to the .env file specified in 'EMMY' system variable of the machine
+		let filePath = process.env.EMMY_PROD;
+		console.log("Production Path: " + filePath);
 
-		// if production mode, it will use the path to the .env file specified in EMMY system variable
-		if(fs.existsSync(prodPath)){
-			dotenv.config({ path: process.env.EMMY })
+		if (fileChecker(filePath)) {
+			dotenv.config({ path: filePath })
 		} else {
-			fs.existsSync(__dirname + '/./EMMY_DEV.env') ?
-			dotenv.config({ path: path.resolve(__dirname, './EMMY_DEV.env') }) :
-			console.error('Cant find env file inside project directory!');
+			console.error("ENV File not found in specified path");
+			process.exit();
 		}
-		
-		
 		break;
+	}
 
-	case 'development ':
-		
-		// if development mode, it will use the sample config file in the project (EMMY_DEV.env)
-		dotenv.config({ path: path.resolve(__dirname, './EMMY_DEV.env') })
+	case 'development ': {
+		// if development mode, it will use the sample config file in the project "configs/EMMY_DEV.env"
+		let filePath = path.resolve(__dirname, './EMMY_DEV.env');
+		console.log(`\nFilePath: ${filePath}`);
+
+		if (fileChecker(filePath)) {
+			dotenv.config({ path: filePath });
+		} else {
+			console.error("NO .ENV FILE IN DIRECTORY");
+			process.exit();
+		}
 		break;
+	}
 }
-
 
 module.exports = { ...process.env };
