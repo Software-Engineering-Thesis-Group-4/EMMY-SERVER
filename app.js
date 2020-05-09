@@ -10,8 +10,6 @@ const ip         = require('ip');
 const helmet     = require('helmet');
 const fileUpload = require('express-fileupload');
 const colors     = require('colors');
-const RateLimit  = require('express-rate-limit');
-const MongoStore = require('rate-limit-mongo');
 
 const { createDBConnection } = require('./db');
 colors.enable();
@@ -23,9 +21,9 @@ const app = express();
 
 // or listen to both HTTP and HTTPS by creating another server with HTTP
 let server = undefined;
-if (process.env.NODE_ENV == 'production'){
-	const keyPath = "/srv/www/keys/my-site-key.pem";
-	const certPath = "/srv/www/keys/chain.pem";
+if (process.env.NODE_ENV == 'production '){
+	const keyPath = "C:/Users/Guest Account/AppData/Local/mkcert/rootCA-key.pem";
+	const certPath = "C:/Users/Guest Account/AppData/Local/mkcert/rootCA.pem"; // or "$(mkcert -CAROOT)/rootCA.pem"
 	const options = {
 		key: fs.readFileSync(keyPath),
 		cert: fs.readFileSync(certPath)
@@ -52,16 +50,6 @@ app.use(helmet());
 app.use(fileUpload(/* (process.env.NODE_ENV === 'development ' ?
 	{ debug: true } : { debug: false }) */
 ));
-
-app.use(RateLimit({
-	store: new MongoStore({
-		uri: `mongodb://localhost:${cfg.DB_PORT}/${cfg.DB_NAME}`,
-		collectionName: "expressRateLimitRecord"
-	}),
-	max: 100, //number of request threshold
-	windowMs: 15 * 60 * 1000, //15mins per 100request threshold
-	delayMs: 0
-}));
 
 app.use(helmet({
 	xssFilter: {
