@@ -5,8 +5,8 @@ require('colors').enable();
 
 // import utilities
 const { createAccessToken, createRefreshToken, removeRefreshToken } = require('../utility/jwt');
-const { validateLogin } = require('../utility/validator');
-const { body, validationResult } = require('express-validator');
+const { loginRules, logoutRules, validate } = require('../utility/validator');
+const apiLimiter = require('../utility/apiLimiter');
 const logger = require('../utility/logger');
 
 // import models
@@ -32,17 +32,8 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/login', validateLogin, async (req, res) => {
+	router.post('/login', apiLimiter, loginRules, validate, async (req, res) => {
 		try {
-
-
-			// data sanitization
-			let errors = validationResult(req);
-
-			if (!errors.isEmpty()) {
-				console.error('Invalid Credentials Format.'.red);
-				return res.status(401).send(ERR_INVALID_CREDENTIALS);
-			}
 
 			// check if email exists in the database
 			const user = await User.findOne({ email: req.body.email });
@@ -191,7 +182,7 @@ module.exports = (io) => {
 										console.error('Invalid Refresh Token'.red)
 										return res.status(401).send(ERR_UNAUTHORIZED);
 								}
-								
+
 							});
 						});
 					}
@@ -217,14 +208,8 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/logout', body('email').trim().notEmpty().isEmail(), (req, res) => {
+	router.post('/logout', logoutRules, validate, (req, res) => {
 		try {
-			const errors = validationResult(req);
-
-			if (!errors.isEmpty()) {
-				console.error('Invalid Credential Format.'.red);
-				return res.sendStatus(400);
-			}
 
 			const { userUsername, userId } = req.body;
 

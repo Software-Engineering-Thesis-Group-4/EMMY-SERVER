@@ -1,7 +1,7 @@
 const { body, validationResult } = require('express-validator')
 
 //Prevent Reflected XSS attack: request-based attack
-exports.validateLogin = [
+exports.loginRules = [
 	body('email').trim().escape()
 		.notEmpty().withMessage('Email cannot be empty')
 		.isEmail().withMessage('Invalid Email Format'),
@@ -12,7 +12,7 @@ exports.validateLogin = [
 ]
 
 // Prevent Stored/Database/Persistent XSS attack
-exports.registerValidationRules = [
+exports.registerRules = [
 	body('email').trim().escape()
 		.notEmpty().withMessage('Email cannot be empty')
 		.isEmail().withMessage('Invalid Email Format'),
@@ -44,25 +44,31 @@ exports.registerValidationRules = [
 ]
 
 // Prevent BOTH Reflected XSS and Stored/Persistent XSS attack
-exports.resetPassValidationRules = [
+exports.resetPassRules = [
 	// validate input email to start process
-	body('email').trim().escape()
+	body('email').trim()
 		.notEmpty().withMessage('Email cannot be empty')
 		.isEmail().withMessage('Invalid Email format'),
 ]
 
-exports.resetKeyValidationRules = [
+exports.resetKeyRules = [
 	// validate input code from sent email. 'Code' possibly alphanumeric only
-	body('key').trim()
+	body('key').trim().escape()
 		.notEmpty().withMessage('Key cannot be empty')
 		.isAlphanumeric().withMessage('Invalid key data'),
+]
+
+exports.logoutRules = [
+	body('email')
+		.trim().notEmpty().withMessage("Error: Empty email")
+		.isEmail().withMessage('Invalid Credential Format'),
 ]
 
 
 exports.validate = (req, res, next) => {
 	let errors = validationResult(req);
 
-	if (!errors.isEmpty()) {
+	if (errors.isEmpty()) {
 		return next();
 	} else {
 		let errMessages = errors.errors.map(err => err.msg);

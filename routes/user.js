@@ -12,13 +12,8 @@ const logger = require('../utility/logger');
 const { encrypt, decrypter } = require('../utility/aes');
 const { createToken } = require('../utility/jwt');
 const mailer = require('../utility/mailer');
-const {
-	registerValidationRules,
-	resetPassValidationRules,
-	resetKeyValidationRules,
-	validate
-} = require("../utility/validator");
-const { validationResult } = require('express-validator');
+const { registerRules, resetPassRules, resetKeyRules, validate } = require("../utility/validator");
+const apiLimiter = require('../utility/apiLimiter');
 
 // error messages
 const ERR_SERVER_ERROR = "Internal Server Error.";
@@ -52,9 +47,9 @@ module.exports = (io) => {
 			return res.status(500).send('Server error. A problem occured when retrieving users');
 		}
 	});
-	
 
-	
+
+
 
 	/* ---------------------------------------------------------------------------------------------------------------------
 	Route:
@@ -66,7 +61,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/enroll', registerValidationRules, async (req, res) => {
+	router.post('/enroll', apiLimiter, registerRules, validate, async (req, res) => {
 		try {
 
 			const errors = validationResult(req);
@@ -125,10 +120,10 @@ module.exports = (io) => {
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
 	POST /api/users/email-notif
-	
+
 	Description:
 	This route is used for sending email through the HR manager or users.
-	
+
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
@@ -146,7 +141,7 @@ module.exports = (io) => {
 			if(netStatus){
 
 				mailer.sendEmailNotif(empEmail, userUsername, emailBod);
-			
+
 				logger.employeeRelatedLog(userId,userUsername,6,empEmail);
 				res.status(200).send({ resetTok: encTok });
 
@@ -154,19 +149,19 @@ module.exports = (io) => {
 
 
 			logger.employeeRelatedLog(userId,userUsername,6,empEmail,'CONNECTION ERROR: Check internet connection!');
-				
+
 			res.status(502).send('Please check your internet connection!');
-			
+
 
 		} catch (err) {
-			
+
 			const { userId, userUsername} = req.body;
 			logger.employeeRelatedLog(userId,userUsername,6,undefined,err.message);
-		
+
 			console.log(err);
 			return res.status(500).send(ERR_SERVER_ERROR);
 		}
-		
+
 	})
 
 
@@ -174,14 +169,14 @@ module.exports = (io) => {
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
 	POST /api/users/reset-password
-	
+
 	Description:
 	This is used for handling forgot password requests.
-	
+
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/reset-password', resetPassValidationRules, validate, async (req, res) => {
+	router.post('/reset-password', apiLimiter, resetPassRules, validate, async (req, res) => {
 		try {
 			const email = req.body.email;
 
@@ -222,7 +217,7 @@ module.exports = (io) => {
 			}
 		} catch (error) {
 
-			// DECRYPT EMAIL FIRST 
+			// DECRYPT EMAIL FIRST
 			const email = req.body.email;
 			//---------------- log -------------------//
 			logger.serverRelatedLog(email,1,error.message);
@@ -238,14 +233,14 @@ module.exports = (io) => {
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
 	POST /api/user/reset-password-key
-	
+
 	Description:
 	This route is used for handling the reset key to access reset password page.
-	
+
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/reset-password-key', resetKeyValidationRules, validate, async (req, res) => {
+	router.post('/reset-password-key', apiLimiter, resetKeyRules, validate, async (req, res) => {
 		try {
 			const { key, resetTok, userId } = req.body;
 			const decTok = decrypter(resetTok);
@@ -273,4 +268,4 @@ module.exports = (io) => {
 	});
 
 	return router;
-}; 
+};
