@@ -19,11 +19,11 @@ module.exports = (io) => {
       res.redirect('/dbBackup.html')
    })
 
-   router.get('/register-admin', (req, res) => {
+   router.get('/register/user', (req, res) => {
       res.redirect('/enroll_user.html');
    });
 
-   router.get('/register-employee', (req, res) => {
+   router.get('/register/employee', (req, res) => {
       res.redirect('/enroll_employee.html');
    });
 
