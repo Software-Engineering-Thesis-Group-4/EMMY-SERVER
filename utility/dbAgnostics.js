@@ -44,7 +44,7 @@ exports.findAll = async (Model) => {
     let isErr = {};
 
     try {
-       
+        
         Model = modelPicker(Model);
 
         const modelings = await Model.find({});

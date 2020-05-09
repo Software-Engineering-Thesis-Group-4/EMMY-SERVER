@@ -4,10 +4,15 @@ const dbQuery = require('../utility/dbAgnostics');
 
 const { AuditLog} = require('../db/models/AuditLog')
 const { ExtremeEmo} = require('../db/models/ExtremeEmo')
+const { User } = require('../db/models/User');
+
+const { Employee } = require('../db/models/Employee') 
+
+
+
 const mailer = require('../utility/mailer')
 const jwt = require('jsonwebtoken')
 const token = require('../utility/jwt')
-
 
 module.exports = (io) => {
 	
@@ -62,29 +67,26 @@ module.exports = (io) => {
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.get('/admin', async (req, res) => {
-
-		jwt.verify('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyIwIjoibSIsIjEiOiJpIiwiMiI6ImMiLCIzIjoiaCIsIjQiOiJhIiwiNSI6ImUiLCI2IjoibCIsIjciOiJAIiwiOCI6ImciLCI5IjoibSIsIjEwIjoiYSIsIjExIjoiaSIsIjEyIjoibCIsIjEzIjoiLiIsIjE0IjoiYyIsIjE1IjoibyIsIjE2IjoibSIsImlhdCI6MTU4ODY5MDg0NSwiZXhwIjoxNTg4Njk0NDQ1fQ.zF6kfecB4_RL4OMff2cooaY5WRwN1pqVcR3KjLC2pnc',process.env.JWT_KEY,(err,doc) => {
-			console.log(doc.token)
-			res.send(doc.token)
-		})
 		
-		// try {
-			
-		// 	let auditLogs = await dbQuery.findAllPopulate(`AuditLog`,{
-		// 										path	: 'user' , 
-		// 										select	: {password: 0}
-		// 									});
-			
-		// 	if (auditLogs.value){
-		// 		return res.send(500).send(auditLogs.message)
-		// 	}
+		const emails = await Employee.find({ fingerprintId: { $gt: 17, $lt: 21 }, isMale : true },{ firstName : 1,email : 1})
 
-		// 	return res.status(200).send(auditLogs.output);
+		try {
+			
+			let auditLogs = await dbQuery.findAllPopulate(`AuditLog`,{
+												path	: 'user' , 
+												select	: {password: 0}
+											});
+			
+			if (auditLogs.value){
+				return res.send(500).send(auditLogs.message)
+			}
 
-		// } catch (error) {
-		// 	console.error(error);
-		// 	res.status(500).send('Server error. A problem occured when retrieving the audit logs');
-		// }
+			return res.status(200).send(auditLogs.output);
+
+		} catch (error) {
+			console.error(error);
+			res.status(500).send('Server error. A problem occured when retrieving the audit logs');
+		}
 
 	});
 

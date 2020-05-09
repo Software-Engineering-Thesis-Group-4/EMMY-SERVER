@@ -16,8 +16,9 @@ const pickActionLog = (actionNumb) => {
         case 6 : action = 'Download'        ; break;
         case 7 : action = 'Upload'          ; break;
         case 8 : action = 'E-mail'          ; break;
+        case 9 : action = 'Reset'           ; break;
 
-        default : action = 'Unknown action!'; 
+        default : action = 'Unknown action'; 
     }
 
     return action;
@@ -253,7 +254,7 @@ exports.serverRelatedLog = (output,log,errMessage) => {
                 actionLog   = pickActionLog(8);
                 break;
             case 2  : 
-                audLog      = `EMMY sent a extreme emotion email to ${output}.`; 
+                audLog      = `EMMY sent extreme emotion automated email to ${output}.`; 
                 actionLog   = pickActionLog(8);
                 break;
             case 3  : 
@@ -261,13 +262,13 @@ exports.serverRelatedLog = (output,log,errMessage) => {
                 actionLog   = pickActionLog(8);
                 break;
             case 4  : 
-                audLog      = `Cleaned ${output} database`; 
-                actionLog   = pickActionLog(1);
+                audLog      = `Updating fields for ${output}`; 
+                actionLog   = pickActionLog(9);
                 break;
             case 5  : 
                 audLog      = `${output} submitted key for reset password`; 
                 actionLog   = pickActionLog(1);
-                break;     
+                break;   
 
             default : audLog = 'Unknown server related log';               
         }

@@ -1,5 +1,5 @@
 
-const { ExtremeEmo } = require('../db/models/ExtremeEmo');
+const { Employee } = require('../db/models/Employee');
 
 const mailer = require('./mailer');
 const logger = require('./logger');
@@ -9,22 +9,25 @@ const logger = require('./logger');
 let startDate   = new Date();
 let endDate     = new Date();
 
-// default 7 days 
-let dayDuration = 7;
+// default 1 day 
+let dayDuration = 1;
 endDate.setDate(endDate.getDate() + dayDuration);
 
-// max negativeEmotions default 7
-let maxNegativEmotions = 7;
+// max negativeEmotions default 1
+let maxNegativEmotions = 1;
  
-
 ////--------------------------------- GLOBAL VARIABLES ---------------------------------
+
+
+
 
 exports.editAutoEmailOptions = async (day, negaEmoCap) => {
 
     try{
+        
         // if options are changed clean database and reset startDate and endDate
-        startDate = new Date();
-        endDate = new Date();
+        startDate   = new Date();
+        endDate     = new Date();
 
 
         dayDuration = day;
@@ -33,14 +36,34 @@ exports.editAutoEmailOptions = async (day, negaEmoCap) => {
 
         endDate.setDate(endDate.getDate() + dayDuration);
 
-        const cleanDb = await ExtremeEmo.remove({});
+        const employees = await Employee.find({ angryEmoCount: { $gt: 0 } }, 
+                                            { angryEmoCount : 1, firstName : 1, lastName : 1, sendAutoEmail : 1 });
 
-        if(cleanDb.ok){
-            logger.serverRelatedLog('Extreme Emotions',4);
+        if(!employees) {
+            logger.serverRelatedLog('Employee',4,'Error getting employees or employee collection is empty');
+            console.log('Error getting employees or employee collection is empty');
+        } else {
+
+            employees.forEach(emp => {
+
+                emp.angryEmoCount = 0;
+                emp.sendAutoEmail = false;
+
+                emp.save((err, doc) => {
+                    if(err){
+                        logger.serverRelatedLog(`Employee`,4,err.message);
+                    } else {
+                        logger.serverRelatedLog(`${doc.firstName} ${doc.lastName}`,4,err.message);
+                    }
+                });
+            });
         }
+        
+        console.log('.............................resetting some fields for employee collection'.blue);
+
     } catch (err){
         console.log(err);
-        logger.serverRelatedLog('Extreme Emotions',4,err.message);
+        logger.serverRelatedLog('Employee',4,err.message);
     }
 }
 
@@ -50,7 +73,7 @@ exports.editAutoEmailOptions = async (day, negaEmoCap) => {
 exports.startEndDateChecker = async () => {
 
     try{
-        console.log('Checking if duration is finish for automated email')
+        console.log('Checking if duration is finished for automated email')
 
         // if day and month is the same for start date and end date clean db then reset startDate and endDate
         if(startDate.getDate() == endDate.getDate() && startDate.getMonth() == endDate.getMonth()){
@@ -59,13 +82,29 @@ exports.startEndDateChecker = async () => {
             endDate = new Date();
             endDate.setDate(endDate.getDate() + dayDuration);
 
-            const cleanDb = await ExtremeEmo.deleteMany({});
-            console.log('.............................cleaning collection'.blue)
+            const employees = await Employee.find({ angryEmoCount: { $gt: 0 } }, 
+                                                { angryEmoCount : 1, firstName : 1, lastName : 1, sendAutoEmail : 1 });
 
-            
-            if(cleanDb.ok){
-                logger.serverRelatedLog('Extreme Emotions',4);
+            if(!employees) {
+                logger.serverRelatedLog('Employee',4,'Error getting employees or employee collection is empty');
+                console.log('Error getting employees or employee collection is empty');
+            } else {
+    
+                employees.forEach(emp => {
+    
+                    emp.angryEmoCount = 0;
+                    emp.sendAutoEmail = false;
+
+                    emp.save((err, doc) => {
+                        if(err){
+                            logger.serverRelatedLog(`Employee`,4,err.message);
+                        } else {
+                            logger.serverRelatedLog(`${doc.firstName} ${doc.lastName}`,4,err.message);
+                        }
+                    });
+                });
             }
+            console.log('.............................resetting some fields for employee collection'.blue);
 
             logger.serverRelatedLog('finished',3);
             console.log('Duration finished for automated email.')
@@ -76,7 +115,7 @@ exports.startEndDateChecker = async () => {
         }
     } catch (err){
         console.log(err);
-        logger.serverRelatedLog('Extreme Emotions',4,err.message);
+        logger.serverRelatedLog('Employee',4,err.message);
     }
 }
 
@@ -85,50 +124,104 @@ exports.checkIfSendEmail = async (employeeId) => {
 
     try{
 
-        const emp = await ExtremeEmo.findOne({ employee : employeeId });
+        // TODO : GET REQUIRED FIELDS ONLY
+        
+        const employee = await Employee.findOne({ employeeId },
+                                            { 
+                                                angryEmoCount       : 1, 
+                                                firstName           : 1, 
+                                                lastName            : 1, 
+                                                sendAutoEmail       : 1, 
+                                                leaderboardEmoCount : 1 
+                                            });
 
-        // if employee is not yet in extreme emo database save employee into database
+
         if(!emp){
 
-        const newExtreme = new ExtremeEmo({
-            negaEmoCnt : 1,
-            employee   : employeeId
-        })
-
-        await newExtreme.save();
+            // TODO: ADD LOGGER
+            // cant find employee
 
         } else {
 
-            // check if employee exceedes extreme emotion cap and hasnt received an email yet
-            if(emp.negaEmoCnt + 1 >= maxNegativEmotions && emp.sentEmail == false)  {
+            // check if employee exceedes extreme emotion cap and not yet included in scheduled auto email
+            if(employee.angryEmoCount + 1 >= maxNegativEmotions && employee.sendAutoEmail == false)  {
                 
-                const emailErr = await mailer.sendAutoEmail(emp.employee.email);
+                employee.sendAutoEmail       = true;
+                employee.angryEmoCount       = employee.angryEmoCount + 1;
+                employee.leaderboardEmoCount = employee.leaderboardEmoCount + 1;
                 
-                if(emailErr.value){
-                    logger.serverRelatedLog(emp.employee.email,2,emailErr.message);
-                } else {
-                    emp.sentEmail = true;
-                    await emp.save();
-                    logger.serverRelatedLog(emp.employee.email,2);    
-                }
+
+                employee.save((err, doc) => {
+                    if(err){
+                        logger.serverRelatedLog(`Employee`,4,err.message);
+                    } else {
+                        logger.serverRelatedLog(`${doc.firstName} ${doc.lastName}`,4,err.message);
+                    }
+                });
             }
+
 
             // if employee hasnt excede extreme emotion
-            if(emp.negaEmoCnt < maxNegativEmotions){
-                emp.negaEmoCnt = emp.negaEmoCnt + 1;
-                await emp.save();   
+            if(employee.angryEmoCount + 1 < maxNegativEmotions){
+
+                employee.angryEmoCount       = employee.angryEmoCount + 1;
+                employee.leaderboardEmoCount = employee.leaderboardEmoCount + 1;
+
+                employee.save((err, doc) => {
+                    if(err){
+                        logger.serverRelatedLog(`Employee`,4,err.message);
+                    } else {
+                        logger.serverRelatedLog(`${doc.firstName} ${doc.lastName}`,4,err.message);
+                    }
+                });  
             }
 
 
-            // if employee exceedes extreme emotion cap and sad sad emotion is still adding and email already sent
-            if(emp.negaEmoCnt >= maxNegativEmotions && emp.sentEmail == true){
-                emp.negaEmoCnt = emp.negaEmoCnt + 1;
-                await emp.save();  
-                // notify HR?
+            // if employee exceedes extreme emotion cap and sad sad emotion is still adding and email was already sent
+            if(employee.angryEmoCount >= maxNegativEmotions && employee.sendAutoEmail == true){
+
+                employee.angryEmoCount       = employee.angryEmoCount + 1;
+                employee.leaderboardEmoCount = employee.leaderboardEmoCount + 1;
+
+                employee.save((err, doc) => {
+                    if(err){
+                        logger.serverRelatedLog(`Employee`,4,err.message);
+                    } else {
+                        logger.serverRelatedLog(`${doc.firstName} ${doc.lastName}`,4,err.message);
+                    }
+                }); 
+                //TODO: notify HR
             }
         }
     } catch (err) {
         console.log(err);
         logger.serverRelatedLog(undefined,2,err.message);
+    }
+}
+
+// TODO: MAKE SEND EMAIL SCHEDULED METHOD
+exports.scheduledAutoEmail = async () => {
+
+    try{
+
+        const employees = await Employee.find({ angryEmoCount: { $gte: maxNegativEmotions }, 
+                                                sendAutoEmail : false },{ email : 1, _id : 0 });
+
+        if(!employees.length){
+            logger.serverRelatedLog(`no employees.`,2);
+        } else {
+
+            const strEmp    = employees.toString();
+            const emailErr  = await mailer.sendAutoEmail(strEmp);
+
+            if(emailErr.value){
+                logger.serverRelatedLog(strEmp,2,emailErr.message);
+            } else {
+                logger.serverRelatedLog(strEmp,2);    
+            }
+        }
+    } catch (err) {
+        console.log(err.message);
+        logger.serverRelatedLog(`corresponding employees`,2,err.message);
     }
 }

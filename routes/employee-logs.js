@@ -169,13 +169,13 @@ module.exports = (io) => {
 					case "in":
 						log.emotionIn = emotion;
 						await log.save();
-						if(emotion == 1 || emotion == 2){ autoEmail.checkIfSendEmail(log.employeeRef._id); }
+						if(emotion === 1){ autoEmail.checkIfSendEmail(log.employeeRef._id); }
 						return res.sendStatus(200);
 
 					case "out":
 						log.emotionOut = emotion;
 						await log.save();
-						if(emotion == 1 || emotion == 2){ autoEmail.checkIfSendEmail(log.employeeRef._id); }
+						if(emotion === 1){ autoEmail.checkIfSendEmail(log.employeeRef._id); }
 						return res.sendStatus(200);
 				}
 			}

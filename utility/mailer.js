@@ -76,6 +76,7 @@ exports.sendAutoEmail = async (sendToEmail) => {
 			to      : sendToEmail, // list of receivers
 			subject : 'HR notification Email', // Subject line
 			text    : message, // plain text body 
+		
 		})
 
 		
