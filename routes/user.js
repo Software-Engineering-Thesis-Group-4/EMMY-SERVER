@@ -257,6 +257,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
+	// TODO: REFACTOR: GET TOKEN FROM AUTHENTICATION HEADER ("BEARER TOKEN")
 	router.post('/reset-password-key', resetKeyValidationRules, validate, async (req, res) => {
 		try {
 
