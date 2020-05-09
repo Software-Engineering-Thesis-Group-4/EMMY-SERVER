@@ -10,6 +10,7 @@ const ip         = require('ip');
 const helmet     = require('helmet');
 const fileUpload = require('express-fileupload');
 const colors     = require('colors');
+const { apiLimiter } = require('./utility/apiLimiter');
 
 const { createDBConnection } = require('./db');
 colors.enable();
@@ -104,6 +105,13 @@ app.use('/api/employees', employeeRoute); 				// localhost:3000/api/employees/
 app.use('/api/employeelogs', employeeLogsRoute); 		// localhost:3000/api/employeelogs/
 app.use('/api/users', userRoute);							// localhost:3000/api/employeelogs/
 app.use('/api/auditlogs', auditLogsRoute);				// localhost:3000/api/auditlogs/
+
+// RATE LIMITER PER ROUTES
+app.use('/auth/login', apiLimiter);
+app.use('/auth/logout', apiLimiter);
+app.use('/api/users/enroll', apiLimiter);
+app.use('/api/users/reset-password', apiLimiter);
+app.use('/api/users/reset-password-key', apiLimiter);
 
 
 // SERVE VUE APPLICATION --------------------------------------------------------------------------------------

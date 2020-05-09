@@ -6,7 +6,7 @@ require('colors').enable();
 // import utilities
 const { createAccessToken, createRefreshToken, removeRefreshToken } = require('../utility/jwt');
 const { loginRules, logoutRules, validate } = require('../utility/validator');
-const apiLimiter = require('../utility/apiLimiter');
+const { validationResult, body } = require('express-validator');
 const logger = require('../utility/logger');
 
 // import models
@@ -32,7 +32,8 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/login', apiLimiter, loginRules, validate, async (req, res) => {
+
+	router.post('/login', loginRules, validate, async (req, res) => {
 		try {
 
 			// check if email exists in the database
@@ -99,6 +100,10 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
+
+	// TODO
+	// Update this to use utility/validatorjs
+
 	router.post('/verify',
 		[
 			body('access_token').notEmpty().isJWT(),

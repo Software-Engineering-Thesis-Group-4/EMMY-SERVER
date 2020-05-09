@@ -48,9 +48,6 @@ module.exports = (io) => {
 		}
 	});
 
-
-
-
 	/* ---------------------------------------------------------------------------------------------------------------------
 	Route:
 	POST /api/users/enroll
@@ -61,7 +58,8 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/enroll', apiLimiter, registerRules, validate, async (req, res) => {
+
+	router.post('/enroll', registerRules, validate, async (req, res) => {
 		try {
 
 			const errors = validationResult(req);
@@ -176,7 +174,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/reset-password', apiLimiter, resetPassRules, validate, async (req, res) => {
+	router.post('/reset-password', resetPassRules, validate, async (req, res) => {
 		try {
 			const email = req.body.email;
 
@@ -240,7 +238,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/reset-password-key', apiLimiter, resetKeyRules, validate, async (req, res) => {
+	router.post('/reset-password-key', resetKeyRules, validate, async (req, res) => {
 		try {
 			const { key, resetTok, userId } = req.body;
 			const decTok = decrypter(resetTok);
