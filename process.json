@@ -1,0 +1,11 @@
+{
+  "apps": [
+    {
+      "name": "EMMY-PM2",
+      "script": "app.js",
+      "env": {
+        "NODE_ENV": "production "
+      }
+    }
+  ]
+}
