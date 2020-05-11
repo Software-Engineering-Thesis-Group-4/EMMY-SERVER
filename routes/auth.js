@@ -5,8 +5,8 @@ require('colors').enable();
 
 // import utilities
 const { createAccessToken, createRefreshToken, removeRefreshToken } = require('../utility/jwt');
-const { loginRules, logoutRules, validate } = require('../utility/validator');
-const { validationResult, body } = require('express-validator');
+const { loginRules, logoutRules, verifyTokenRules, validate } = require('../utility/validator');
+const { validationResult } = require('express-validator');
 const logger = require('../utility/logger');
 
 // import models
@@ -35,6 +35,11 @@ module.exports = (io) => {
 
 	router.post('/login', loginRules, validate, async (req, res) => {
 		try {
+
+			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				res.status(401).send(ERR_INVALID_CREDENTIALS.red);
+			}
 
 			// check if email exists in the database
 			const user = await User.findOne({ email: req.body.email });
@@ -104,21 +109,16 @@ module.exports = (io) => {
 	// TODO
 	// Update this to use utility/validatorjs
 
-	router.post('/verify',
-		[
-			body('access_token').notEmpty().isJWT(),
-			body('email').trim().notEmpty().isEmail()
-		],
+	router.post('/verify', verifyTokenRules, validate,
 		async (req, res) => {
 			try {
 
 				// validate of errors exists in data sanitization +++++++++++++++++++++++++++++
 				const errors = validationResult(req);
-
 				if (!errors.isEmpty()) {
-					console.error('Invalid Credentials.'.red);
-					return res.status(401).send(ERR_UNAUTHORIZED);
+					res.status(401).send(ERR_UNAUTHORIZED.red);
 				}
+
 				// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 				let { access_token, email } = req.body;
@@ -215,6 +215,11 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/logout', logoutRules, validate, (req, res) => {
 		try {
+
+			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				res.status(401).send(ERR_UNAUTHENTICATED.red);
+			}
 
 			const { userUsername, userId } = req.body;
 

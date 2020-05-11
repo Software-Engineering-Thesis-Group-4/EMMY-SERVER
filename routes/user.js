@@ -13,9 +13,10 @@ const { encrypt, decrypter } = require('../utility/aes');
 const { createToken } = require('../utility/jwt');
 const mailer = require('../utility/mailer');
 const { registerRules, resetPassRules, resetKeyRules, validate } = require("../utility/validator");
-const apiLimiter = require('../utility/apiLimiter');
+const { validationResult } = require('express-validator');
 
 // error messages
+const ERR_INVALID_CREDENTIALS = "Invalid email or password.";
 const ERR_SERVER_ERROR = "Internal Server Error.";
 const ERR_DUPLICATE = "Already Exists."
 
@@ -44,7 +45,7 @@ module.exports = (io) => {
 
 		} catch (error) {
 			console.error(error);
-			return res.status(500).send('Server error. A problem occured when retrieving users');
+			return res.status(500).send(`${ERR_SERVER_ERROR} A problem occured when retrieving users`);
 		}
 	});
 
@@ -63,6 +64,9 @@ module.exports = (io) => {
 		try {
 
 			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				res.status(401).send(ERR_INVALID_CREDENTIALS.red);
+			}
 
 			// extract logged in user information
 			const { userId, userUsername } = req.body;
@@ -176,6 +180,12 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/reset-password', resetPassRules, validate, async (req, res) => {
 		try {
+
+			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				res.status(401).send(ERR_INVALID_CREDENTIALS.red);
+			}
+
 			const email = req.body.email;
 
 			// check if user has internet access
@@ -240,13 +250,20 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/reset-password-key', resetKeyRules, validate, async (req, res) => {
 		try {
+
+			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				res.status(401).send('Invalid Key Format'.red);
+			}
+
+			//FIX: userId not used
 			const { key, resetTok, userId } = req.body;
 			const decTok = decrypter(resetTok);
 
 			jwt.verify(decTok, process.env.JWT_KEY, async (err, payload) => {
 
 				if (err) {
-					res.status(401).send('Invalid');
+					res.status(401).send('Invalid Key');
 				} else {
 					if (key === decTok.substring(decTok.length - 7)) {
 
