@@ -38,7 +38,7 @@ module.exports = (io) => {
 
 			const errors = validationResult(req);
 			if (!errors.isEmpty()) {
-				res.status(401).send(ERR_INVALID_CREDENTIALS.red);
+				res.status(401).send(ERR_INVALID_CREDENTIALS);
 			}
 
 			// check if email exists in the database
@@ -116,7 +116,7 @@ module.exports = (io) => {
 				// validate of errors exists in data sanitization +++++++++++++++++++++++++++++
 				const errors = validationResult(req);
 				if (!errors.isEmpty()) {
-					res.status(401).send(ERR_UNAUTHORIZED.red);
+					res.status(401).send(ERR_UNAUTHORIZED);
 				}
 
 				// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -218,7 +218,7 @@ module.exports = (io) => {
 
 			const errors = validationResult(req);
 			if (!errors.isEmpty()) {
-				res.status(401).send(ERR_UNAUTHENTICATED.red);
+				res.status(401).send(ERR_UNAUTHENTICATED);
 			}
 
 			const { userUsername, userId } = req.body;
