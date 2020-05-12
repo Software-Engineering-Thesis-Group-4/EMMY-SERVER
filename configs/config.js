@@ -16,7 +16,7 @@ function fileChecker(fpath){
 switch (process.env.NODE_ENV) {
 	case 'production ': {
 		// if production mode, it will use the path to the .env file specified in 'EMMY' system variable of the machine
-		let filePath = process.env.EMMY_PROD;
+		let filePath = process.env.EMMY;
 		console.log("Production Path: " + filePath);
 
 		if (fileChecker(filePath)) {
