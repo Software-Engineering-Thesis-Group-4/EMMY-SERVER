@@ -1,4 +1,6 @@
 const http       = require('http');
+const https 	  = require('https');
+const fs 		  = require('fs');
 const path       = require('path');
 const logger     = require('morgan');
 const socketIO   = require('socket.io');
@@ -8,8 +10,7 @@ const ip         = require('ip');
 const helmet     = require('helmet');
 const fileUpload = require('express-fileupload');
 const colors     = require('colors');
-const RateLimit  = require('express-rate-limit');
-const MongoStore = require('rate-limit-mongo');
+const { apiLimiter } = require('./utility/apiLimiter');
 
 const { createDBConnection } = require('./db');
 colors.enable();
@@ -18,7 +19,23 @@ colors.enable();
 const cfg = require('./configs/config.js');
 
 const app = express();
+
+// or listen to both HTTP and HTTPS by creating another server with HTTP
+
+// let server = undefined;
+// if (process.env.NODE_ENV == 'production '){
+// 	const keyPath = "C:/Users/Guest Account/AppData/Local/mkcert/rootCA-key.pem";
+// 	const certPath = "C:/Users/Guest Account/AppData/Local/mkcert/rootCA.pem"; // or "$(mkcert -CAROOT)/rootCA.pem"
+// 	const options = {
+// 		key: fs.readFileSync(keyPath),
+// 		cert: fs.readFileSync(certPath)
+// 	};
+// 	server = https.createServer(options, app);
+// }else {
+// 	server = http.createServer(app);
+// }
 const server = http.createServer(app);
+
 const io = socketIO(server);
 const PORT = cfg.PORT || 3000;
 
@@ -35,16 +52,6 @@ app.use(helmet());
 app.use(fileUpload(/* (process.env.NODE_ENV === 'development ' ?
 	{ debug: true } : { debug: false }) */
 ));
-
-app.use(RateLimit({
-	store: new MongoStore({
-		uri: `mongodb://localhost:${cfg.DB_PORT}/${cfg.DB_NAME}`,
-		collectionName: "expressRateLimitRecord"
-	}),
-	max: 100, //number of request threshold
-	windowMs: 15 * 60 * 1000, //15mins per 100request threshold
-	delayMs: 0
-}));
 
 app.use(helmet({
 	xssFilter: {
@@ -99,6 +106,13 @@ app.use('/api/employees', employeeRoute); 				// localhost:3000/api/employees/
 app.use('/api/employeelogs', employeeLogsRoute); 		// localhost:3000/api/employeelogs/
 app.use('/api/users', userRoute);							// localhost:3000/api/employeelogs/
 app.use('/api/auditlogs', auditLogsRoute);				// localhost:3000/api/auditlogs/
+
+// RATE LIMITER PER ROUTES
+app.use('/auth/login', apiLimiter);
+app.use('/auth/logout', apiLimiter);
+app.use('/api/users/enroll', apiLimiter);
+app.use('/api/users/reset-password', apiLimiter);
+app.use('/api/users/reset-password-key', apiLimiter);
 
 
 // SERVE VUE APPLICATION --------------------------------------------------------------------------------------
