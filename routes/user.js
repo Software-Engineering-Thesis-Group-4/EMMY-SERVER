@@ -240,8 +240,8 @@ module.exports = (io) => {
 
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
-	POST /api/user/reset-password-key
-
+	POST /api/users/reset-password-key
+  
 	Description:
 	This route is used for handling the reset key to access reset password page.
 
