@@ -21,19 +21,20 @@ const cfg = require('./configs/config.js');
 const app = express();
 
 // or listen to both HTTP and HTTPS by creating another server with HTTP
-let server = undefined;
-if (process.env.NODE_ENV == 'production '){
-	const keyPath = "C:/Users/Guest Account/AppData/Local/mkcert/rootCA-key.pem";
-	const certPath = "C:/Users/Guest Account/AppData/Local/mkcert/rootCA.pem"; // or "$(mkcert -CAROOT)/rootCA.pem"
-	const options = {
-		key: fs.readFileSync(keyPath),
-		cert: fs.readFileSync(certPath)
-	};
-	server = https.createServer(options, app);
-}else {
-	server = http.createServer(app);
-}
 
+// let server = undefined;
+// if (process.env.NODE_ENV == 'production '){
+// 	const keyPath = "C:/Users/Guest Account/AppData/Local/mkcert/rootCA-key.pem";
+// 	const certPath = "C:/Users/Guest Account/AppData/Local/mkcert/rootCA.pem"; // or "$(mkcert -CAROOT)/rootCA.pem"
+// 	const options = {
+// 		key: fs.readFileSync(keyPath),
+// 		cert: fs.readFileSync(certPath)
+// 	};
+// 	server = https.createServer(options, app);
+// }else {
+// 	server = http.createServer(app);
+// }
+const server = http.createServer(app);
 
 const io = socketIO(server);
 const PORT = cfg.PORT || 3000;
