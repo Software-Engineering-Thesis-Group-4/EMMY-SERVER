@@ -82,11 +82,11 @@ exports.verifyTokenRules = [
 ]
 
 exports.validate = (req, res, next) => {
-	let errors = validationResult(req);
+	let { errors } = validationResult(req);
 
-	if (!errors.isEmpty()) {
-		let errMessages = errors.errors.map(err => err.msg);
-		console.error(errMessages);//return res.status(422).json(errMessages);
+	if (errors.length > 0) {
+		console.log(errors);
 	}
+	
 	return next();
 }
