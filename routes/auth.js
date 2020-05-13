@@ -116,7 +116,7 @@ module.exports = (io) => {
 				// validate of errors exists in data sanitization +++++++++++++++++++++++++++++
 				const errors = validationResult(req);
 				if (!errors.isEmpty()) {
-					res.status(401).send(ERR_UNAUTHORIZED);
+					return res.status(401).send(ERR_UNAUTHORIZED);
 				}
 
 				// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
