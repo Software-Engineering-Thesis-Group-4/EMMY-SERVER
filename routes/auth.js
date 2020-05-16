@@ -106,9 +106,6 @@ module.exports = (io) => {
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 
-	// TODO
-	// Update this to use utility/validatorjs
-
 	router.post('/verify', verifyTokenRules, validate,
 		async (req, res) => {
 			try {
