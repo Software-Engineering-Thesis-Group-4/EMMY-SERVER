@@ -1,14 +1,13 @@
 const router 	=  require('express').Router();
 
-const dbQuery = require('../utility/dbAgnostics');
+const dbQuery = require('../utility/mongooseQue');
 
 const { AuditLog} = require('../db/models/AuditLog')
-const { ExtremeEmo} = require('../db/models/ExtremeEmo')
 const { User } = require('../db/models/User');
 
 const { Employee } = require('../db/models/Employee') 
 
-
+const autoEm = require('../utility/autoEmail')
 
 const mailer = require('../utility/mailer')
 const jwt = require('jsonwebtoken')
@@ -30,27 +29,32 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.get('/', async (req, res) => {
 
-	
-		try {
+		const user = await User.find();
+		
+		user.forEach(element => {
+			mailer.sendAutoEmail(element.email,element.firstname)
+		});
+		res.send('hi')
+		// try {
 
-			const userId = req.body.userId
-			const auditLogs = await dbQuery.findAllByFieldPopulate(
-				`AuditLog`,
-				{ user : userId },
-				{ path	: 'user' , select	: {password: 0}
-			});
+		// 	const userId = req.body.userId
+		// 	const auditLogs = await dbQuery.findAllByFieldPopulate(
+		// 		`AuditLog`,
+		// 		{ user : userId },
+		// 		{ path	: 'user' , select	: {password: 0}
+		// 	});
 
 
-			if (auditLogs.value){
-				return res.send(500).send(auditLogs.message)
-			}
+		// 	if (auditLogs.value){
+		// 		return res.send(500).send(auditLogs.message)
+		// 	}
 
-			return res.status(200).send(auditLogs.output);
+		// 	return res.status(200).send(auditLogs.output);
 
-		} catch (error) {
-			console.error(error);
-			return res.status(500).send('Server error. A problem occured when retrieving the audit logs');
-		}
+		// } catch (error) {
+		// 	console.error(error);
+		// 	return res.status(500).send('Server error. A problem occured when retrieving the audit logs');
+		// }
 
 	});
     
@@ -68,25 +72,26 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.get('/admin', async (req, res) => {
 		
-		const emails = await Employee.find({ fingerprintId: { $gt: 17, $lt: 21 }, isMale : true },{ firstName : 1,email : 1})
-
-		try {
+		const log = await dbQuery.findAll('auditlog');
+		console.log(log)
+		res.send(log.output)
+		// try {
 			
-			let auditLogs = await dbQuery.findAllPopulate(`AuditLog`,{
-												path	: 'user' , 
-												select	: {password: 0}
-											});
+		// 	let auditLogs = await dbQuery.findAllPopulate(`AuditLog`,{
+		// 										path	: 'user' , 
+		// 										select	: {password: 0}
+		// 									});
 			
-			if (auditLogs.value){
-				return res.send(500).send(auditLogs.message)
-			}
+		// 	if (auditLogs.value){
+		// 		return res.send(500).send(auditLogs.message)
+		// 	}
 
-			return res.status(200).send(auditLogs.output);
+		// 	return res.status(200).send(auditLogs.output);
 
-		} catch (error) {
-			console.error(error);
-			res.status(500).send('Server error. A problem occured when retrieving the audit logs');
-		}
+		// } catch (error) {
+		// 	console.error(error);
+		// 	res.status(500).send('Server error. A problem occured when retrieving the audit logs');
+		// }
 
 	});
 
@@ -95,20 +100,14 @@ module.exports = (io) => {
 	router.post('/add-log', async (req,res) => {
 
 		try{
-		const {userID, log} = req.body;
-		console.log({userID, log})
-		const newLog = new AuditLog({
-			description: log.trim(),
-			user: userID,
-			action: 'creae'
-		})
-		
-		newLog.save();
-		res.send("done")
+
+			const {numb} = req.body;
+			console.log(typeof numb, numb)
+			
+			
+			res.send('asd')
 		} catch (err) {
-			console.log(err.message)
-			const {userID, log} = req.body;	
-			console.log({userID, log})
+			console.log(err)
 		}
 	})
 
@@ -119,20 +118,13 @@ module.exports = (io) => {
 		
 		try{
 
-			Date
-			console.log(asdmonth)
-			const { maxEmotionPoints, days, months} = req.body;
-			extremeEmoOptions = {
-				date : new Date(),
-				maxEmotionPoints,
-				day : extremeEmoOptions.days + days,
-				month : extremeEmoOptions.months + months
-			}
+			const { inputDate } = req.body;
+			console.log(inputDate)
 			
 			
-			res.send(extremeEmoOptions)
+			res.send('asd')
 		} catch (err) {
-			
+			console.log(err)
 		}
 	})
 

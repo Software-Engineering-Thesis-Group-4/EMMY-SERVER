@@ -7,10 +7,7 @@ const { createAccessToken, createRefreshToken, removeRefreshToken } = require('.
 const { validateLogin } = require('../utility/validator');
 const { body, validationResult } = require('express-validator');
 const logger = require('../utility/logger');
-
-// import models
-const { User } = require("../db/models/User");
-const { RefreshToken } = require("../db/models/RefreshToken");
+const db = require('../utility/mongooseQue');
 
 // error messages
 const ERR_INVALID_CREDENTIALS = "Invalid email or password.";
@@ -44,8 +41,8 @@ module.exports = (io) => {
 			}
 
 			// check if email exists in the database
-			const user = await User.findOne({ email: req.body.email });
-			if (!user) {
+			const user = await db.findOne('user', { email: req.body.email });
+			if (user.value) {
 				console.error('Invalid Email. User not found.'.red);
 				return res.status(401).send(ERR_INVALID_CREDENTIALS); // USER NOT FOUND
 			}
@@ -86,7 +83,7 @@ module.exports = (io) => {
 
 		} catch (error) {
 			
-			const user = await User.findOne({ email: req.body.email });
+			const user = await db.findOne('user', { email: req.body.email });
 			//---------------- log -------------------//
 			logger.userRelatedLog(user._id,user.username,2,null,error.message);
 
@@ -127,14 +124,15 @@ module.exports = (io) => {
 
 				let { access_token, email } = req.body;
 
-				let user = await User.findOne({ email });
-				if (!user) {
+				let user = await db.findOne('user',{ email });
+
+				if (user.value) {
 					console.error('User not found'.red)
 					return res.status(401).send(ERR_UNAUTHENTICATED)
 				}
 
 				// if user exists, verify access token
-				jwt.verify(access_token, process.env.JWT_KEY, (err) => {
+				jwt.verify(access_token, process.env.JWT_KEY, async (err) => {
 
 					// if there are no errors...
 					if (!err) {
@@ -152,51 +150,44 @@ module.exports = (io) => {
 						console.log('Access Token Expired.'.yellow);
 
 						// if refresh token is VALID, renew token
-						RefreshToken.findOne({ email }, (err, refresh_token) => {
+						const refTok = await db.findOne('refreshtoken', { email });
 
-							if (err) {
-								console.error('Refresh Token Retrieval Error.'.red);
-								return res.status(500).send(ERR_SERVER_ERROR);
+						if(refTok.value){
+							console.error('Refresh Token Not Found.'.red);
+							return res.status(404).send(ERR_UNAUTHORIZED);	
+						}
+
+						// validate refresh token
+						jwt.verify(refresh_token.token, process.env.REFRESH_KEY, (err) => {
+
+							if (!err) {
+								console.log('Refresh Token Valid.'.green);
+								let token = createAccessToken(email);
+
+								console.log('Access Token Renewed'.green)
+								return res.status(200).send({ token });
 							}
 
-							if (!refresh_token) {
-								console.error('Refresh Token Not Found.'.red);
-								return res.status(404).send(ERR_UNAUTHORIZED);
+							switch (err.name) {
+								case 'TokenExpiredError':
+									removeRefreshToken(email);
+									console.error('Refresh Token Expired'.red)
+									return res.status(401).send(ERR_UNAUTHORIZED);
+
+								case 'JsonWebTokenError':
+									removeRefreshToken(email);
+									console.error('Invalid Refresh Token'.red)
+									return res.status(401).send(ERR_UNAUTHORIZED);
+
+								default:
+									removeRefreshToken(email);
+									console.error('Invalid Refresh Token'.red)
+									return res.status(401).send(ERR_UNAUTHORIZED);
 							}
-
-							// validate refresh token
-							jwt.verify(refresh_token.token, process.env.REFRESH_KEY, (err, decoded) => {
-
-								if (!err) {
-									console.log('Refresh Token Valid.'.green);
-									let token = createAccessToken(email);
-
-									console.log('Access Token Renewed'.green)
-									return res.status(200).send({ token });
-								}
-
-								switch (err.name) {
-									case 'TokenExpiredError':
-										removeRefreshToken(email);
-										console.error('Refresh Token Expired'.red)
-										return res.status(401).send(ERR_UNAUTHORIZED);
-
-									case 'JsonWebTokenError':
-										removeRefreshToken(email);
-										console.error('Invalid Refresh Token'.red)
-										return res.status(401).send(ERR_UNAUTHORIZED);
-
-									default:
-										removeRefreshToken(email);
-										console.error('Invalid Refresh Token'.red)
-										return res.status(401).send(ERR_UNAUTHORIZED);
-								}
 								
-							});
 						});
 					}
 				});
-
 			} catch (error) {
 				console.log(error.message);
 				return res.status(500).send(ERR_SERVER_ERROR);
@@ -221,7 +212,8 @@ module.exports = (io) => {
 		try {
 			const errors = validationResult(req);
 
-			const {userUsername, userId} = req.body;
+			//  I need this details plszzz loggedInUsername, userId
+			const {loggedInUsername, userId} = req.body;
 
 			if(!errors.isEmpty()) {
 				console.error('Invalid Credential Format.'.red);
@@ -231,16 +223,16 @@ module.exports = (io) => {
 			removeRefreshToken(req.body.email);
 			
 			//---------------- log -------------------//
-			logger.userRelatedLog(userId,userUsername,3);
+			logger.userRelatedLog(userId,loggedInUsername,3);
 
 
 			return res.sendStatus(200);
 
 		} catch (error) {
 
-			const {userUsername, userId} = req.body;
+			const {loggedInUsername, userId} = req.body;
 			//---------------- log -------------------//
-			logger.userRelatedLog(userId,userUsername,3,null,error.message);
+			logger.userRelatedLog(userId,loggedInUsername,3,null,error.message);
 
 			console.log(error.message);
 			return res.status(500).send(ERR_SERVER_ERROR);

@@ -33,11 +33,9 @@ const UserSchema = Schema({
 		type: String,
 		default: null,
    },
-   
-
-   emp: {
-      type: Schema.Types.ObjectId,
-      ref: 'Employee'
+   isActive: {
+      type: Boolean,
+      default : false
    }
 });
 

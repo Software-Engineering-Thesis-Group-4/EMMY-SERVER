@@ -4,14 +4,15 @@ const bcrypt   = require('bcryptjs');
 const jwt      = require('jsonwebtoken');
 const isOnline = require('is-online');
 
-// import models
-const { User } = require("../db/models/User");
 
 // import utilities
 const logger = require('../utility/logger');
 const { encrypt, decrypter } = require('../utility/aes');
 const token = require('../utility/jwt');
 const mailer = require('../utility/mailer');
+const accountSettings = require('../utility/accountSettings');
+const db = require('../utility/mongooseQue');
+
 
 const {
 	registerValidationRules,
@@ -45,9 +46,9 @@ module.exports = (io) => {
 
 		try {
 
-			let users = await User.find({},{'password': 0});
+			let users = await db.findAll('user',null,{'password': 0});
 
-			return res.status(200).send(users);
+			return res.status(200).send(users.output);
 
 		} catch (error) {
 			console.error(error);
@@ -71,10 +72,10 @@ module.exports = (io) => {
 	router.post('/enroll', registerValidationRules, async (req, res) => {
 		try {
 
-			const errors = validationResult(req);
+			// user credentials from req body
+			const { userId, loggedInUsername } = req.body;
 
-			// extract logged in user information
-			const { userId, userUsername } = req.body;
+			const errors = validationResult(req);
 
 			if(!errors.isEmpty()) {
 				return res.status(400).send(errors.errors);
@@ -83,8 +84,18 @@ module.exports = (io) => {
 			// Extract user information
 			let { email, firstname, lastname, username, password, confirmPassword, isAdmin } = req.body;
 
-			let user = await User.findOne({ email });
-			if (user) return res.status(409).send(ERR_DUPLICATE);
+			const existingEmail = await db.findOne('user',{ email });
+
+			if(!existingEmail.value){
+				console.log('at email')
+				return res.status(409).send('Email ' + ERR_DUPLICATE);
+			}
+
+			const existingUsername = await db.findOne('user',{ username });
+
+			if(!existingUsername.value){
+				return res.status(409).send('Username ' +  ERR_DUPLICATE);
+			}
 
 			if(confirmPassword !== password) {
 				console.error('Confirm password does not match'.red);
@@ -94,28 +105,30 @@ module.exports = (io) => {
 			// hash password
 			password = bcrypt.hashSync(password);
 
-			// create a new User
-			let newUser = new User({
+			const newUser = await db.save('user',{
 				email    : email,
 				firstname: firstname,
 				lastname : lastname,
 				username : username,
 				password : password,
 				isAdmin  : isAdmin
-			});
+			} )
 
-			await newUser.save();
+			// create a new User
+			if(newUser.value){
+				logger.userRelatedLog(userId,loggedInUsername,4,undefined,newUser.message);
+				return res.status(422).send(`Error registering a new user`);
+			}
 
-			//---------------- log -------------------//
-			logger.userRelatedLog(userId,userUsername,4,username);
-
-			return res.status(200).send(`Successfully registered a new user (${newUser.email})`);
+	
+			logger.userRelatedLog(userId,loggedInUsername,4,username);
+			return res.status(200).send(`Successfully registered a new user (${newUser.output.email})`);
 
 		} catch (error) {
 
 			// error log
-			const { userId, userUsername } = req.body;
-			logger.userRelatedLog(userId,userUsername,4,undefined,error.message);
+			const { userId, loggedInUsername } = req.body;
+			logger.userRelatedLog(userId,loggedInUsername,4,undefined,error.message);
 
 			console.log(error);
 			return res.status(500).send(ERR_SERVER_ERROR);
@@ -138,35 +151,35 @@ module.exports = (io) => {
 
 		try{
 
-			// user credentials
-			const { userId, userUsername} = req.body;
+			// user credentials from req body
+			const { userId, loggedInUsername} = req.body;
 			const { emailBod, empEmail } = req.body;
 			
 			const netStatus = await isOnline();
 
 			if(netStatus){
 
-				const isErr = await mailer.sendEmailNotif(empEmail, userUsername, emailBod);
+				const isErr = await mailer.sendEmailNotif(empEmail, loggedInUsername, emailBod);
 				
 				if(isErr.value){
-					logger.employeeRelatedLog(userId,userUsername,6,empEmail,isErr.message);
+					logger.employeeRelatedLog(userId,loggedInUsername,6,empEmail,isErr.message);
 					console.log('Error sending email'.yellow);
 					res.status(500).send('Error sending email');
 				} else {
-					logger.employeeRelatedLog(userId,userUsername,6,empEmail);
+					logger.employeeRelatedLog(userId,loggedInUsername,6,empEmail);
 					res.status(200).send("Successfully sent notification email");
 				}
 
 			} else {
-				logger.employeeRelatedLog(userId,userUsername,6,empEmail,'CONNECTION ERROR: Check internet connection!');	
+				logger.employeeRelatedLog(userId,loggedInUsername,6,empEmail,'CONNECTION ERROR: Check internet connection!');	
 				res.status(502).send('Please check your internet connection!');
 			}
 
 			
 		} catch (err) {
 			
-			const { userId, userUsername} = req.body;
-			logger.employeeRelatedLog(userId,userUsername,6,undefined,err.message);
+			const { userId, loggedInUsername} = req.body;
+			logger.employeeRelatedLog(userId,loggedInUsername,6,undefined,err.message);
 		
 			console.log(err);
 			return res.status(500).send(ERR_SERVER_ERROR);
@@ -175,10 +188,52 @@ module.exports = (io) => {
 	})
 
 
+	/* ---------------------------------------------------------------------------------------------------------------------
+	Route:
+	POST /api/users/change-account-photo
+
+	Description:
+
+	Api for fetching data of all users (to be used rendering list of accounts in the admin page)
+	Gets all user data except for sensitive information (i.e. password)
+
+	Author:
+	Michael Ong
+	----------------------------------------------------------------------------------------------------------------------*/
+	router.post('/change-account-photo', async (req, res) => {
+
+		try {
+
+			// user credentials from request body
+			const { loggedInUsername, userId } = req.body;
+			
+			if(!req.files){
+				return res.status(204).send('Not selected a file or file is empty! Please select a file');
+			} 
+
+			const userPhoto = req.files.accPhoto;
+			const isErr = await accountSettings.changeUserPhoto(userPhoto,userId);
+
+		
+
+			if(isErr.value){
+				logger.userRelatedLog(userId,loggedInUsername,8,null,isErr.message);
+				return res.status(422).send('Error changing user account photo');
+			}
+
+				logger.userRelatedLog(userId,loggedInUsername,8);
+				return res.status(200).send(`Successfully changed user account photo for ${isErr.output.username}`)
+			
+		} catch (error) {
+			console.error(error.message);
+			return res.status(500).send('Server error. A problem occured when changing user account photo');
+		}
+	});
+
 
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
-	POST /api/reset-password
+	POST /api/users/reset-password
 	
 	Description:
 	This is used for handling forgot password requests.
@@ -186,19 +241,20 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/reset-password', resetPassValidationRules, validate, async (req, res) => {
+	router.post('/reset-password', async (req, res) => {
 		try {
 
 			const email = req.body.email;
+			
 
 			// check if user has internet access
 			const netStatus = await isOnline();
 
 			if (netStatus) {
 
-				const user = await User.findOne({ email: email });
+				const user = await db.findOne('user', { email });
 
-				if (!user) {
+				if (user.value) {
 					return res.status(500).send('Email doesnt exist in database');
 				}
 				
@@ -207,13 +263,13 @@ module.exports = (io) => {
 				const decryptUser 	= user.email;
 
 				// create token with user info ------- 1 min lifespan
-				const token = token.createResetPassToken({ email : user.email });
+				const resetToken = token.createResetPassToken({ email : user.email });
 
 				// gets last 7 char in token and makes it the verif key
-				const key = token.substring(token.length - 7)
+				const key = resetToken.substring(resetToken.length - 7)
 
 				// encrypt token before sending to user
-				const encTok = encrypt(token);
+				const encTok = encrypt(resetToken);
 
 				// send key to user email
 				const isErr = await mailer.resetPassMail(decryptUser, username, key);

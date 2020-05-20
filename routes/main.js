@@ -7,6 +7,10 @@ module.exports = (io) => {
       res.redirect('/log_employee.html');
    });
 
+    router.get('/account-settings', (req, res) => {
+      res.redirect('/accountSettings.html');
+   });
+
    router.get('/edit-employeelogs', (req,res) => {
       res.redirect('/editEmployeeLog.html')
    })

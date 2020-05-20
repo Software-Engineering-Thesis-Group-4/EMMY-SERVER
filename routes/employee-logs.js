@@ -1,15 +1,11 @@
 const express = require('express');
 const router = express.Router();
 
-// import model
-const { EmployeeLog } = require('../db/models/EmployeeLog');
-const { ExtremeEmo } = require('../db/models/ExtremeEmo');
-
-
 // import utilities
 const { handleEmployeeLog } = require('../utility/EmployeeLogHandler.js');
 const logger = require('../utility/logger');
 const autoEmail = require('../utility/autoEmail');
+const db = require('../utility/mongooseQue');
 
 module.exports = (io) => {
 	/*----------------------------------------------------------------------------------------------------------------------
@@ -24,8 +20,9 @@ module.exports = (io) => {
 	router.get('/', async (req, res) => {
 		
 		try {
-			let employeeLogs = await EmployeeLog.find({}).populate('employeeRef');
-			return res.status(200).send(employeeLogs);
+
+			let employeeLogs = await db.findAll();
+			return res.status(200).send(employeeLogs.output);
 
 		} catch (error) {
 			console.log(error)
@@ -65,34 +62,30 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.delete('delete/:id', async (req, res) => {
+	router.delete('/delete/:id', async (req, res) => {
 
 		try {
 
-			//user credentials
-			const { userUsername,userId } = req.body;
+			// user credentials
+			const { loggedInUsername,userId } = req.body;
 
 			let id = req.params.id;
 
-			const empLog = await EmployeeLog.findByIdAndUpdate(
-				id,
-				{ $set: { deleted: true } },
-				{ new: true }
-			);
+			const empLog = await db.updateById('employeelog',id,{ deleted: true });
 
-			if(!empLog) {
-				logger.employeelogsRelatedLog(userId,userUsername,0,undefined,'Log not found.');
-				return res.status(404).send('Log not found.');
+			if(empLog.value) {
+				logger.employeelogsRelatedLog(userId,loggedInUsername,0,undefined,empLog.message);
+				return res.status(404).send('Error deleting log(mark as deleted)');
 			}
 
 			
-			logger.employeelogsRelatedLog(userId,userUsername,0,empLog._id);
+			logger.employeelogsRelatedLog(userId,loggedInUsername,0,empLog.output._id);
 			res.status(200);
 
 		} catch (error) {
 			
-			const { userUsername,userId } = req.body;
-			logger.employeelogsRelatedLog(userId,userUsername,1,undefined,error.message);
+			const { loggedInUsername,userId } = req.body;
+			logger.employeelogsRelatedLog(userId,loggedInUsername,1,undefined,error.message);
 
 			console.log(error.message);
 			res.status(500).send('Server error. Unable to delete employee log.');
@@ -114,30 +107,25 @@ module.exports = (io) => {
 		try {
 			
 			//user credentials
-			const { userUsername,userId } = req.body;
+			const { loggedInUsername,userId } = req.body;
 
 			const logId = req.params.id;
 			const { emotionIn,emotionOut } = req.body;
 
-			const empLog = await EmployeeLog.findByIdAndUpdate(
-				logId,
-				{ $set: { emotionIn, emotionOut} },
-				{ new: true }
-			);
+			const empLog = await db.updateById('employeelog',logId,{ emotionIn, emotionOut });
 
-			if(!empLog) {
-				logger.employeelogsRelatedLog(userId,userUsername,1,undefined,'Log not found');
-				return res.status(404).send('Log not found.');
+			if(empLog.value) {
+				logger.employeelogsRelatedLog(userId,loggedInUsername,1,undefined,empLog.message);
+				return res.status(404).send('Error on editing log.');
 			}
 
-
-			logger.employeelogsRelatedLog(userId,userUsername,1,empLog._id);
+			logger.employeelogsRelatedLog(userId,loggedInUsername,1,empLog.output._id);
 			res.status(200).send('Successfully edited employee log');
 
 		} catch (error) {
 
-			const { userUsername,userId } = req.body;
-			logger.employeelogsRelatedLog(userId,userUsername,1,undefined,error.message);
+			const { loggedInUsername,userId } = req.body;
+			logger.employeelogsRelatedLog(userId,loggedInUsername,1,undefined,error.message);
 
 			res.status(500).send(error.message);
 		}
@@ -159,9 +147,9 @@ module.exports = (io) => {
 
 		try {
 			const { emotion, employeeLog, status } = req.body;
-			let log = await EmployeeLog.findById(employeeLog);
+			let log = await db.findById('employeelog',employeeLog);
 
-			if (!log) {
+			if (log.value) {
 				throw new Error('Log not found!');
 			} else {
 				switch (status) {
@@ -169,13 +157,13 @@ module.exports = (io) => {
 					case "in":
 						log.emotionIn = emotion;
 						await log.save();
-						if(emotion === 1){ autoEmail.checkIfSendEmail(log.employeeRef._id); }
+						if(emotion === 1){ autoEmail.putToEmailQueue(log.output.employeeRef._id); }
 						return res.sendStatus(200);
 
 					case "out":
 						log.emotionOut = emotion;
 						await log.save();
-						if(emotion === 1){ autoEmail.checkIfSendEmail(log.employeeRef._id); }
+						if(emotion === 1){ autoEmail.putToEmailQueue(log.output.employeeRef._id); }
 						return res.sendStatus(200);
 				}
 			}
