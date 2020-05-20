@@ -1,5 +1,5 @@
 const nodemailer = require("nodemailer");
-
+const autoEmailSettings = require('./autoEmail');
 
 const gmail = nodemailer.createTransport({
 	service: 'gmail',
@@ -13,8 +13,6 @@ const gmail = nodemailer.createTransport({
 	});
 
 exports.resetPassMail =  async (sendToEmail, username, key) => {
-
-	let isErr = {};
 
 	try{
 
@@ -41,8 +39,6 @@ exports.resetPassMail =  async (sendToEmail, username, key) => {
 
 exports.sendEmailNotif = async (sendToEmail, sender,mailBody) => {
 
-	let isErr = {};
-
 	try{
 
 		const message = `Hello there! This is ${sender} from the HR department. ` + mailBody;
@@ -63,19 +59,17 @@ exports.sendEmailNotif = async (sendToEmail, sender,mailBody) => {
 	
 } 
 
-exports.sendAutoEmail = async (sendToEmail) => {
-
-	let isErr = {};
+exports.sendAutoEmail = async (sendToEmail, employeeFirstName) => {
 
 	try{
 
-		const message = `Hello there! This email is from the HR department. blah blah blah`;
+		const message = `<h3>Dear ${employeeFirstName}</h3>` + autoEmailSettings.emailTemplate;
 
 		await gmail.sendMail({
 			from    : 'Emmy',
 			to      : sendToEmail, // list of receivers
 			subject : 'HR notification Email', // Subject line
-			text    : message, // plain text body 
+			html    : message, 
 		
 		})
 

@@ -1,5 +1,4 @@
 const fs 		= require('fs');
-const _ 		= require('lodash');
 const childProc = require('child_process');
 const path 		= require('path');
 const zipFold	= require('zip-a-folder');
@@ -21,8 +20,6 @@ const dbOptions = {
 // backup database
 exports.dbAutoBackUp = () => {
 	
-	let isErr = {};
-
 	try {
 
 		const dbPath = path.join(__dirname, '/../db/backup');
@@ -44,8 +41,6 @@ exports.dbAutoBackUp = () => {
 };
 
 exports.zipBackup = async () => {
-
-	let isErr = {};
 
 	try {
 
@@ -74,10 +69,7 @@ exports.zipBackup = async () => {
 // Restore database
 exports.dbRestore = async (files) => {
 
-
-	let isErr = {};
-
-	 try {
+	try {
 
 		const uploadPath = path.join(__dirname, '/../uploads/');
 

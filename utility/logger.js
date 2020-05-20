@@ -26,13 +26,13 @@ const pickActionLog = (actionNumb) => {
 
 
 
-exports.userRelatedLog = (loggerId,logUsername,log,inputUser,errMessage) => {
+exports.userRelatedLog = (loggerId,loggerUsername,log,input,errMessage) => {
 
     /*/======================================//
         
-        DONE LOGS : 3/8
+        DONE LOGS : 5/10
         
-        2,3,4
+        2,3,4,7,8
 
     //======================================/*/
 
@@ -44,33 +44,42 @@ exports.userRelatedLog = (loggerId,logUsername,log,inputUser,errMessage) => {
         switch(log){
 
             case 0  : 
-                audLog      = `${logUsername} recently changed account settings.`;
+                audLog      = `${loggerUsername} recently changed account settings.`;
                 actionLog   = pickActionLog(2);
                 break;
             case 1  : 
-                audLog      = `Recently changed password for user ${logUsername}.`; 
+                audLog      = `Recently changed password for user ${loggerUsername}.`; 
                 actionLog   = pickActionLog(2);
                 break;
             case 2  : 
-                audLog      = `${logUsername} logged in.`; 
+                audLog      = `${loggerUsername} logged in.`; 
                 actionLog   = pickActionLog(5);
                 break;
             case 3  : 
-                audLog      = `${logUsername} logged out.`; 
+                audLog      = `${loggerUsername} logged out.`; 
                 actionLog   = pickActionLog(5);
                 break;
+            case 8  : 
+                audLog      = `Recently changed account image for user ${loggerUsername}.`; 
+                actionLog   = pickActionLog(2);
+                break;
+            
 
             // admin privileges
             case 4  : 
-                audLog      = `${logUsername} added new user ${inputUser}.`;
+                audLog      = `${loggerUsername} added new user ${input}.`;
                 actionLog   = pickActionLog(0); 
                 break;
             case 5  : 
-                audLog      = `${logUsername} deleted user ${inputUser}.`;
+                audLog      = `${loggerUsername} deleted user ${input}.`;
                 actionLog   = pickActionLog(1);
                 break;
             case 6  : 
-                audLog      = `${logUsername} recently changed account settings for ${inputUser}.`;
+                audLog      = `${loggerUsername} recently changed account settings for ${input}.`;
+                actionLog   = pickActionLog(2);
+                break;
+            case 7  : 
+                audLog      = `${loggerUsername} recently changed automated email ${input}.`;
                 actionLog   = pickActionLog(2);
                 break;
 
@@ -96,11 +105,11 @@ exports.userRelatedLog = (loggerId,logUsername,log,inputUser,errMessage) => {
     }
 };
 
-exports.employeeRelatedLog = (loggerId,logUsername,log,emp,errMessage) => {
+exports.employeeRelatedLog = (loggerId,loggerUsername,log,emp,errMessage) => {
 
      /*/======================================//
         
-        DONE LOGS : 6/8
+        DONE LOGS : 6/9
         
         0,3,4,6,7,8
 
@@ -115,11 +124,11 @@ exports.employeeRelatedLog = (loggerId,logUsername,log,emp,errMessage) => {
         switch(log){
 
             case 0  : 
-                audLog      = `${logUsername} imported CSV file.`; 
+                audLog      = `${loggerUsername} imported CSV file.`; 
                 actionLog   = pickActionLog(3);
                 break;
             case 1  : 
-                audLog      = `${logUsername} exported CSV file.`;
+                audLog      = `${loggerUsername} exported CSV file.`;
                 actionLog   = pickActionLog(4);
                 break;
             case 2  : 
@@ -129,27 +138,27 @@ exports.employeeRelatedLog = (loggerId,logUsername,log,emp,errMessage) => {
             
             // admin privileges 
             case 3  : 
-                audLog      = `${logUsername} added Employee ${emp}.`; 
+                audLog      = `${loggerUsername} added Employee ${emp}.`; 
                 actionLog   = pickActionLog(0);
                 break;
             case 4  : 
-                audLog      = `${logUsername} deleted Employee ${emp} (marks as terminated).`;
+                audLog      = `${loggerUsername} deleted Employee ${emp} (marks as terminated).`;
                 actionLog   = pickActionLog(1);
                 break;
             case 5  : 
-                audLog      = `${logUsername} updated Employee ${emp}.`; 
+                audLog      = `${loggerUsername} updated Employee ${emp}.`; 
                 actionLog   = pickActionLog(2);
                 break;
             case 6  : 
-                audLog      = `${logUsername} sent an email to ${emp}.`; 
+                audLog      = `${loggerUsername} sent an email to ${emp}.`; 
                 actionLog   = pickActionLog(8);
                 break;
             case 7  :  
-                audLog      = `${logUsername} downloaded database backup.`; 
+                audLog      = `${loggerUsername} downloaded database backup.`; 
                 actionLog   = pickActionLog(6);
                 break;
             case 8  : 
-                audLog      = `${logUsername} restored database backup.`; 
+                audLog      = `${loggerUsername} restored database backup.`; 
                 actionLog   = pickActionLog(7);
                 break;
 
@@ -262,7 +271,7 @@ exports.serverRelatedLog = (output,log,errMessage) => {
                 actionLog   = pickActionLog(8);
                 break;
             case 4  : 
-                audLog      = `Updating fields for ${output}`; 
+                audLog      = `Updating fields for ${output} collection`; 
                 actionLog   = pickActionLog(9);
                 break;
             case 5  : 

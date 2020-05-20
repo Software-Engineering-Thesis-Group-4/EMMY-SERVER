@@ -10,8 +10,6 @@ const csvImport = async (csvFile) => {
 
 	try {
 
-		let isErr = {};
-
 		if (csvFile.name.substring(csvFile.name.length, csvFile.name.length - 3) != 'csv') {
 			return isErr = { value: true, message: 'Invalid file format, must be csv file' };
 
