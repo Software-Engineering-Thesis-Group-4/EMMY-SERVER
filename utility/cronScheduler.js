@@ -5,10 +5,7 @@ const autoEmail = require('./autoEmail');
 const logger = require('../utility/logger');
 
 
-const {
-	 DB_BACKUP_SCHEDULE,
-	 AUTO_EMAIL_SCHEDULE,
-	 DATE_CHECKER_SCHEDULE } = process.env;
+const { DB_BACKUP_SCHEDULE, AUTO_EMAIL_SCHEDULE, DATE_CHECKER_SCHEDULE } = process.env;
 
 
 // DB BACKUP
@@ -28,6 +25,16 @@ cron.schedule(DB_BACKUP_SCHEDULE, async () => {
 });
 
 
+// AUTOMATED EMAIL DATE CHECKER
+// EVERY 2:00 am
+cron.schedule(DATE_CHECKER_SCHEDULE, () => {
+	autoEmail.startEndDateChecker();
+},{ 
+	scheduled : true, 
+	timezone  : "Asia/Kuala_Lumpur" 
+});
+
+
 // AUTOMATED EMAIL
 // SCHEDULED 8:00 pm
 cron.schedule(AUTO_EMAIL_SCHEDULE, () => {
@@ -38,12 +45,5 @@ cron.schedule(AUTO_EMAIL_SCHEDULE, () => {
 });
 
 
-// AUTOMATED EMAIL DATE CHECKER
-// EVERY 2:00 am
-cron.schedule(DATE_CHECKER_SCHEDULE, () => {
-	autoEmail.startEndDateChecker();
-},{ 
-	scheduled : true, 
-	timezone  : "Asia/Kuala_Lumpur" 
-});
+
 
