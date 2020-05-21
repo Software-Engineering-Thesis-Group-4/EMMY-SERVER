@@ -8,33 +8,26 @@ const { User }              = require('../db/models/User');
 const modelPicker = (modelName) => {
 
 
-    let importModel = null;
-
     switch(modelName.toLowerCase()) {
 
         case "auditlog" : 
-            importModel = AuditLog; 
-            return importModel;
-        
+           return importModel = AuditLog; 
+
         case "employee" : 
-            importModel = Employee;
-            return importModel;
-
+            return importModel = Employee;
+             
         case "employeelog" : 
-            importModel = EmployeeLogs;
-            return importModel;
-
+            return importModel = EmployeeLogs;
+             
         case "notificationlog" : 
-           importModel = NotificationLog;
-            return importModel;
+            return importModel = NotificationLog;
 
         case "refreshtoken" : 
-            importModel = RefreshToken;
-            return importModel;
+            return importModel = RefreshToken;
         
         case "user" : 
-            importModel = User;
-            return importModel;
+            return importModel = User;
+             
     }
 }
  
@@ -96,7 +89,7 @@ exports.updateById = async (model,id,data) => {
     }
 }
 
-// TODO : FINISH THIS
+
 exports.save = async (model,data) => {
 
     try {
@@ -128,7 +121,7 @@ exports.findOne = async (model,field) => {
         Model = modelPicker(model);
 
         const modelings = await Model.findOne(field);
-        console.log(modelings)
+     
         if(!modelings){
             return isErr = { value : true, output : `Cant find document in ${Model.modelName} collection` };
         }

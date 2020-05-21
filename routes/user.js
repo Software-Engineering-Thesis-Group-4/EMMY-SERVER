@@ -1,18 +1,15 @@
 const express  = require('express');
 const router   = express.Router();
 const bcrypt   = require('bcryptjs');
-const jwt      = require('jsonwebtoken');
 const isOnline = require('is-online');
 
 
 // import utilities
 const logger = require('../utility/logger');
 const { encrypt, decrypter } = require('../utility/aes');
-const token = require('../utility/jwt');
 const mailer = require('../utility/mailer');
 const accountSettings = require('../utility/accountSettings');
 const db = require('../utility/mongooseQue');
-
 
 const {
 	registerValidationRules,
@@ -258,31 +255,15 @@ module.exports = (io) => {
 					return res.status(500).send('Email doesnt exist in database');
 				}
 				
-
-				const username 		= user.username;
-				const decryptUser 	= user.email;
-
-				// create token with user info ------- 1 min lifespan
-				const resetToken = token.createResetPassToken({ email : user.email });
-
-				// gets last 7 char in token and makes it the verif key
-				const key = resetToken.substring(resetToken.length - 7)
-
-				// encrypt token before sending to user
-				const encTok = encrypt(resetToken);
-
-				// send key to user email
-				const isErr = await mailer.resetPassMail(decryptUser, username, key);
-
+				const isErr = await accountSettings.resetPassword(user.output.email);
 
 				if(isErr.value){
-					logger.serverRelatedLog(email,1,isErr.message);
+					logger.serverRelatedLog(user.output.email,1,isErr.message);
 					return res.status(500).send('Error sending email!');
-				} else {
-					//---------------- log -------------------//
-					logger.serverRelatedLog(user.email,1);
-					return res.status(200).send({ resetTok: encTok });
 				}
+
+				logger.serverRelatedLog(user.output.emailss,1);
+				return res.status(200).send({ resetTok: isErr.output.resetTok });
 
 			} else {
 				logger.serverRelatedLog(email,1,`CONNECTION ERROR: Check internet connection!`);
@@ -300,6 +281,14 @@ module.exports = (io) => {
 	});
 
 
+	router.post('/asd', (req,res) => {
+
+		const authHeader = req.headers['authorization'];
+		console.log(authHeader);
+		const token = authHeader && authHeader.split(' ')[1]   //bearer TOKEN
+		console.log(token)
+		res.send(token)
+	})
 
 
 
@@ -313,47 +302,23 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	// TODO: REFACTOR: GET TOKEN FROM AUTHENTICATION HEADER ("BEARER TOKEN")
-	router.post('/reset-password-key', resetKeyValidationRules, validate, async (req, res) => {
+	router.post('/reset-password-key', async (req, res) => {
 		try {
 
-			const { key, resetTok } = req.body;
-			const decTok = decrypter(resetTok);
+			const { key } = req.body;
+			
+			// get token from header
+			const authHeader = req.headers['authorization'];
 
-			jwt.verify(decTok, process.env.JWT_KEY, async (err, payload) => {
-
-				if (err) {
-
-					switch (err.name) {
-						
-						case 'TokenExpiredError':
-							console.error('Reset Password Token Expired'.red)
-							logger.serverRelatedLog(payload.email,5,err.name);
-							return res.status(401).send("Unauthorized Access.");
-
-						case 'JsonWebTokenError':
-							console.error('Reset Password Token'.red)
-							logger.serverRelatedLog(payload.email,5,err.name);
-							return res.status(401).send("Unauthorized Access.");
-
-						default:
-							console.error('Reset Password Token'.red)
-							logger.serverRelatedLog(payload.email,5,err.name);
-							return res.status(401).send("Unauthorized Access.");
-					}
-				} else {
-					if (key === decTok.substring(decTok.length - 7)) {
-
-						// if token is not expired and key is correct, proceed to change password page
-						logger.serverRelatedLog(payload.email,5);
-						res.status(200).send({ user: payload.email });
-
-					} else {
-						logger.serverRelatedLog(payload.email,5,'Invalid reset password key');
-						res.status(400).send('Invalid reset password key');
-					}
-				}
-			})
+			const keyChecker = await accountSettings.resetPasswordKey(authHeader,key);
+			
+			if (keyChecker.value) {
+				logger.serverRelatedLog(undefined,5,keyChecker.message);
+				return res.status(400).send(keyChecker.message);
+			} else {
+				logger.serverRelatedLog(keyChecker.output.email,5);
+				return res.status(200).send({ user: keyChecker.output });
+			}
 
 		} catch (error) {
 			console.log(error.message);

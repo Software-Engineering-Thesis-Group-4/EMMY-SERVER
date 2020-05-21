@@ -1,6 +1,23 @@
 const jwt = require('jsonwebtoken');
 require('colors');
 
+
+const tokenPicker = (token) => {
+
+	switch(token.toLowerCase()){
+
+		case 'refreshtoken':
+			return tokenKey = process.env.REFRESH_KEY;
+
+		case 'authtoken':
+			return tokenKey = process.env.JWT_KEY;
+
+		default:
+			return null;
+	}
+}
+
+
 // import model
 const { RefreshToken } = require("../db/models/RefreshToken");
 
@@ -83,5 +100,29 @@ exports.removeRefreshToken = async (email) => {
 	} catch (error) {
 		console.log('Failed to removed/delete refresh token'.red);
 		throw new Error(error.message)
+	}
+}
+
+exports.verify = async (token, tokenKind) => {
+
+	try{
+
+		const tokKey = tokenPicker(tokenKind);
+		
+		if(!tokKey){
+			return isErr = { value : true, message : 'Invalid token kind' };
+		}
+		
+		const verifiedToken = jwt.verify(token, tokKey);
+		
+		if(verifiedToken.name){
+			return isErr = { value : true, message : verifiedToken.message };
+		}
+
+		return isErr = { value : false, output : verifiedToken };
+
+	} catch (err) {
+		console.log(err.message);
+		return isErr = { value : true, message : err.message }
 	}
 }

@@ -62,7 +62,7 @@ exports.resetKeyValidationRules = [
 exports.validate = (req, res, next) => {
 	let errors = validationResult(req);
 
-	if (!errors.isEmpty()) {
+	if (errors.isEmpty()) {
 		return next();
 	} else {
 		let errMessages = errors.errors.map(err => err.msg);
