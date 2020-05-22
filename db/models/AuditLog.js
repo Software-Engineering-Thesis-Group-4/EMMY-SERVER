@@ -3,9 +3,9 @@ const Schema = mongoose.Schema;
 
 // AUDITLOG SCHEMA -----------------------
 const AuditLogSchema = Schema({
-   date     : { type : Date, default : Date.now },
-   message  : { type : String, required : true },
-   user     : { type: Schema.Types.ObjectId, ref: 'User' } 
+   dateCreated     : { type : Date, default : Date.now },
+   message         : { type : String, required : true },
+   user            : { type: Schema.Types.ObjectId, ref: 'User' }
 });
 
 const AuditLog = mongoose.model('AuditLog', AuditLogSchema);

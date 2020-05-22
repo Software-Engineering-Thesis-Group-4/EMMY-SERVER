@@ -23,13 +23,13 @@ const app = express();
 // or listen to both HTTP and HTTPS by creating another server with HTTP
 
 // let server = undefined;
+// const keyPath = "certificates/keyCA.pem";
+// const certPath = "certificates/rootCA.pem";
+// const options = {
+// 	key: fs.readFileSync(keyPath),
+// 	cert: fs.readFileSync(certPath)
+// };
 // if (process.env.NODE_ENV == 'production '){
-// 	const keyPath = "C:/Users/Guest Account/AppData/Local/mkcert/rootCA-key.pem";
-// 	const certPath = "C:/Users/Guest Account/AppData/Local/mkcert/rootCA.pem"; // or "$(mkcert -CAROOT)/rootCA.pem"
-// 	const options = {
-// 		key: fs.readFileSync(keyPath),
-// 		cert: fs.readFileSync(certPath)
-// 	};
 // 	server = https.createServer(options, app);
 // }else {
 // 	server = http.createServer(app);
@@ -106,7 +106,7 @@ app.use('/api/employeelogs', employeeLogsRoute); 		// localhost:3000/api/employe
 app.use('/api/users', userRoute);							// localhost:3000/api/employeelogs/
 app.use('/api/auditlogs', auditLogsRoute);				// localhost:3000/api/auditlogs/
 
-// localhost:3000/dev 
+// localhost:3000/dev
 // (utility routes is restricted when node environment is set to "production ")
 if (process.env.NODE_ENV === 'development ') {
 	app.use('/dev', utilityRoute);
