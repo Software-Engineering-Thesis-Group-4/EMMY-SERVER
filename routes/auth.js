@@ -45,18 +45,18 @@ module.exports = (io) => {
 			}
 
 			// validate password
-			let passwordIsValid = await bcrypt.compare(req.body.password, user.password);
+			let passwordIsValid = await bcrypt.compare(req.body.password, user.output.password);
 
 			// if submitted password invalid, return an error
 			if (passwordIsValid) {
 
-				createRefreshToken(user.email);
+				createRefreshToken(user.output.email);
 
 				// create access token
 				const access_token = createAccessToken();
 
 				//---------------- log -------------------//
-				logger.userRelatedLog(user._id,user.username,2);
+				logger.userRelatedLog(user.output._id,user.output.username,2);
 
 
 
@@ -64,13 +64,13 @@ module.exports = (io) => {
 				console.log('User Authenticated. Login Success'.green);
 				return res.status(200).send({
 					token: access_token,
-					email: user.email,
-					username: user.username,
-					firstname: user.firstname,
-					lastname : user.lastname,
-					isAdmin  : user.isAdmin,
-					photo    : user.photo,
-					userId   : user._id
+					email: user.output.email,
+					username: user.output.username,
+					firstname: user.output.firstname,
+					lastname : user.output.lastname,
+					isAdmin  : user.output.isAdmin,
+					photo    : user.output.photo,
+					userId   : user.output._id
 				});
 
 			} else {
@@ -82,7 +82,7 @@ module.exports = (io) => {
 			
 			const user = await db.findOne('user', { email: req.body.email });
 			//---------------- log -------------------//
-			logger.userRelatedLog(user._id,user.username,2,null,error.message);
+			logger.userRelatedLog(user.output._id,user.output.username,2,null,error.message);
 
 			console.log(error.message);
 			return res.status(500).send(ERR_SERVER_ERROR);
@@ -115,10 +115,7 @@ module.exports = (io) => {
 
 				// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-				let { email } = req.body;
-				const authHeader = req.headers['authorization'];
-				const authTok = authHeader && authHeader.split(' ')[1];   //bearer TOKEN
-
+				let { email, access_token } = req.body;
 				let user = await db.findOne('user',{ email });
 
 				if (user.value) {
@@ -126,7 +123,7 @@ module.exports = (io) => {
 					return res.status(401).send(ERR_UNAUTHENTICATED)
 				}
 
-				const verifiedToken = await token.verify(authTok,'authtoken');
+				const verifiedToken = await token.verify(access_token,'authtoken');
 
 				if(verifiedToken.value){
 
