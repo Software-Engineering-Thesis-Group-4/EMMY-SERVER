@@ -6,6 +6,8 @@ const isOnline = require('is-online');
 
 // import models
 const { User } = require("../db/models/User");
+const { EmployeeDataNotification } = require("../db/models/EmployeeDataNotif");
+const { EmotionNotification } = require("../db/models/EmotionNotification");
 
 // import utilities
 const logger = require('../utility/logger');
@@ -14,6 +16,7 @@ const { createToken } = require('../utility/jwt');
 const mailer = require('../utility/mailer');
 const { registerRules, resetPassRules, resetKeyRules, validate } = require("../utility/validator");
 const { validationResult } = require('express-validator');
+const notifHandler = require('../utility/notificationHandler');
 
 // error messages
 const ERR_INVALID_CREDENTIALS = "Invalid email or password.";
@@ -167,6 +170,66 @@ module.exports = (io) => {
 	})
 
 
+	router.get('/emotion-notifications', async (req, res) => {
+
+		try{
+			const emotionNotif = await EmotionNotification.find({});
+			//const employeeEventNotif = await EmployeeDataNotification.find({});
+			console.log(`Successfully Fetched Emotion Notification`);
+			return res.status(200).send(emotionNotif);
+			//return res.status(200).send({emotionNotif, employeeEventNotif})
+		}catch (error) {
+			console.log(error);
+			return res.status(500).send("Error Server: Could not fetch Emotion Notifications");
+		}
+	});
+
+	router.get('/modifyemployee-notifications', async (req, res) => {
+
+		try{
+			const empDataNotif = await EmployeeDataNotification.find({});
+			//const employeeEventNotif = await EmployeeDataNotification.find({});
+			console.log(`Successfully Fetched Employee CRUD Notification`);
+			return res.status(200).send(empDataNotif);
+			//return res.status(200).send({emotionNotif, employeeEventNotif})
+		}catch (error) {
+			console.log(error);
+			return res.status(500).send("Error Server: Could not fetch Employee CRUD Notifications");
+		}
+	});
+
+	//DELETE: testing purposes only
+	router.post('/save-employeenotif', (req, res) => {
+
+		let user = req.body.userRef;
+		let employee = req.body.employeeRef;
+		let action = req.body.action; //deleted employee ===> sample only
+
+		if(notifHandler.save_employeeNotif(action, user, employee) != false){
+			return res.status(200).send("Successfully saved Employee CRUD event to DB");
+		} else {
+			return res.status(500).send("Error saving Employee CRUD Notification");
+		}
+	});
+
+	//DELETE: testing purposes only
+	router.post('/save-emotionNotif', (req, res) =>{
+
+		let emotion = req.body.emotion;
+		let employeeID = req.body.employeeID;
+
+		let boolValue = notifHandler.save_emotionNotif(emotion, employeeID);
+
+		if (boolValue != false) {  // "!= false" --> works but "== true" or "=== true" does not work wtf
+			console.log("Successfully saved Employee CRUD event to DB: ROUTE");
+			return res.status(200).send("Successfully saved Employee CRUD event to DB: ROUTE");
+		}else{
+			console.log("Server Error: ROUTE");
+			return res.status(500).send("Server Error: ROUTE");
+		}
+
+	});
+
 
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
@@ -241,7 +304,7 @@ module.exports = (io) => {
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
 	POST /api/users/reset-password-key
-  
+
 	Description:
 	This route is used for handling the reset key to access reset password page.
 

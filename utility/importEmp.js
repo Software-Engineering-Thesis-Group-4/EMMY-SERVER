@@ -17,11 +17,11 @@ const csvImport = async (stringData) => {
 
 		const headerVal = 'EMPLOYEE_ID,FIRSTNAME,LASTNAME,EMAIL,'
 						+ 'GENDER,EMPLOYMENT_STATUS,DEPARTMENT,JOB_TITLE,FINGERPRINT_ID';
-			
+
 		let x = 1;
-			
+
 		if(finalData[0].toString().trim().toUpperCase() == headerVal) {
-			
+
 			while(x < finalData.length){
 
 				// const empId 		= encrypt(finalData[x][0]);
@@ -31,8 +31,10 @@ const csvImport = async (stringData) => {
 				// const fingerprintId = encrypt(parseInt(finalData[x][8]))
 				const gender 		= finalData[x][4].toLowerCase() === 'm' ? true : false;
 				const empStat 		= finalData[x][5].toLowerCase() === 'full-time' ? true : false;
-				
-				
+
+				// TODO validate finalData[][] for csv
+				// CSV Validation
+
 				const newEmp = new Employee({
 					employeeId		: finalData[x][0],
 					firstName		: finalData[x][1],
@@ -43,10 +45,10 @@ const csvImport = async (stringData) => {
 					department		: finalData[x][6],
 					jobTitle		: finalData[x][7],
 					fingerprintId	: finalData[x][8]
-					
+
 				})
 
-				await newEmp.save();	
+				await newEmp.save();
 				x++;
 			}
 
@@ -58,23 +60,23 @@ const csvImport = async (stringData) => {
 														+ `${headerVal} (not case sensitive)` };
 		}
 	} catch (err) {
-		
+
 		console.log(err.message);
-		
+
 		if(err.code === 11000){
-			return errMessage = { 
-				isErr 			: true, 
+			return errMessage = {
+				isErr 			: true,
 				message 		: `ERROR : Duplicate value for ${err.keyValue}`,
 				duplicateValue	: err.keyValue
 			};
 		} else {
-			return errMessage = { 
-				isErr 			: true, 
+			return errMessage = {
+				isErr 			: true,
 				message 		: 'Error importing employees, check if fields are correct and complete.'
 			};
 		}
 
-		
+
 	}
 }
 

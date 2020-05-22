@@ -1,12 +1,5 @@
 const { body, validationResult } = require('express-validator')
 
-// error messages
-const ERR_INVALID_CREDENTIALS = "Invalid email or password.";
-const ERR_SERVER_ERROR = "Internal Server Error.";
-const ERR_UNAUTHORIZED = "Unauthorized Access.";
-const ERR_UNAUTHENTICATED = "Unauthenticated.";
-
-
 //Prevent Reflected XSS attack: request-based attack
 exports.loginRules = [
 	body('email').trim().escape()
@@ -19,6 +12,7 @@ exports.loginRules = [
 ]
 
 // Prevent Stored/Database/Persistent XSS attack
+// Register New User
 exports.registerRules = [
 	body('email').trim().escape()
 		.notEmpty().withMessage('Register Error: Email cannot be empty')

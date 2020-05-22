@@ -9,6 +9,7 @@ const { csvImport } = require('../utility/importEmp');
 const exportDb = require('../utility/export');
 const dbBackup = require('../utility/dbBackup');
 const logger = require('../utility/logger');
+const { save_employeeNotif } = require('../utility/notificationHandler');
 
 // import models
 const { Employee } = require('../db/models/Employee');
@@ -217,6 +218,10 @@ module.exports = (io) => {
 			//---------------- log -------------------//
 			logger.employeeRelatedLog(userId, userUsername, 3, `${firstname} ${lastname}`);
 
+			// TODO
+			// "created new employee" notification
+			save_employeeNotif(create, userId, employee_id);
+
 			return res.status(201).send("Successfully registered a new employee.")
 
 		} catch (error) {
@@ -276,6 +281,9 @@ module.exports = (io) => {
 						//---------------- log -------------------//
 						logger.employeeRelatedLog(userId, userUsername, 0);
 
+						// TODO should I include this to the notification page? -Pao
+						// "imported employees from csv" notification
+						//save_employeeNotif(importEmployeesCSV, admin, employee);
 						res.status(200).send(isValid.message);
 					}
 				}
@@ -294,7 +302,7 @@ module.exports = (io) => {
 
 
 	/*----------------------------------------------------------------------------------------------------------------------
-	export report must be used in logs ---- used in employees for testing purposes 
+	export report must be used in logs ---- used in employees for testing purposes
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.get('/export-csv', async (req, res) => {
 
@@ -313,7 +321,7 @@ module.exports = (io) => {
 	});
 
 	/*----------------------------------------------------------------------------------------------------------------------
-	 export report must be used in logs ---- used in employees for testing purposes 
+	 export report must be used in logs ---- used in employees for testing purposes
 	 ----------------------------------------------------------------------------------------------------------------------*/
 	router.get('/export-pdf', async (req, res) => {
 
@@ -339,9 +347,8 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.delete('/:id', async (req, res) => {
+	router.delete('/:id', async (req, res) => { // might want to use router.patch() method instead since it just updates to --> {terminated: true}
 		try {
-
 
 			const { userId, userUsername } = req.body;
 			let id = req.params.id;
@@ -355,6 +362,9 @@ module.exports = (io) => {
 			//---------------- log -------------------//
 			logger.employeeRelatedLog(userId, userUsername, 4, emp);
 
+			// TODO
+			// "successfully terminated employee" notification
+			save_employeeNotif(terminated, userId, id);
 			res.status(200).send('Successfully deleted employee');
 
 		} catch (error) {
@@ -363,6 +373,27 @@ module.exports = (io) => {
 			//---------------- log -------------------//
 			logger.employeeRelatedLog(userId, userUsername, 4, null, error.message);
 			res.status(500).send('Server error. Unable to delete employee.');
+		}
+	});
+
+	// Get Specific Employee Data by employeeId for 'Employee Profile Page'
+	router.get('/:employeeId', async (req, res) => {
+		try {
+			let empId = req.params.employeeId;
+			const employee = await Employee.findOne({ employeeId: empId })
+
+			if(!employee){
+				console.log("No Employee Found");
+				res.status(404).send("Employee Not Found");
+			} else{
+				console.log("Employee Found");
+				res.status(200).send(employee);
+			}
+
+		} catch (error) {
+			console.log(error);
+			console.log("Error: Cannot fetch employee data for some reason".red);
+			res.status(500).send("Server Error");
 		}
 	});
 
