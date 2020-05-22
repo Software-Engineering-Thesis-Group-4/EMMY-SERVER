@@ -9,6 +9,7 @@ const { csvImport } = require('../utility/importEmp');
 const exportDb = require('../utility/export');
 const dbBackup = require('../utility/dbBackup');
 const logger = require('../utility/logger');
+const { save_employeeNotif } = require('../utility/notificationHandler');
 
 // import models
 const { Employee } = require('../db/models/Employee');
@@ -217,6 +218,10 @@ module.exports = (io) => {
 			//---------------- log -------------------//
 			logger.employeeRelatedLog(userId, userUsername, 3, `${firstname} ${lastname}`);
 
+			// TODO
+			// "created new employee" notification
+			save_employeeNotif(create, userId, employee_id);
+
 			return res.status(201).send("Successfully registered a new employee.")
 
 		} catch (error) {
@@ -276,6 +281,9 @@ module.exports = (io) => {
 						//---------------- log -------------------//
 						logger.employeeRelatedLog(userId, userUsername, 0);
 
+						// TODO should I include this to the notification page? -Pao
+						// "imported employees from csv" notification
+						//save_employeeNotif(importEmployeesCSV, admin, employee);
 						res.status(200).send(isValid.message);
 					}
 				}
@@ -339,7 +347,7 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.delete('/:id', async (req, res) => {
+	router.delete('/:id', async (req, res) => { // might want to use router.patch() method instead since it just updates to --> {terminated: true}
 		try {
 
 			const { userId, userUsername } = req.body;
@@ -354,6 +362,9 @@ module.exports = (io) => {
 			//---------------- log -------------------//
 			logger.employeeRelatedLog(userId, userUsername, 4, emp);
 
+			// TODO
+			// "successfully terminated employee" notification
+			save_employeeNotif(terminated, userId, id);
 			res.status(200).send('Successfully deleted employee');
 
 		} catch (error) {
@@ -365,7 +376,7 @@ module.exports = (io) => {
 		}
 	});
 
-	// Get Specific Employee Data by employeeId
+	// Get Specific Employee Data by employeeId for 'Employee Profile Page'
 	router.get('/:employeeId', async (req, res) => {
 		try {
 			let empId = req.params.employeeId;

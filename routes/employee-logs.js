@@ -6,6 +6,7 @@ const { EmployeeLog } = require('../db/models/EmployeeLog');
 
 // import utilities
 const { handleEmployeeLog } = require('../utility/EmployeeLogHandler.js');
+const { save_emotionNotif } = require('../utility/notificationHandler');
 
 module.exports = (io) => {
 	/*----------------------------------------------------------------------------------------------------------------------
@@ -97,6 +98,11 @@ module.exports = (io) => {
 			if (!log) {
 				throw new Error('Log not found!');
 			} else {
+
+				if(emotion === '4' || emotion === '5'){ //sad or angry
+					save_emotionNotif(emotion, employeeLog); // employeeID == employeeLog
+				}
+
 				switch (status) {
 					case "in":
 						log.emotionIn = emotion;
