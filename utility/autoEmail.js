@@ -1,11 +1,9 @@
-
-const { Employee } = require('../db/models/Employee');
-
+const db = require('./mongooseQue');
 const mailer = require('./mailer');
 const logger = require('./logger');
 
 ////--------------------------------- GLOBAL VARIABLES ---------------------------------
-
+// TODO: LEADERBOARDS
 let startDate   = new Date();
 let endDate     = new Date();
 
@@ -32,31 +30,6 @@ exports.activateAutoEmailSystem = true;
 
 ////--------------------------------- AUTO EMAIL SETTINGS ---------------------------------
 
-exports.changeEmailTemplate = async (template) => {
-
-    try{
-        
-        this.emailTemplate = template;
-        return isErr = { value : false }
-
-    } catch (err) {
-        console.log(err)
-        return isErr = { value : true, message : err.message }
-    }
-}
-
-exports.turnOnOffAutoEmail = async (buttonVal) => {
-
-    try{
-        
-        this.activateAutoEmailSystem = buttonVal;
-        return isErr = { value : false }
-
-    } catch (err) {
-        console.log(err)
-        return isErr = { value : true, message : err.message }
-    }
-}
 
 
 // checks if the duration entered is finish
@@ -69,25 +42,22 @@ exports.startEndDateChecker = async () => {
         // if day and month is the same for start date and end date clean db then reset startDate and endDate
         if(startDate.getDate() == endDate.getDate() && startDate.getMonth() == endDate.getMonth()){
 
-            const employees = await Employee.find({ sendAutoEmail : true }, 
+            const employees = await db.findAll('employee',{ sendAutoEmail : true }, 
                                                 { firstName : 1, lastName : 1, sendAutoEmail : 1 });
 
-            if(!employees) {
+            if(employees.value) {
                 logger.serverRelatedLog('Employee',4,'Error getting employees or employee collection is empty');
                 console.log('Error getting employees or employee collection is empty');
             } else {
     
-                employees.forEach(emp => {
+                employees.output.forEach(async emp => {
 
                     emp.sendAutoEmail = false;
 
-                    emp.save((err, doc) => {
-                        if(err){
-                            logger.serverRelatedLog(`Employee`,4,err.message);
-                        } else {
-                            logger.serverRelatedLog(`${doc.firstName} ${doc.lastName}`,4,err.message);
-                        }
-                    });
+                    const updatedEmp = await db.updateById('employee',emp.employeeId, { sendAutoEmail : false });
+
+                    updatedEmp.value ? logger.serverRelatedLog(`Employee`,4,err.message) :
+                    logger.serverRelatedLog(`${doc.firstName} ${doc.lastName}`,4);
                 });
 
                 // reset date 
@@ -112,64 +82,41 @@ exports.startEndDateChecker = async () => {
 }
 
 
+exports.angryEmoIncrementer = async (employeeId) => {
 
+    try{
+        const employee = await db.updateById('employee',employeeId, { leaderboardEmoCount : leaderboardEmoCount + 1 });
+       
+        employee.value ?
+        logger.serverRelatedLog(`employee`,4,err.message) :   
+        logger.serverRelatedLog(`${employee.output.firstName} ${employee.output.lastName}`,4);
+    } catch (err) {
+        console.log(err.message);
+        logger.serverRelatedLog(`employee`,4,err.message)
+    }
+}
 
 exports.putToEmailQueue = async (employeeId) => {
 
     try{
-        const employee = await Employee.findOne({ employeeId },{   
-                                                firstName           : 1, 
-                                                lastName            : 1, 
-                                                sendAutoEmail       : 1, 
-                                                leaderboardEmoCount : 1 
-                                            });
         
-        if(!emp){
+        if(this.activateAutoEmailSystem == true){
+            const employee = await db.updateById('employee',employeeId,{ 
+                leaderboardEmoCount : leaderboardEmoCount + 1,
+                sendAutoEmail : true
+            });
 
-            logger.serverRelatedLog(`employee`,4,'Cant find employee');
-        
+            employee.value ?
+            logger.serverRelatedLog(`employee`,4,err.message):
+            logger.serverRelatedLog(`${employee.output.firstName} ${employee.output.lastName}`,4);
         } else {
+            const employee = await db.updateById('employee',employeeId,{ 
+                leaderboardEmoCount : leaderboardEmoCount + 1,
+            });
 
-            if(employee.sendAutoEmail == false && this.activateAutoEmailSystem == true ){
-
-                employee.sendAutoEmail       = true;
-                employee.leaderboardEmoCount = employee.leaderboardEmoCount + 1;
-                    
-                employee.save((err, doc) => {
-                    if(err){
-                        logger.serverRelatedLog(`employee`,4,err.message);
-                    } else {
-                        logger.serverRelatedLog(`${doc.firstName} ${doc.lastName}`,4,err.message);
-                    }
-                });
-            }
-
-            if(employee.sendAutoEmail == true && this.activateAutoEmailSystem == true){
-
-                employee.leaderboardEmoCount = employee.leaderboardEmoCount + 1;
-
-                employee.save((err, doc) => {
-                    if(err){
-                        logger.serverRelatedLog(`employee`,4,err.message);
-                    } else {
-                        logger.serverRelatedLog(`${doc.firstName} ${doc.lastName}`,4,err.message);
-                    }
-                }); 
-            }
-
-            // if auto email system is turned off update leaderboards
-            if(this.activateAutoEmailSystem == false){
-                
-                employee.leaderboardEmoCount = employee.leaderboardEmoCount + 1;
-
-                employee.save((err, doc) => {
-                    if(err){
-                        logger.serverRelatedLog(`employee`,4,err.message);
-                    } else {
-                        logger.serverRelatedLog(`${doc.firstName} ${doc.lastName}`,4,err.message);
-                    }
-                }); 
-            }
+            employee.value ?
+            logger.serverRelatedLog(`employee`,4,err.message) : 
+            logger.serverRelatedLog(`${employee.output.firstName} ${employee.output.lastName}`,4);
         }
     } catch (err) {
         console.log(err);
@@ -182,9 +129,9 @@ exports.scheduledAutoEmail = async () => {
 
     try{
 
-        const employees = await Employee.find({ sendAutoEmail : true },{ email : 1, _id : 0,  firstName : 1 });
+        const employees = await db.findAll('employee',{ sendAutoEmail : true },{ email : 1, _id : 0,  firstName : 1 });
         
-        if(!employees.length){ 
+        if(employees.value){ 
             logger.serverRelatedLog(`no employees.`,2);
         } else {
 
@@ -192,11 +139,9 @@ exports.scheduledAutoEmail = async () => {
 
                 const emailErr  = await mailer.sendAutoEmail(emp.email,emp.firstName);
                 
-                if(emailErr.value){
-                    logger.serverRelatedLog(emp.email,2,emailErr.message);
-                } else {
-                    logger.serverRelatedLog(emp.email,2);    
-                }
+                emailErr.value ?
+                logger.serverRelatedLog(emp.email,2,emailErr.message) :
+                logger.serverRelatedLog(emp.email,2);    
             });
         }
     } catch (err) {

@@ -116,13 +116,13 @@ exports.verify = async (token, tokenKind) => {
 		const verifiedToken = jwt.verify(token, tokKey);
 		
 		if(verifiedToken.name){
-			return isErr = { value : true, message : verifiedToken.message };
+			return isErr = { value : true, message : verifiedToken.message, errName : err.name };
 		}
 
 		return isErr = { value : false, output : verifiedToken };
 
 	} catch (err) {
 		console.log(err.message);
-		return isErr = { value : true, message : err.message }
+		return isErr = { value : true, message : err.message, errName : err.name }
 	}
 }

@@ -91,7 +91,7 @@ const utilityRoute = require('./routes/main')(io);
 const authRoute = require('./routes/auth')(io);
 const userRoute = require('./routes/user')(io);
 const auditLogsRoute = require('./routes/audit-logs')(io);
-const adminRoute = require('./routes/admin')(io);;
+const adminRoute = require('./routes/admin')(io);
 
 app.use('/auth', authRoute);									// localhost:3000/auth/
 app.use('/main', utilityRoute); 								// localhost:3000/utility

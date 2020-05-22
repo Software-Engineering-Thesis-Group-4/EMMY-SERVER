@@ -157,13 +157,13 @@ module.exports = (io) => {
 					case "in":
 						log.emotionIn = emotion;
 						await log.save();
-						if(emotion === 1){ autoEmail.putToEmailQueue(log.output.employeeRef._id); }
+						if(emotion === 1) autoEmail.angryEmoIncrementer(log.output.employeeRef._id);
 						return res.sendStatus(200);
 
 					case "out":
 						log.emotionOut = emotion;
 						await log.save();
-						if(emotion === 1){ autoEmail.putToEmailQueue(log.output.employeeRef._id); }
+						if(emotion === 1) autoEmail.putToEmailQueue(log.output.employeeRef._id);
 						return res.sendStatus(200);
 				}
 			}

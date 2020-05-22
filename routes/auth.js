@@ -1,6 +1,5 @@
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 
 // import utilities
 const { createAccessToken, createRefreshToken, removeRefreshToken } = require('../utility/jwt');
@@ -8,6 +7,7 @@ const { validateLogin } = require('../utility/validator');
 const { body, validationResult } = require('express-validator');
 const logger = require('../utility/logger');
 const db = require('../utility/mongooseQue');
+const token = require('../utility/jwt')
 
 // error messages
 const ERR_INVALID_CREDENTIALS = "Invalid email or password.";
@@ -122,7 +122,9 @@ module.exports = (io) => {
 				}
 				// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-				let { access_token, email } = req.body;
+				let { email } = req.body;
+				const authHeader = req.headers['authorization'];
+				const authTok = authHeader && authHeader.split(' ')[1];   //bearer TOKEN
 
 				let user = await db.findOne('user',{ email });
 
@@ -131,25 +133,11 @@ module.exports = (io) => {
 					return res.status(401).send(ERR_UNAUTHENTICATED)
 				}
 
-				// if user exists, verify access token
-				jwt.verify(access_token, process.env.JWT_KEY, async (err) => {
+				const verifiedToken = await token.verify(authTok,'authtoken');
 
-					// if there are no errors...
-					if (!err) {
-						console.log('Valid Access Token. Verification Success.'.green)
-						return res.sendStatus(200);
-					}
+				if(verifiedToken.value){
 
-					if (err.name === 'JsonWebTokenError') {
-						console.error('Invalid Access Token.'.red)
-						return res.status(401).send(ERR_UNAUTHORIZED);
-					}
-
-					// if token is expired check, get refresh token of user
-					if (err.name === 'TokenExpiredError') {
-						console.log('Access Token Expired.'.yellow);
-
-						// if refresh token is VALID, renew token
+					if(verifiedToken.errName == 'TokenExpiredError'){
 						const refTok = await db.findOne('refreshtoken', { email });
 
 						if(refTok.value){
@@ -157,37 +145,28 @@ module.exports = (io) => {
 							return res.status(404).send(ERR_UNAUTHORIZED);	
 						}
 
-						// validate refresh token
-						jwt.verify(refresh_token.token, process.env.REFRESH_KEY, (err) => {
+						const verifiedRefToken = await token.verify(refTok.output.token,'refreshtoken');
 
-							if (!err) {
-								console.log('Refresh Token Valid.'.green);
-								let token = createAccessToken(email);
+						if(verifiedRefToken.value){
+							removeRefreshToken(email);
+							console.error('Refresh Token Expired'.red)
+							return res.status(401).send(ERR_UNAUTHORIZED);
+						}
 
-								console.log('Access Token Renewed'.green)
-								return res.status(200).send({ token });
-							}
+						console.log('Refresh Token Valid.'.green);
+						let token = createAccessToken(email);
 
-							switch (err.name) {
-								case 'TokenExpiredError':
-									removeRefreshToken(email);
-									console.error('Refresh Token Expired'.red)
-									return res.status(401).send(ERR_UNAUTHORIZED);
+						console.log('Access Token Renewed'.green)
+						return res.status(200).send({ token });
 
-								case 'JsonWebTokenError':
-									removeRefreshToken(email);
-									console.error('Invalid Refresh Token'.red)
-									return res.status(401).send(ERR_UNAUTHORIZED);
-
-								default:
-									removeRefreshToken(email);
-									console.error('Invalid Refresh Token'.red)
-									return res.status(401).send(ERR_UNAUTHORIZED);
-							}
-								
-						});
 					}
-				});
+					console.log(verifiedToken.message.red);
+					return res.status(401).send(ERR_UNAUTHORIZED);
+				}
+
+				console.log('Valid Access Token. Verification Success.'.green)
+				return res.sendStatus(200);
+				
 			} catch (error) {
 				console.log(error.message);
 				return res.status(500).send(ERR_SERVER_ERROR);

@@ -113,14 +113,14 @@ exports.save = async (model,data) => {
     }
 }  
 
-exports.findOne = async (model,field) => {
+exports.findOne = async (model,field,options) => {
     
 
     try {
         
         Model = modelPicker(model);
 
-        const modelings = await Model.findOne(field);
+        const modelings = await Model.findOne(field,options);
      
         if(!modelings){
             return isErr = { value : true, output : `Cant find document in ${Model.modelName} collection` };

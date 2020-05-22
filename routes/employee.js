@@ -9,9 +9,8 @@ const aes = require('../utility/aes');
 const exportDb = require('../utility/export');
 const dbBackup = require('../utility/dbBackup');
 const logger = require('../utility/logger');
+const db = require('../utility/mongooseQue');
 
-// import models
-const { Employee } = require('../db/models/Employee');
 
 // TODO: IMPLEMENT DATABASE MODULE
 module.exports = (io) => {
@@ -132,8 +131,13 @@ module.exports = (io) => {
 	router.get('/', async (req, res) => {
 		try {
 			// get all employees
-			let employees = await Employee.find({});
-			return res.status(200).send(employees);
+			let employees = await db.findAll('employee'); db.findAll
+
+			if(employees.value){
+				return res.status(500).send('Server error. A problem occured when retrieving employees');
+			}
+
+			return res.status(200).send(employees.output);
 
 		} catch (error) {
 			console.error(error);
@@ -175,7 +179,7 @@ module.exports = (io) => {
 
 			employment_status = (employment_status === "Part-time" ? 0 : 1);
 
-			const newEmployee = new Employee({
+			const newEmployee = await db.save('employee',{
 				employeeId: employee_id,
 				firstName: firstname,
 				lastName: lastname,
@@ -186,12 +190,14 @@ module.exports = (io) => {
 				jobTitle: job_title,
 				fingerprintId: fingerprint_id,
 			});
+			
 
-			await newEmployee.save();
-
+			if(newEmployee.value){
+				return res.status(500).send(`500 Internal Server Error. ${newEmployee.message}`);
+			}
+			
 			//---------------- log -------------------//
 			logger.employeeRelatedLog(userId,loggedInUsername,3,`${firstname} ${lastname}`);
-			
 			return res.status(201).send("Successfully registered a new employee.")
 
 		} catch (error) {
@@ -258,14 +264,14 @@ module.exports = (io) => {
 	
 	
 	/*----------------------------------------------------------------------------------------------------------------------
-	export report must be used in logs ---- used in employees for testing purposes 
+	TODO: export report must be used in logs ---- used in employees for testing purposes 
 	----------------------------------------------------------------------------------------------------------------------*/
    router.get('/export-csv', async (req,res) => {
 
 	try {
 		
 		const pathToDownload = path.join(__dirname, '/../downloadables/generated.csv')
-		let emp = await Employee.find();
+		let emp = await db.findAll('employee');
 
 		await exportDb.toCsv(emp);
 		res.download(pathToDownload)
@@ -310,21 +316,17 @@ module.exports = (io) => {
 			const { userId, loggedInUsername } = req.body;
 
 			let id = req.params.id;
+			const emp = await db.updateById('employee',id, { terminated: true });
+			
 
-			const emp = await Employee.findByIdAndUpdate(
-				id,
-				{ $set: { terminated: true } },
-				{ new: true }
-			);
-
-			if(emp){
+			if(emp.value){
 				//---------------- log -------------------//
-				logger.employeeRelatedLog(userId,loggedInUsername,4,`${emp.firstName} ${emp.lastName}`);
-				return res.status(200).send('Successfully deleted employee');
-			} else {
-				//---------------- log -------------------//
-				logger.employeeRelatedLog(userId,loggedInUsername,4,`${emp.firstName} ${emp.lastName}`,'Error in deleting employee');
+				logger.employeeRelatedLog(userId,loggedInUsername,4,`undefined`,'Error in deleting employee');
 				return res.send(500).send('Error in deleting employee');
+				
+			} else {
+				logger.employeeRelatedLog(userId,loggedInUsername,4,`${emp.output.firstName} ${emp.output.lastName}`);
+				return res.status(200).send('Successfully deleted employee');
 			}
 			
 
