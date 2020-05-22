@@ -39,7 +39,7 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/', async (req, res) => {
+	router.post('/scanner', async (req, res) => {
 		try {
 			const fingerprintNumber = req.body.enrollNumber;
 			let { status, message } = await handleEmployeeLog(io, fingerprintNumber);
