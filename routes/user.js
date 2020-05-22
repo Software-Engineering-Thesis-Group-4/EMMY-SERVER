@@ -311,12 +311,10 @@ module.exports = (io) => {
 				res.status(401).send('Invalid Key Format'.red);
 			}
 
-			const { key } = req.body;
+			const { key, reset_token } = req.body;
 			
-			// get token from header
-			const authHeader = req.headers['authorization'];
 
-			const keyChecker = await accountSettings.resetPasswordKey(authHeader,key);
+			const keyChecker = await accountSettings.resetPasswordKey(reset_token,key);
 			
 			if (keyChecker.value) {
 				logger.serverRelatedLog(undefined,5,keyChecker.message);

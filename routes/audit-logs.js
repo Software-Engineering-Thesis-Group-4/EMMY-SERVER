@@ -24,8 +24,7 @@ module.exports = (io) => {
 			const userId = req.body.userId
 			const auditLogs = await dbQuery.findAllPopulate(
 				`AuditLog`,
-				{ user : userId,
-				isServer : false },
+				{ user : userId, isServer : false },
 				{ path	: 'user' , select	: {password: 0}
 			});
 

@@ -1,5 +1,4 @@
-const { AuditLog } 	= require('../db/models/AuditLog');
-
+const db = require('./mongooseQue');
 
 const pickActionLog = (actionNumb) => {
 
@@ -26,7 +25,7 @@ const pickActionLog = (actionNumb) => {
 
 
 
-exports.userRelatedLog = (loggerId,loggerUsername,log,input,errMessage) => {
+exports.userRelatedLog = async (loggerId,loggerUsername,log,input,errMessage) => {
 
     /*/======================================//
         
@@ -90,22 +89,26 @@ exports.userRelatedLog = (loggerId,loggerUsername,log,input,errMessage) => {
         if(errMessage){
             audLog = `ERROR: ${errMessage} on log: ${audLog}`;
         }
-
-        const newLog = new AuditLog({
+        
+        const newLog = await db.save('AuditLog',{
             description : audLog,
             action      : actionLog,
             user        : loggerId
-        })
-        
-        newLog.save();
-        console.log('Succesfully added log'.grey);
+        });
+      
+        if(newLog.value){
+            console.log('Error adding log'.red);
+        } else {
+            console.log('Succesfully added log'.grey);
+        }
+       
 
     } catch (error) {
         console.log(error);
     }
 };
 
-exports.employeeRelatedLog = (loggerId,loggerUsername,log,emp,errMessage) => {
+exports.employeeRelatedLog = async (loggerId,loggerUsername,log,emp,errMessage) => {
 
      /*/======================================//
         
@@ -170,14 +173,19 @@ exports.employeeRelatedLog = (loggerId,loggerUsername,log,emp,errMessage) => {
             audLog = `ERROR: ${errMessage} on log: ${audLog}`;
         }
         
-        const newLog = new AuditLog({
+
+        const newLog = await db.save('AuditLog',{
             description : audLog,
             action      : actionLog,
             user        : loggerId
-        })
+        });
+      
+        if(newLog.value){
+            console.log('Error adding log'.red);
+        } else {
+            console.log('Succesfully added log'.grey);
+        }
         
-        newLog.save();
-        console.log('Succesfully added log'.grey);
 
     } catch (error) {
         console.log(error);
@@ -185,7 +193,7 @@ exports.employeeRelatedLog = (loggerId,loggerUsername,log,emp,errMessage) => {
 };
 
 
-exports.employeelogsRelatedLog = (loggerId,loggerUsername,log,employeeLogId,errMessage) => {
+exports.employeelogsRelatedLog = async (loggerId,loggerUsername,log,employeeLogId,errMessage) => {
 
     /*/======================================//
        
@@ -222,21 +230,24 @@ exports.employeelogsRelatedLog = (loggerId,loggerUsername,log,employeeLogId,errM
             audLog = `ERROR: ${errMessage} on log: ${audLog}`;
         }
 
-        const newLog = new AuditLog({
+        const newLog = await db.save('AuditLog',{
             description : audLog,
             action      : actionLog,
             user        : loggerId
-        })
-
-        newLog.save();
-        console.log('Succesfully added log'.grey);
+        });
+      
+        if(newLog.value){
+            console.log('Error adding log'.red);
+        } else {
+            console.log('Succesfully added log'.grey);
+        }
 
     } catch (error) {
         console.log(error);
     }  
 };
 
-exports.serverRelatedLog = (output,log,errMessage) => {
+exports.serverRelatedLog = async (output,log,errMessage) => {
 
      /*/======================================//
         
@@ -286,15 +297,19 @@ exports.serverRelatedLog = (output,log,errMessage) => {
             audLog = `ERROR: ${errMessage} on log: ${audLog}`;
         }
 
-        const newLog = new AuditLog({
+        const newLog = await db.save('AuditLog',{
             description : audLog,
             action      : actionLog,
             user        : null,
             isServer    : true
         })
+      
+        if(newLog.value){
+            console.log('Error adding log'.red);
+        } else {
+            console.log('Succesfully added log'.grey);
+        }
         
-        newLog.save();
-        console.log('Succesfully added log'.grey);
 
     } catch (error) {
         console.log(error);

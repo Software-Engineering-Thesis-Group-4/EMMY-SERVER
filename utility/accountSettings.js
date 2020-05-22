@@ -43,11 +43,10 @@ exports.resetPassword = async (email) => {
 
 }
 
-exports.resetPasswordKey = async (authHeader,key) => {
+exports.resetPasswordKey = async (resetTok,key) => {
 
     try{
 
-        const resetTok = authHeader && authHeader.split(' ')[1]   //bearer TOKEN
         const decryptedToke = aes.decrypter(resetTok)
         
 		const verifiedToken = await jwt.verify(decryptedToke, 'authtoken');
