@@ -38,11 +38,12 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
+	// SUGGESTION: require a valid admin access (access_token, email, and account_type) before proceeding to execute process
 	router.get('/', async (req, res) => {
 
 		try {
 
-			let users = await User.find({},{'password': 0});
+			let users = await User.find({}, { 'password': 0 });
 
 			return res.status(200).send(users);
 
@@ -62,7 +63,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-
+	// SUGGESTION: require a valid admin access (access_token, email, and account_type) before proceeding to execute process
 	router.post('/enroll', registerRules, validate, async (req, res) => {
 		try {
 
@@ -74,7 +75,7 @@ module.exports = (io) => {
 			// extract logged in user information
 			const { userId, userUsername } = req.body;
 
-			if(!errors.isEmpty()) {
+			if (!errors.isEmpty()) {
 				return res.status(400).send(errors.errors);
 			}
 
@@ -84,7 +85,7 @@ module.exports = (io) => {
 			let user = await User.findOne({ email });
 			if (user) return res.status(409).send(ERR_DUPLICATE);
 
-			if(confirmPassword !== password) {
+			if (confirmPassword !== password) {
 				console.error('Confirm password does not match'.red);
 				return res.status(400).send('Confirm password does not match.');
 			}
@@ -105,7 +106,7 @@ module.exports = (io) => {
 			await newUser.save();
 
 			//---------------- log -------------------//
-			logger.userRelatedLog(userId,userUsername,4,username);
+			logger.userRelatedLog(userId, userUsername, 4, username);
 
 			return res.status(200).send(`Successfully registered a new user (${newUser.email})`);
 
@@ -113,7 +114,7 @@ module.exports = (io) => {
 
 			// error log
 			const { userId, userUsername } = req.body;
-			logger.userRelatedLog(userId,userUsername,4,undefined,error.message);
+			logger.userRelatedLog(userId, userUsername, 4, undefined, error.message);
 
 			console.log(error);
 			return res.status(500).send(ERR_SERVER_ERROR);
@@ -134,34 +135,34 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/email-notif', async (req, res) => {
 
-		try{
+		try {
 
 			// user credentials
-			const { userId, userUsername} = req.body;
+			const { userId, userUsername } = req.body;
 
 			const { emailBod, empEmail } = req.body;
 
 			const netStatus = await isOnline();
 
-			if(netStatus){
+			if (netStatus) {
 
 				mailer.sendEmailNotif(empEmail, userUsername, emailBod);
 
-				logger.employeeRelatedLog(userId,userUsername,6,empEmail);
+				logger.employeeRelatedLog(userId, userUsername, 6, empEmail);
 				res.status(200).send({ resetTok: encTok });
 
 			}
 
 
-			logger.employeeRelatedLog(userId,userUsername,6,empEmail,'CONNECTION ERROR: Check internet connection!');
+			logger.employeeRelatedLog(userId, userUsername, 6, empEmail, 'CONNECTION ERROR: Check internet connection!');
 
 			res.status(502).send('Please check your internet connection!');
 
 
 		} catch (err) {
 
-			const { userId, userUsername} = req.body;
-			logger.employeeRelatedLog(userId,userUsername,6,undefined,err.message);
+			const { userId, userUsername } = req.body;
+			logger.employeeRelatedLog(userId, userUsername, 6, undefined, err.message);
 
 			console.log(err);
 			return res.status(500).send(ERR_SERVER_ERROR);
@@ -172,13 +173,13 @@ module.exports = (io) => {
 
 	router.get('/emotion-notifications', async (req, res) => {
 
-		try{
+		try {
 			const emotionNotif = await EmotionNotification.find({});
 			//const employeeEventNotif = await EmployeeDataNotification.find({});
 			console.log(`Successfully Fetched Emotion Notification`);
 			return res.status(200).send(emotionNotif);
 			//return res.status(200).send({emotionNotif, employeeEventNotif})
-		}catch (error) {
+		} catch (error) {
 			console.log(error);
 			return res.status(500).send("Error Server: Could not fetch Emotion Notifications");
 		}
@@ -186,13 +187,13 @@ module.exports = (io) => {
 
 	router.get('/modifyemployee-notifications', async (req, res) => {
 
-		try{
+		try {
 			const empDataNotif = await EmployeeDataNotification.find({});
 			//const employeeEventNotif = await EmployeeDataNotification.find({});
 			console.log(`Successfully Fetched Employee CRUD Notification`);
 			return res.status(200).send(empDataNotif);
 			//return res.status(200).send({emotionNotif, employeeEventNotif})
-		}catch (error) {
+		} catch (error) {
 			console.log(error);
 			return res.status(500).send("Error Server: Could not fetch Employee CRUD Notifications");
 		}
@@ -205,7 +206,7 @@ module.exports = (io) => {
 		let employee = req.body.employeeRef;
 		let action = req.body.action; //deleted employee ===> sample only
 
-		if(notifHandler.save_employeeNotif(action, user, employee) != false){
+		if (notifHandler.save_employeeNotif(action, user, employee) != false) {
 			return res.status(200).send("Successfully saved Employee CRUD event to DB");
 		} else {
 			return res.status(500).send("Error saving Employee CRUD Notification");
@@ -213,7 +214,7 @@ module.exports = (io) => {
 	});
 
 	//DELETE: testing purposes only
-	router.post('/save-emotionNotif', (req, res) =>{
+	router.post('/save-emotionNotif', (req, res) => {
 
 		let emotion = req.body.emotion;
 		let employeeID = req.body.employeeID;
@@ -223,7 +224,7 @@ module.exports = (io) => {
 		if (boolValue != false) {  // "!= false" --> works but "== true" or "=== true" does not work wtf
 			console.log("Successfully saved Employee CRUD event to DB: ROUTE");
 			return res.status(200).send("Successfully saved Employee CRUD event to DB: ROUTE");
-		}else{
+		} else {
 			console.log("Server Error: ROUTE");
 			return res.status(500).send("Server Error: ROUTE");
 		}
@@ -278,7 +279,7 @@ module.exports = (io) => {
 
 
 					//---------------- log -------------------//
-					logger.serverRelatedLog(user.email,1);
+					logger.serverRelatedLog(user.email, 1);
 
 
 					res.status(200).send({ resetTok: encTok });
@@ -291,7 +292,7 @@ module.exports = (io) => {
 			// DECRYPT EMAIL FIRST
 			const email = req.body.email;
 			//---------------- log -------------------//
-			logger.serverRelatedLog(email,1,error.message);
+			logger.serverRelatedLog(email, 1, error.message);
 			console.log(error)
 			res.status(500).send('Error on server!')
 		}

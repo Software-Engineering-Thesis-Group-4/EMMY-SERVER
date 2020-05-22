@@ -347,6 +347,7 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
+	// SUGGESTION: require a valid user session (access_token and email) before performing employee termination operation
 	router.delete('/:id', async (req, res) => { // might want to use router.patch() method instead since it just updates to --> {terminated: true}
 		try {
 
@@ -377,6 +378,7 @@ module.exports = (io) => {
 	});
 
 	// Get Specific Employee Data by employeeId for 'Employee Profile Page'
+	// SUGGESTION: require a valid user session (access_token and email)
 	router.get('/:employeeId', async (req, res) => {
 		try {
 			let empId = req.params.employeeId;

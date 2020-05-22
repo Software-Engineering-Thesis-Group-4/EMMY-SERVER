@@ -60,6 +60,7 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
+	// SUGGESTION: require a valid user session (access_token and email) before performing employee log deletion
 	router.delete('/:id', async (req, res) => {
 		try {
 			let id = req.params.id;
@@ -89,6 +90,7 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
+	// FIX: Implement authenticated websocket connection.
 	router.patch('/sentiment', async (req, res) => {
 
 		try {
@@ -121,6 +123,18 @@ module.exports = (io) => {
 		}
 	});
 
+
+	
+	/*----------------------------------------------------------------------------------------------------------------------
+	-> POST /api/employeelogs/:_id
+
+	Description:
+	get daily attendance logs of a specific employee
+
+	Author:
+	Paolo Latoja
+	----------------------------------------------------------------------------------------------------------------------*/
+	// SUGGESTION: require a valid user session (access_token and email) before proceeding to the retrieval of employee logs
 	router.get('/:_id', async (req, res) => {
 		//objectID of employeeRef as Logs for Specific Employee ---> Employee Profile Page
 		try {
