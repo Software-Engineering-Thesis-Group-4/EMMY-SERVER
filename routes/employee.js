@@ -42,7 +42,7 @@ module.exports = (io) => {
 
 				//---------------- log -------------------//
 				logger.employeeRelatedLog(userId,loggedInUsername,7,null,isErr.message);
-				res.status(500).send('Error on downloading zip file');	
+				res.status(400).send('Error on downloading zip file');	
 			} else {
 				//---------------- log -------------------//
 				logger.employeeRelatedLog(userId,loggedInUsername,7);
@@ -98,7 +98,7 @@ module.exports = (io) => {
 				dbBackup.cleanUploads();
 				//---------------- log -------------------//
 				logger.employeeRelatedLog(userId,loggedInUsername,8,null,isErr.message);
-				return res.status(500).send(isErr.message);
+				return res.status(400).send(isErr.message);
 						
 			} else {
 				//---------------- log -------------------//
@@ -132,10 +132,10 @@ module.exports = (io) => {
 	router.get('/', async (req, res) => {
 		try {
 			// get all employees
-			let employees = await db.findAll('employee'); db.findAll
+			let employees = await db.findAll('employee');
 
 			if(employees.value){
-				return res.status(500).send('Server error. A problem occured when retrieving employees');
+				return res.status(422).send('Server error. A problem occured when retrieving employees');
 			}
 
 			return res.status(200).send(employees.output);
@@ -194,7 +194,7 @@ module.exports = (io) => {
 			
 
 			if(newEmployee.value){
-				return res.status(500).send(`500 Internal Server Error. ${newEmployee.message}`);
+				return res.status(204).send(newEmployee.message);
 			}
 			
 			//---------------- log -------------------//
@@ -334,7 +334,7 @@ module.exports = (io) => {
 			if(emp.value){
 				//---------------- log -------------------//
 				logger.employeeRelatedLog(userId,loggedInUsername,4,`undefined`,'Error in deleting employee');
-				return res.send(500).send('Error in deleting employee');
+				return res.send(400).send('Error in deleting employee');
 				
 			} else {
 				logger.employeeRelatedLog(userId,loggedInUsername,4,`${emp.output.firstName} ${emp.output.lastName}`);

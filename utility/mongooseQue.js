@@ -1,6 +1,6 @@
 const { AuditLog }          = require('../db/models/AuditLog'); 
 const { Employee }          = require('../db/models/Employee'); 
-const { EmployeeLogs }      = require('../db/models/EmployeeLog'); 
+const { EmployeeLog }      = require('../db/models/EmployeeLog'); 
 const { EmployeeDataNotification }   = require('../db/models/EmployeeDataNotif');
 const { EmotionNotification } = require('../db/models/EmotionNotification')
 const { RefreshToken }      = require('../db/models/RefreshToken'); 
@@ -18,7 +18,7 @@ const modelPicker = (modelName) => {
             return importModel = Employee;
              
         case "employeelog" : 
-            return importModel = EmployeeLogs;
+            return importModel = EmployeeLog;
              
         case "notificationlog" : 
             return importModel = NotificationLog;
@@ -130,7 +130,7 @@ exports.findOne = async (model,field,options) => {
         const modelings = await Model.findOne(field,options);
      
         if(!modelings){
-            return isErr = { value : true, output : `Cant find document in ${Model.modelName} collection` };
+            return isErr = { value : true, message : `Cant find document in ${Model.modelName} collection` };
         }
 
         return isErr = { value : false, output : modelings };
@@ -154,7 +154,7 @@ exports.findAll = async (model,field,options) => {
             return isErr = { value : false, output : modelings };
         }
 
-        return isErr = { value : true, output : `${Model.modelName} is empty` };
+        return isErr = { value : true, message : `${Model.modelName} is empty` };
 
     } catch (err) {
         return isErr = { value : true, message : err.message };
@@ -173,7 +173,7 @@ exports.findAllPopulate = async (Model,field,populateOptions) => {
             return isErr = { value : false, output : modelings };
         }
 
-        return isErr = { value : false, output : `${Model.modelName} is empty` };
+        return isErr = { value : false, message : `${Model.modelName} is empty` };
 
     } catch (err) {
         return isErr = { value : true, message : err.message };

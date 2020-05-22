@@ -22,7 +22,7 @@ module.exports = (io) => {
 		
 		try {
 
-			let employeeLogs = await db.findAll();
+			let employeeLogs = await db.findAll('employeelog');
 			return res.status(200).send(employeeLogs.output);
 
 		} catch (error) {

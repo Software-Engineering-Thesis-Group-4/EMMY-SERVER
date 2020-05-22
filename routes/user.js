@@ -4,9 +4,7 @@ const bcrypt   = require('bcryptjs');
 const isOnline = require('is-online');
 
 // import models
-const { User } = require("../db/models/User");
-const { EmployeeDataNotification } = require("../db/models/EmployeeDataNotif");
-const { EmotionNotification } = require("../db/models/EmotionNotification");
+
 
 // import utilities
 const logger = require('../utility/logger');
@@ -15,6 +13,7 @@ const mailer = require('../utility/mailer');
 const { registerRules, resetPassRules, resetKeyRules, validate } = require("../utility/validator");
 const { validationResult } = require('express-validator');
 const notifHandler = require('../utility/notificationHandler');
+const db = require('../utility/mongooseQue');
 
 // error messages
 const ERR_INVALID_CREDENTIALS = "Invalid email or password.";
@@ -156,7 +155,7 @@ module.exports = (io) => {
 				if(isErr.value){
 					logger.employeeRelatedLog(userId,loggedInUsername,6,empEmail,isErr.message);
 					console.log('Error sending email'.yellow);
-					res.status(500).send('Error sending email');
+					res.status(400).send('Error sending email');
 				} else {
 					logger.employeeRelatedLog(userId,loggedInUsername,6,empEmail);
 					res.status(200).send("Successfully sent notification email");
@@ -252,7 +251,7 @@ module.exports = (io) => {
 				const user = await db.findOne('user', { email });
 
 				if (user.value) {
-					return res.status(500).send('Email doesnt exist in database');
+					return res.status(204).send('Email doesnt exist in database');
 				}
 				
 				const isErr = await accountSettings.resetPassword(user.output.email);
@@ -279,17 +278,6 @@ module.exports = (io) => {
 			res.status(500).send('Error on server!');
 		}
 	});
-
-
-	router.post('/asd', (req,res) => {
-
-		const authHeader = req.headers['authorization'];
-		console.log(authHeader);
-		const token = authHeader && authHeader.split(' ')[1]   //bearer TOKEN
-		console.log(token)
-		res.send(token)
-	})
-
 
 
 	/*----------------------------------------------------------------------------------------------------------------------
@@ -330,6 +318,41 @@ module.exports = (io) => {
 			return res.status(500).send('Error on server!');
 		}
 	});
+
+	//DELETE: testing purposes only
+	router.post('/save-employeenotif', (req, res) => {
+
+		let user = req.body.userRef;
+		let employee = req.body.employeeRef;
+		let action = req.body.action; //deleted employee ===> sample only
+
+		if(notifHandler.save_employeeNotif(action, user, employee) != false){
+			return res.status(200).send("Successfully saved Employee CRUD event to DB");
+		} else {
+			return res.status(500).send("Error saving Employee CRUD Notification");
+		}
+	});
+
+	//DELETE: testing purposes only
+	router.post('/save-emotionNotif', (req, res) =>{
+
+		let emotion = req.body.emotion;
+		let employeeID = req.body.employeeID;
+
+		let boolValue = notifHandler.save_emotionNotif(emotion, employeeID);
+
+		if (boolValue != false) {  // "!= false" --> works but "== true" or "=== true" does not work wtf
+			console.log("Successfully saved Employee CRUD event to DB: ROUTE");
+			return res.status(200).send("Successfully saved Employee CRUD event to DB: ROUTE");
+		}else{
+			console.log("Server Error: ROUTE");
+			return res.status(500).send("Server Error: ROUTE");
+		}
+
+	});
+
+
+
 
 	return router;
 };
