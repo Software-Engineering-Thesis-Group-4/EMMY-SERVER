@@ -3,23 +3,21 @@ const router   = express.Router();
 const bcrypt   = require('bcryptjs');
 const isOnline = require('is-online');
 
+// import models
+const { User } = require("../db/models/User");
+const { EmployeeDataNotification } = require("../db/models/EmployeeDataNotif");
+const { EmotionNotification } = require("../db/models/EmotionNotification");
 
 // import utilities
 const logger = require('../utility/logger');
 const { encrypt, decrypter } = require('../utility/aes');
 const mailer = require('../utility/mailer');
-const accountSettings = require('../utility/accountSettings');
-const db = require('../utility/mongooseQue');
-
-const {
-	registerValidationRules,
-	resetPassValidationRules,
-	resetKeyValidationRules,
-	validate
-} = require("../utility/validator");
+const { registerRules, resetPassRules, resetKeyRules, validate } = require("../utility/validator");
 const { validationResult } = require('express-validator');
+const notifHandler = require('../utility/notificationHandler');
 
 // error messages
+const ERR_INVALID_CREDENTIALS = "Invalid email or password.";
 const ERR_SERVER_ERROR = "Internal Server Error.";
 const ERR_DUPLICATE = "Already Exists."
 
@@ -49,12 +47,9 @@ module.exports = (io) => {
 
 		} catch (error) {
 			console.error(error);
-			return res.status(500).send('Server error. A problem occured when retrieving users');
+			return res.status(500).send(`${ERR_SERVER_ERROR} A problem occured when retrieving users`);
 		}
 	});
-	
-
-	
 
 	/* ---------------------------------------------------------------------------------------------------------------------
 	Route:
@@ -66,16 +61,16 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/enroll', registerValidationRules, async (req, res) => {
+
+	router.post('/enroll', registerRules, validate, async (req, res) => {
 		try {
 
 			// user credentials from req body
 			const { userId, loggedInUsername } = req.body;
 
 			const errors = validationResult(req);
-
-			if(!errors.isEmpty()) {
-				return res.status(400).send(errors.errors);
+			if (!errors.isEmpty()) {
+				res.status(401).send(ERR_INVALID_CREDENTIALS.red);
 			}
 
 			// Extract user information
@@ -136,11 +131,11 @@ module.exports = (io) => {
 
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
-	POST /api/user/email-notif
-	
+	POST /api/users/email-notif
+
 	Description:
 	This route is used for sending email through the HR manager or users.
-	
+
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
@@ -181,7 +176,7 @@ module.exports = (io) => {
 			console.log(err);
 			return res.status(500).send(ERR_SERVER_ERROR);
 		}
-		
+
 	})
 
 
@@ -234,12 +229,17 @@ module.exports = (io) => {
 	
 	Description:
 	This is used for handling forgot password requests.
-	
+
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/reset-password', async (req, res) => {
+	router.post('/reset-password', resetPassRules, validate, async (req, res) => {
 		try {
+
+			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				res.status(401).send(ERR_INVALID_CREDENTIALS.red);
+			}
 
 			const email = req.body.email;
 			
@@ -271,7 +271,7 @@ module.exports = (io) => {
 			}
 		} catch (error) {
 
-			// DECRYPT EMAIL FIRST 
+			// DECRYPT EMAIL FIRST
 			const email = req.body.email;
 			//---------------- log -------------------//
 			logger.serverRelatedLog(email,1,error.message);
@@ -294,16 +294,22 @@ module.exports = (io) => {
 
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
-	POST /api/user/reset-password-key
-	
+	POST /api/users/reset-password-key
+
 	Description:
 	This route is used for handling the reset key to access reset password page.
-	
+
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/reset-password-key', async (req, res) => {
+	router.post('/reset-password-key', resetKeyRules, validate, async (req, res) => {
+		
 		try {
+
+			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				res.status(401).send('Invalid Key Format'.red);
+			}
 
 			const { key } = req.body;
 			
@@ -328,4 +334,4 @@ module.exports = (io) => {
 	});
 
 	return router;
-}; 
+};

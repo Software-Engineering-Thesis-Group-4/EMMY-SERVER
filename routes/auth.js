@@ -3,8 +3,8 @@ const bcrypt = require('bcryptjs');
 
 // import utilities
 const { createAccessToken, createRefreshToken, removeRefreshToken } = require('../utility/jwt');
-const { validateLogin } = require('../utility/validator');
-const { body, validationResult } = require('express-validator');
+const { loginRules, logoutRules, verifyTokenRules, validate } = require('../utility/validator');
+const { validationResult } = require('express-validator');
 const logger = require('../utility/logger');
 const db = require('../utility/mongooseQue');
 const token = require('../utility/jwt')
@@ -28,16 +28,13 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/login', validateLogin, async (req, res) => {
+
+	router.post('/login', loginRules, validate, async (req, res) => {
 		try {
 
-
-			// data sanitization
-			let errors = validationResult(req);
-
+			const errors = validationResult(req);
 			if (!errors.isEmpty()) {
-				console.error('Invalid Credentials Format.'.red);
-				return res.status(401).send(ERR_INVALID_CREDENTIALS);
+				res.status(401).send(ERR_INVALID_CREDENTIALS);
 			}
 
 			// check if email exists in the database
@@ -105,21 +102,17 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/verify',
-		[
-			body('access_token').notEmpty().isJWT(),
-			body('email').trim().notEmpty().isEmail()
-		],
+
+	router.post('/verify', verifyTokenRules, validate,
 		async (req, res) => {
 			try {
 
 				// validate of errors exists in data sanitization +++++++++++++++++++++++++++++
 				const errors = validationResult(req);
-
 				if (!errors.isEmpty()) {
-					console.error('Invalid Credentials.'.red);
 					return res.status(401).send(ERR_UNAUTHORIZED);
 				}
+
 				// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 				let { email } = req.body;
@@ -187,18 +180,19 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/logout', body('email').trim().notEmpty().isEmail(), (req, res) => {
+	router.post('/logout', logoutRules, validate, (req, res) => {
 		try {
-			const errors = validationResult(req);
 
-			//  I need this details plszzz loggedInUsername, userId
+			//  I need this details loggedInUsername, userId
 			const {loggedInUsername, userId} = req.body;
 
-			if(!errors.isEmpty()) {
-				console.error('Invalid Credential Format.'.red);
-				return res.sendStatus(400);
+			const errors = validationResult(req);
+			
+			if (!errors.isEmpty()) {
+				res.status(401).send(ERR_UNAUTHENTICATED);
 			}
 
+			
 			removeRefreshToken(req.body.email);
 			
 			//---------------- log -------------------//

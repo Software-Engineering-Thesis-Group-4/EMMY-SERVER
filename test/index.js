@@ -1,6 +1,7 @@
 const { createDBConnection, closeDBConnection } = require("../db/index.js");
 const { insertRandomEmployees } = require("./test-generate_employees");
 const { insertEmployeeLogs } = require("./test-generate_logs");
+const dotenv = require('dotenv');
 const path = require('path');
 
 let cfg = dotenv.config({ path: path.resolve(__dirname, '../configs/EMMY_DEV.env') }).parsed;

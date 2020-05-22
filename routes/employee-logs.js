@@ -6,11 +6,12 @@ const { handleEmployeeLog } = require('../utility/EmployeeLogHandler.js');
 const logger = require('../utility/logger');
 const autoEmail = require('../utility/autoEmail');
 const db = require('../utility/mongooseQue');
+const { save_emotionNotif } = require('../utility/notificationHandler');
 
 module.exports = (io) => {
 	/*----------------------------------------------------------------------------------------------------------------------
 	-> GET /api/employeelogs
-   
+
 	Description:
 	Get all employeelogs
 
@@ -34,9 +35,9 @@ module.exports = (io) => {
 
 	/*----------------------------------------------------------------------------------------------------------------------
 	-> POST /api/employeelogs
-   
-	Description: 
-	Fingerprint scanner endpoint 
+
+	Description:
+	Fingerprint scanner endpoint
 
 	Author:
 	Nathaniel Saludes
@@ -54,8 +55,8 @@ module.exports = (io) => {
 
 	/*----------------------------------------------------------------------------------------------------------------------
 	-> DELETE /api/employeelogs/:id
-   
-	Description: 
+
+	Description:
 	endpoint for marking a specific employee log as "deleted". (DISCLAIMER) this api does not physically delete the
 	employee log from the database.
 
@@ -136,8 +137,8 @@ module.exports = (io) => {
 
 	/*----------------------------------------------------------------------------------------------------------------------
 	-> POST /api/employeelogs/sentiment
-   
-	Description: 
+
+	Description:
 	endpoint for getting the employee emotion input and update the employee log
 
 	Author:
@@ -152,6 +153,11 @@ module.exports = (io) => {
 			if (log.value) {
 				throw new Error('Log not found!');
 			} else {
+
+				if(emotion === '4' || emotion === '5'){ //sad or angry
+					save_emotionNotif(emotion, employeeLog); // employeeID == employeeLog
+				}
+
 				switch (status) {
 
 					case "in":
@@ -170,6 +176,26 @@ module.exports = (io) => {
 
 		} catch (error) {
 			res.status(500).send(error.message);
+		}
+	});
+
+	router.get('/:_id', async (req, res) => {
+		//objectID of employeeRef as Logs for Specific Employee ---> Employee Profile Page
+		try {
+			let id = req.params._id;
+			const emplog = await db.findAll('employeelog',{ employeeRef: id })
+
+			if(emplog.value){
+				console.error(emplog.message);
+				res.status(404).send("Logs not found");
+			} else {
+				console.log("Logs Found");
+				res.status(200).send(emplog);
+			}
+		} catch (error) {
+			console.log(error);
+			console.log("Server Error".red);
+			res.status(500).send("SERVER ERROR");
 		}
 	});
 

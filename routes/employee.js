@@ -10,6 +10,7 @@ const exportDb = require('../utility/export');
 const dbBackup = require('../utility/dbBackup');
 const logger = require('../utility/logger');
 const db = require('../utility/mongooseQue');
+const { save_employeeNotif } = require('../utility/notificationHandler');
 
 
 // TODO: IMPLEMENT DATABASE MODULE
@@ -198,6 +199,11 @@ module.exports = (io) => {
 			
 			//---------------- log -------------------//
 			logger.employeeRelatedLog(userId,loggedInUsername,3,`${firstname} ${lastname}`);
+			
+			// TODO
+			// "created new employee" notification
+			save_employeeNotif(create, userId, employee_id);
+
 			return res.status(201).send("Successfully registered a new employee.")
 
 		} catch (error) {
@@ -246,6 +252,12 @@ module.exports = (io) => {
 				console.log('Successfully imported csv file!'.green)
 				//---------------- log -------------------//
 				logger.employeeRelatedLog(userId,loggedInUsername,0);
+
+				
+				// TODO should I include this to the notification page? -Pao
+				// "imported employees from csv" notification
+				//save_employeeNotif(importEmployeesCSV, admin, employee);
+				
 				return res.status(200).send(isErr.message);
 			}
 						
@@ -309,7 +321,7 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.delete('/:id', async (req, res) => {
+	router.delete('/:id', async (req, res) => { // might want to use router.patch() method instead since it just updates to --> {terminated: true}
 		try {
 
 			// user credentials from req body	
@@ -326,6 +338,8 @@ module.exports = (io) => {
 				
 			} else {
 				logger.employeeRelatedLog(userId,loggedInUsername,4,`${emp.output.firstName} ${emp.output.lastName}`);
+				// "successfully terminated employee" notification
+				save_employeeNotif(terminated, userId, id);
 				return res.status(200).send('Successfully deleted employee');
 			}
 			
@@ -336,6 +350,29 @@ module.exports = (io) => {
 			//---------------- log -------------------//
 			logger.employeeRelatedLog(userId,loggedInUsername,4,null, error.message);
 			return res.status(500).send('Server error. Unable to delete employee.');
+		}
+	});
+
+	// Get Specific Employee Data by employeeId for 'Employee Profile Page'
+	router.get('/:employeeId', async (req, res) => {
+
+		try {
+			
+			let empId = req.params.employeeId;
+			const employee = await db.findOne('Employee',{ employeeId: empId })
+
+			if(employee.value){
+				console.log("Error retrieving employee");
+				return res.status(404).send("Employee Not Found");
+			}
+
+			console.log("Employee Found");
+			return res.status(200).send(employee);
+			
+		} catch (error) {
+			console.log(error);
+			console.log("Error: Cannot fetch employee data for some reason".red);
+			res.status(500).send("Server Error");
 		}
 	});
 

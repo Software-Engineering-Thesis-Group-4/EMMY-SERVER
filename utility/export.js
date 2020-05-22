@@ -8,7 +8,7 @@ const PdfPrinter 		= require('pdfmake');
 const downloadPath = path.join(__dirname, '/../downloadables');
 
 
-
+// TODO EDIT : MAKE IT FOR EMPLOYEE LOGS 
 const csvWriter = createCsvWriter({
 	path: './downloadables/generated.csv',
 	header: [

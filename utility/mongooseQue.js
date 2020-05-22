@@ -1,7 +1,8 @@
 const { AuditLog }          = require('../db/models/AuditLog'); 
 const { Employee }          = require('../db/models/Employee'); 
 const { EmployeeLogs }      = require('../db/models/EmployeeLog'); 
-const { NotificationLog }   = require('../db/models/NotificationLog'); 
+const { EmployeeDataNotification }   = require('../db/models/EmployeeDataNotif');
+const { EmotionNotification } = require('../db/models/EmotionNotification')
 const { RefreshToken }      = require('../db/models/RefreshToken'); 
 const { User }              = require('../db/models/User'); 
 
@@ -24,6 +25,12 @@ const modelPicker = (modelName) => {
 
         case "refreshtoken" : 
             return importModel = RefreshToken;
+        
+        case "emotionnotification" : 
+            return importModel = EmotionNotification;
+
+        case "employeedatanotif" : 
+            return importModel = EmployeeDataNotification;
         
         case "user" : 
             return importModel = User;

@@ -1,3 +1,5 @@
+// const https 	  = require('https');
+// const fs 		  = require('fs');
 const http       = require('http');
 const path       = require('path');
 const logger     = require('morgan');
@@ -8,8 +10,7 @@ const ip         = require('ip');
 const helmet     = require('helmet');
 const fileUpload = require('express-fileupload');
 const colors     = require('colors');
-const RateLimit  = require('express-rate-limit');
-const MongoStore = require('rate-limit-mongo');
+const { apiLimiter } = require('./utility/apiLimiter');
 
 const { createDBConnection } = require('./db');
 colors.enable();
@@ -18,7 +19,23 @@ colors.enable();
 const cfg = require('./configs/config.js');
 
 const app = express();
+
+// or listen to both HTTP and HTTPS by creating another server with HTTP
+
+// let server = undefined;
+// const keyPath = "certificates/keyCA.pem";
+// const certPath = "certificates/rootCA.pem";
+// const options = {
+// 	key: fs.readFileSync(keyPath),
+// 	cert: fs.readFileSync(certPath)
+// };
+// if (process.env.NODE_ENV == 'production '){
+// 	server = https.createServer(options, app);
+// }else {
+// 	server = http.createServer(app);
+// }
 const server = http.createServer(app);
+
 const io = socketIO(server);
 const PORT = cfg.PORT || 3000;
 
@@ -35,16 +52,6 @@ app.use(helmet());
 app.use(fileUpload(/* (process.env.NODE_ENV === 'development ' ?
 	{ debug: true } : { debug: false }) */
 ));
-
-app.use(RateLimit({
-	store: new MongoStore({
-		uri: `mongodb://localhost:${cfg.DB_PORT}/${cfg.DB_NAME}`,
-		collectionName: "expressRateLimitRecord"
-	}),
-	max: 100, //number of request threshold
-	windowMs: 15 * 60 * 1000, //15mins per 100request threshold
-	delayMs: 0
-}));
 
 app.use(helmet({
 	xssFilter: {
@@ -87,19 +94,36 @@ app.use(helmet({
 // IMPORT & CONFIGURE ROUTES ----------------------------------------------------------------------------------
 const employeeLogsRoute = require('./routes/employee-logs')(io);
 const employeeRoute = require('./routes/employee')(io);
-const utilityRoute = require('./routes/main')(io);
+const utilityRoute = require('./routes/utility')(io);
 const authRoute = require('./routes/auth')(io);
 const userRoute = require('./routes/user')(io);
 const auditLogsRoute = require('./routes/audit-logs')(io);
 const adminRoute = require('./routes/admin')(io);
 
 app.use('/auth', authRoute);									// localhost:3000/auth/
-app.use('/main', utilityRoute); 								// localhost:3000/utility
 app.use('/api/employees', employeeRoute); 				// localhost:3000/api/employees/
 app.use('/api/employeelogs', employeeLogsRoute); 		// localhost:3000/api/employeelogs/
 app.use('/api/users', userRoute);							// localhost:3000/api/users/
 app.use('/api/auditlogs', auditLogsRoute);				// localhost:3000/api/auditlogs/
 app.use('/api/admin', adminRoute);				// localhost:3000/api/admin/
+
+// localhost:3000/dev
+// (utility routes is restricted when node environment is set to "production ")
+if (process.env.NODE_ENV === 'development ') {
+	app.use('/dev', utilityRoute);
+} else {
+	app.get('/dev', (req, res) => {
+		res.status(403).send('403 Forbidden Access. [Production Mode]');
+	})
+}
+
+// RATE LIMITER PER ROUTES
+app.use('/auth/login', apiLimiter);
+app.use('/auth/logout', apiLimiter);
+app.use('/api/users/enroll', apiLimiter);
+app.use('/api/users/reset-password', apiLimiter);
+app.use('/api/users/reset-password-key', apiLimiter);
+
 
 // SERVE VUE APPLICATION --------------------------------------------------------------------------------------
 app.get(/.*/, (req, res) => {
