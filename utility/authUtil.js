@@ -11,7 +11,7 @@ exports.verifyAdmin = async (req, res, next) => {
         return res.status(401).send("Unauthorized Access.")
     }
 
-    const user = await db.findById('user',userId);
+    const user = await db.findById('user',{ _id : userId});
 
     if(user.value){
         return res.status(401).send("Unauthorized Access.")
@@ -30,7 +30,7 @@ exports.verifyUser = async (req, res, next) => {
         return res.status(401).send("Unauthorized Access.")
     }
 
-    const user = await db.findById('user',userId);
+    const user = await db.findById('user',{ _id : userId});
 
     if(user.value){
         return res.status(401).send("Unauthorized Access.")

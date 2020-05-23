@@ -50,7 +50,7 @@ const modelPicker = (modelName) => {
 ----------------------------------------------------------------------------------------------/*/
 
 
-exports.findById = async (model,id) => {
+exports.findById = async (model,_id) => {
 
     try {
         
@@ -58,7 +58,7 @@ exports.findById = async (model,id) => {
 
 
 
-        const modeling = await modeling.findById(id);
+        const modeling = await Model.findById(_id);
 
         if(!modeling){
             return isErr = { value : true, message :`Cant find document in ${Model.modelName} collection`, statusCode : 204 };
