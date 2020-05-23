@@ -64,7 +64,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-
+	// SUGGESTION: require a valid admin access (access_token, email, and account_type) before proceeding to execute process
 	router.post('/enroll', registerRules, validate, async (req, res) => {
 		try {
 
@@ -92,7 +92,7 @@ module.exports = (io) => {
 				return res.status(409).send('Username ' +  ERR_DUPLICATE);
 			}
 
-			if(confirmPassword !== password) {
+			if (confirmPassword !== password) {
 				console.error('Confirm password does not match'.red);
 				return res.status(400).send('Confirm password does not match.');
 			}
@@ -144,7 +144,7 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/email-notif', authUtil.verifyAdmin, async (req, res) => { //TODO if admin only or for all users
 
-		try{
+		try {
 
 			// user credentials from req body
 			const { userId, loggedInUsername} = req.body;
@@ -152,7 +152,7 @@ module.exports = (io) => {
 			
 			const netStatus = await isOnline();
 
-			if(netStatus){
+			if (netStatus) {
 
 				const isErr = await mailer.sendEmailNotif(empEmail, loggedInUsername, emailBod);
 				
@@ -430,42 +430,6 @@ module.exports = (io) => {
 		}
 	
 	});
-
-
-	//DELETE: testing purposes only
-	router.post('/save-employeenotif', authUtil.verifyUser, (req, res) => {
-
-		let user = req.body.userRef;
-		let employee = req.body.employeeRef;
-		let action = req.body.action; //deleted employee ===> sample only
-
-		if(notifHandler.save_employeeNotif(action, user, employee) != false){
-			return res.status(200).send("Successfully saved Employee CRUD event to DB");
-		} else {
-			return res.status(500).send("Error saving Employee CRUD Notification");
-		}
-	});
-
-	//DELETE: testing purposes only
-	router.post('/save-emotionNotif', authUtil.verifyUser, (req, res) =>{
-
-		let emotion = req.body.emotion;
-		let employeeID = req.body.employeeID;
-
-		let boolValue = notifHandler.save_emotionNotif(emotion, employeeID);
-
-		if (boolValue != false) {  // "!= false" --> works but "== true" or "=== true" does not work wtf
-			console.log("Successfully saved Employee CRUD event to DB: ROUTE");
-			return res.status(200).send("Successfully saved Employee CRUD event to DB: ROUTE");
-		}else{
-			console.log("Server Error: ROUTE");
-			return res.status(500).send("Server Error: ROUTE");
-		}
-
-	});
-
-
-
 
 	return router;
 };
