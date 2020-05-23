@@ -30,7 +30,7 @@ module.exports = (io) => {
 
 
 			if (auditLogs.value){
-				return res.send(204).send(auditLogs.message)
+				return res.send(auditLogs.statusCode).send(auditLogs.message)
 			}
 
 			return res.status(200).send(auditLogs.output);
@@ -64,7 +64,7 @@ module.exports = (io) => {
 											});
 			
 			if (auditLogs.value){
-				return res.send(204).send(auditLogs.message)
+				return res.send(auditLogs.statusCode).send(auditLogs.message)
 			}
 
 			return res.status(200).send(auditLogs.output);

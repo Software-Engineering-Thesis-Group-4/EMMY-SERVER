@@ -135,7 +135,7 @@ module.exports = (io) => {
 			let employees = await db.findAll('employee');
 
 			if(employees.value){
-				return res.status(422).send('Server error. A problem occured when retrieving employees');
+				return res.status(employees.statusCode).send(employees.message);
 			}
 
 			return res.status(200).send(employees.output);
@@ -194,7 +194,7 @@ module.exports = (io) => {
 			
 
 			if(newEmployee.value){
-				return res.status(204).send(newEmployee.message);
+				return res.status(newEmployee.statusCode).send(newEmployee.message);
 			}
 			
 			//---------------- log -------------------//

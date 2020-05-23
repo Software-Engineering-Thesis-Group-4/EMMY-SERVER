@@ -61,14 +61,14 @@ exports.findById = async (model,id) => {
         const modeling = await modeling.findById(id);
 
         if(!modeling){
-            return isErr = { value : true, message :`Cant find document in ${Model.modelName} collection` };
+            return isErr = { value : true, message :`Cant find document in ${Model.modelName} collection`, statusCode : 204 };
         }
 
         return isErr = { value : false, output : modeling };
 
     } catch (err) {
         console.log(err.message)
-        return isErr = { value : true, message : err.message };
+        return isErr = { value : true, message : err.message, statusCode : 500 };
     }
 }  
 
@@ -85,14 +85,14 @@ exports.updateById = async (model,id,data) => {
         );
 
         if(!updatedModeling){
-            return isErr = { value : true, message : `Error updating a document in ${Model.name} collection` }; 
+            return isErr = { value : true, message : `Error updating a document in ${Model.name} collection`, statusCode : 204 }; 
         }
 
         return isErr = { value : false, output : updatedModeling }
        
     
     } catch (err) {
-        return isErr = { value : true, message : err.message };
+        return isErr = { value : true, message : err.message, statusCode : 500 };
     }
 }
 
@@ -109,14 +109,14 @@ exports.save = async (model,data) => {
         const savedModeling = await modeling.save();
 
         if(!savedModeling){
-            return isErr = { value : true, message : `Error saving document for ${Model.name}` };
+            return isErr = { value : true, message : `Error saving document for ${Model.name}`, statusCode : 204 };
         }
 
         return isErr = { value : false, output : savedModeling };
 
     } catch (err) {
         console.log(err.message)
-        return isErr = { value : true, message : err.message };
+        return isErr = { value : true, message : err.message, statusCode : 500 };
     }
 }  
 
@@ -130,14 +130,14 @@ exports.findOne = async (model,field,options) => {
         const modelings = await Model.findOne(field,options);
      
         if(!modelings){
-            return isErr = { value : true, message : `Cant find document in ${Model.modelName} collection` };
+            return isErr = { value : true, message : `Cant find document in ${Model.modelName} collection`, statusCode : 204 };
         }
 
         return isErr = { value : false, output : modelings };
 
     } catch (err) {
         console.log(err)
-        return isErr = { value : true, message : err.message };
+        return isErr = { value : true, message : err.message, statusCode : 500 };
     }
 }
 
@@ -154,10 +154,10 @@ exports.findAll = async (model,field,options) => {
             return isErr = { value : false, output : modelings };
         }
 
-        return isErr = { value : true, message : `${Model.modelName} is empty` };
+        return isErr = { value : true, message : `${Model.modelName} is empty`, statusCode : 204 };
 
     } catch (err) {
-        return isErr = { value : true, message : err.message };
+        return isErr = { value : true, message : err.message, statusCode : 500 };
     }
 }
 
@@ -173,9 +173,9 @@ exports.findAllPopulate = async (Model,field,populateOptions) => {
             return isErr = { value : false, output : modelings };
         }
 
-        return isErr = { value : false, message : `${Model.modelName} is empty` };
+        return isErr = { value : false, message : `${Model.modelName} is empty`, statusCode : 204 };
 
     } catch (err) {
-        return isErr = { value : true, message : err.message };
+        return isErr = { value : true, message : err.message, statusCode : 500 };
     }
 }

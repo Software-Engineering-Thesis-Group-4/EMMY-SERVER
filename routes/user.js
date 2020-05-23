@@ -251,7 +251,7 @@ module.exports = (io) => {
 				const user = await db.findOne('user', { email });
 
 				if (user.value) {
-					return res.status(204).send('Email doesnt exist in database');
+					return res.status(user.statusCode).send(user.message);
 				}
 				
 				const isErr = await accountSettings.resetPassword(user.output.email);
