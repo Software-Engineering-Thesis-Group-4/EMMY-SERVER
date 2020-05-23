@@ -65,7 +65,7 @@ module.exports = (io) => {
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 
-	router.post('/enroll', authUtil.verifyAdmin, registerRules, validate, async (req, res) => {
+	router.post('/enroll', registerRules, validate, async (req, res) => {
 		try {
 
 			// user credentials from req body

@@ -39,9 +39,10 @@ exports.verifyUser = async (req, res, next) => {
     return next(); 
 }
 
-exports.verifyUserGetMethod = async () => {
+exports.verifyUserGetMethod = async (req, res, next) => {
 
-    const { userId,access_token } = req.params;
+    const { userId,access_token } = req.query;
+    console.log(userId + ' token ' + access_token)
 
     const verifiedToken = await jwt.verify(access_token,'authtoken'); 
 
@@ -60,7 +61,7 @@ exports.verifyUserGetMethod = async () => {
 
 exports.verifyAdminGetMethod = async (req, res, next) => {
     
-    const { userId,access_token } = req.params;
+    const { userId,access_token } = req.query;
 
     const verifiedToken = await jwt.verify(access_token,'authtoken'); 
 

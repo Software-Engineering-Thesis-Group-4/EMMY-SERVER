@@ -59,8 +59,8 @@ module.exports = (io) => {
 				//---------------- log -------------------//
 				logger.userRelatedLog(user.output._id,user.output.username,2);
 
-
-
+			
+				console.log(access_token);
 				// return user credentials and access token
 				console.log('User Authenticated. Login Success'.green);
 				return res.status(200).send({
