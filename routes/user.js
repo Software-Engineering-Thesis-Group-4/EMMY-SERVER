@@ -14,6 +14,8 @@ const { registerRules, resetPassRules, resetKeyRules, validate } = require("../u
 const { validationResult } = require('express-validator');
 const notifHandler = require('../utility/notificationHandler');
 const db = require('../utility/mongooseQue');
+const authUtil = require('../utility/authUtil');
+const accountSettings = require('../utility/accountSettings');
 
 // error messages
 const ERR_INVALID_CREDENTIALS = "Invalid email or password.";
@@ -23,6 +25,8 @@ const ERR_DUPLICATE = "Already Exists."
 
 module.exports = (io) => {
 
+
+	
 
 	/* ---------------------------------------------------------------------------------------------------------------------
 	Route:
@@ -36,7 +40,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/', async (req, res) => {
+	router.get('/', authUtil.verifyAdmin ,async (req, res) => {
 
 		try {
 
@@ -61,7 +65,7 @@ module.exports = (io) => {
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 
-	router.post('/enroll', registerRules, validate, async (req, res) => {
+	router.post('/enroll', authUtil.verifyAdmin, registerRules, validate, async (req, res) => {
 		try {
 
 			// user credentials from req body
@@ -138,7 +142,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/email-notif', async (req, res) => {
+	router.post('/email-notif', authUtil.verifyAdmin, async (req, res) => { //TODO if admin only or for all users
 
 		try{
 
@@ -185,13 +189,12 @@ module.exports = (io) => {
 
 	Description:
 
-	Api for fetching data of all users (to be used rendering list of accounts in the admin page)
-	Gets all user data except for sensitive information (i.e. password)
+	Api for changing account display photo
 
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/change-account-photo', async (req, res) => {
+	router.post('/change-account-photo', authUtil.verifyUser, async (req, res) => {
 
 		try {
 
@@ -215,6 +218,44 @@ module.exports = (io) => {
 				logger.userRelatedLog(userId,loggedInUsername,8);
 				return res.status(200).send(`Successfully changed user account photo for ${isErr.output.username}`)
 			
+		} catch (error) {
+			console.error(error.message);
+			return res.status(500).send('Server error. A problem occured when changing user account photo');
+		}
+	});
+
+		/* ---------------------------------------------------------------------------------------------------------------------
+	Route:
+	POST /api/users/change-account-settings
+
+	Description:
+
+	Api for changing account settings of user
+
+	Author:
+	Michael Ong
+	----------------------------------------------------------------------------------------------------------------------*/
+	router.post('/change-account-settings', authUtil.verifyUser, async (req, res) => {
+
+		try {
+
+			// user credentials from request body
+			const { loggedInUsername, userId } = req.body;
+			
+			const { email,firstname,lastname,username } = req.body;
+
+			const updatedUser = await db.updateById('user',userId,{ email,firstname,lastname,username });
+			
+			if(updatedUser.value){
+				logger.userRelatedLog(userId,loggedInUsername,0,null,updatedUser.message);
+				return res.status(updatedUser.statusCode).send(updatedUser.message);
+			}
+		
+			
+			logger.userRelatedLog(userId,loggedInUsername,0,updatedUser.output.username);
+			return res.status(200).send(`Successfully changed user profile ${updatedUser.output.username}`) 
+
+
 		} catch (error) {
 			console.error(error.message);
 			return res.status(500).send('Server error. A problem occured when changing user account photo');
@@ -319,8 +360,80 @@ module.exports = (io) => {
 		}
 	});
 
+	/*----------------------------------------------------------------------------------------------------------------------
+	Route:
+	PATCH /api/users/change-password
+
+	Description:
+	This route is used for handling the reset key to access reset password page.
+
+	Author:
+	Michael Ong
+	----------------------------------------------------------------------------------------------------------------------*/
+	router.patch('/change-password', authUtil.verifyUser, async (req, res) => {
+
+		try{
+			// user credentials from request body
+			const { loggedInUsername, userId } = req.body;
+
+			const { password } = req.body
+			const user = await accountSettings.changePassword(userId,password);
+
+			if(user.value){
+				logger.userRelatedLog(userId,loggedInUsername,1,undefined,user.message);
+				return res.status(user.statusCode).send(user.message);
+			}
+
+			logger.userRelatedLog(userId,loggedInUsername,1,user.output.username);
+			return res.status(200).send('Succesfully changed password!');
+
+		} catch (err) {
+			console.log(error.message);
+			
+			return res.status(500).send('Error on server!');
+		}
+	
+	});
+
+	/*----------------------------------------------------------------------------------------------------------------------
+	Route:
+	PATCH /api/users/change-user-profile
+
+	Description:
+	This route is used for handling the reset key to access reset password page.
+
+	Author:
+	Michael Ong
+	----------------------------------------------------------------------------------------------------------------------*/
+	router.patch('/change-user-profile', authUtil.verifyUser, async (req, res) => {
+
+		try{
+			// user credentials from request body
+			const { loggedInUsername, userId } = req.body;
+
+			const { email, firstname, lastname, username } = req.body
+
+			const user = await accountSettings.changeUserProfile(userId,{ email, firstname, lastname, username });
+
+			if(user.value){
+				logger.userRelatedLog(userId,loggedInUsername,0,undefined,user.message);
+				return res.status(user.statusCode).send(user.message);
+			}
+
+			logger.userRelatedLog(userId,loggedInUsername,0,user.output.username);
+			return res.status(200).send('Succesfully changed user profile!');
+
+		} catch (err) {
+			console.log(error.message);
+			
+			return res.status(500).send('Error on server!');
+		}
+	
+	});
+
+
 	//DELETE: testing purposes only
-	router.post('/save-employeenotif', (req, res) => {
+	router.post('/save-employeenotif', authUtil.verifyUser, (req, res) => {
 
 		let user = req.body.userRef;
 		let employee = req.body.employeeRef;
@@ -334,7 +447,7 @@ module.exports = (io) => {
 	});
 
 	//DELETE: testing purposes only
-	router.post('/save-emotionNotif', (req, res) =>{
+	router.post('/save-emotionNotif', authUtil.verifyUser, (req, res) =>{
 
 		let emotion = req.body.emotion;
 		let employeeID = req.body.employeeID;

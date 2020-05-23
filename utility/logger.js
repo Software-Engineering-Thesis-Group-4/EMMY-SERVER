@@ -28,10 +28,10 @@ const pickActionLog = (actionNumb) => {
 exports.userRelatedLog = async (loggerId,loggerUsername,log,input,errMessage) => {
 
     /*/======================================//
+        TODO 
+        DONE LOGS : 7/10
         
-        DONE LOGS : 5/10
-        
-        2,3,4,7,8
+        0,1,2,3,4,7,8
 
     //======================================/*/
 
@@ -111,10 +111,10 @@ exports.userRelatedLog = async (loggerId,loggerUsername,log,input,errMessage) =>
 exports.employeeRelatedLog = async (loggerId,loggerUsername,log,emp,errMessage) => {
 
      /*/======================================//
+        TODO 
+        DONE LOGS : 7/9
         
-        DONE LOGS : 6/9
-        
-        0,3,4,6,7,8
+        0,3,4,5,6,7,8,
 
     //======================================/*/
 
@@ -138,6 +138,7 @@ exports.employeeRelatedLog = async (loggerId,loggerUsername,log,emp,errMessage) 
                 audLog      = `${logUsername} exported PDF file.`; 
                 actionLog   = pickActionLog(4);
                 break;
+
             
             // admin privileges 
             case 3  : 
@@ -149,7 +150,7 @@ exports.employeeRelatedLog = async (loggerId,loggerUsername,log,emp,errMessage) 
                 actionLog   = pickActionLog(1);
                 break;
             case 5  : 
-                audLog      = `${loggerUsername} updated Employee ${emp}.`; 
+                audLog      = `${loggerUsername} updated employee profile of ${emp}.`; 
                 actionLog   = pickActionLog(2);
                 break;
             case 6  : 

@@ -7,6 +7,7 @@ const logger = require('../utility/logger');
 const autoEmail = require('../utility/autoEmail');
 const db = require('../utility/mongooseQue');
 const { save_emotionNotif } = require('../utility/notificationHandler');
+const authUtil = require('../utility/authUtil');
 
 module.exports = (io) => {
 	/*----------------------------------------------------------------------------------------------------------------------
@@ -18,7 +19,7 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/', async (req, res) => {
+	router.get('/', authUtil.verifyUser, async (req, res) => {
 		
 		try {
 
@@ -63,7 +64,7 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.delete('/delete/:id', async (req, res) => {
+	router.delete('/:id', authUtil.verifyAdmin, async (req, res) => {
 
 		try {
 
@@ -95,7 +96,7 @@ module.exports = (io) => {
 
 
 	/*----------------------------------------------------------------------------------------------------------------------
-	-> PATCH /api/employeelogs/edit/id:
+	-> PATCH /api/employeelogs/id:
    
 	Description: 
 	edit employee logs 
@@ -103,7 +104,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.patch('/edit/:id', async (req, res) => {
+	router.patch('/:id', authUtil.verifyAdmin, async (req, res) => {
 
 		try {
 			
@@ -179,7 +180,7 @@ module.exports = (io) => {
 		}
 	});
 
-	router.get('/:_id', async (req, res) => {
+	router.get('/:_id', authUtil.verifyUser, async (req, res) => {
 		//objectID of employeeRef as Logs for Specific Employee ---> Employee Profile Page
 		try {
 			let id = req.params._id;

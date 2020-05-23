@@ -91,3 +91,41 @@ exports.changeUserPhoto = async (imageFile,userId) => {
 		return isErr = { value: true, message: err.message };
 	}
 }
+
+exports.changeUserProfile = async (userId,data) => {
+
+    try{
+
+        const user = await db.updateById('user',userId,data);
+        
+        if(user.value){
+            return isErr = { value : true, message : user.message, statusCode : user.statusCode }
+        }
+
+        return isErr = { value : false, output : user.output }
+
+    } catch (err) {
+		console.log(err);
+		return isErr = { value: true, message: err.message };
+	}
+}
+
+
+exports.changePassword = async (userId,data) => {
+
+    try{
+
+        const user = await db.updateById('user',userId,data);
+
+        if(user.value){
+            return isErr = { value : true, message : user.message, statusCode : user.statusCode }
+        }
+
+        return isErr = { value : false, output : user.output }
+        
+    } catch (err) {
+		console.log(err);
+		return isErr = { value: true, message: err.message, statusCode : 500 };
+	}
+}
+

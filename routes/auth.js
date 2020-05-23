@@ -8,6 +8,7 @@ const { validationResult } = require('express-validator');
 const logger = require('../utility/logger');
 const db = require('../utility/mongooseQue');
 const token = require('../utility/jwt')
+const authUtil = require('../utility/authUtil');
 
 // error messages
 const ERR_INVALID_CREDENTIALS = "Invalid email or password.";
@@ -177,7 +178,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/logout', logoutRules, validate, (req, res) => {
+	router.post('/logout', logoutRules, validate, authUtil.verifyUser, (req, res) => {
 		try {
 
 			//  I need this details loggedInUsername, userId

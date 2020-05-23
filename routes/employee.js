@@ -11,7 +11,7 @@ const dbBackup = require('../utility/dbBackup');
 const logger = require('../utility/logger');
 const db = require('../utility/mongooseQue');
 const { save_employeeNotif } = require('../utility/notificationHandler');
-
+const authUtil = require('../utility/authUtil');
 
 // TODO: IMPLEMENT DATABASE MODULE
 module.exports = (io) => {
@@ -28,7 +28,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/db-backup', async (req,res) => {
+	router.get('/db-backup', authUtil.verifyAdmin, async (req,res) => {
 		
 		try {
 			
@@ -71,7 +71,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/db-backup-restore', async (req, res) => {
+	router.post('/db-backup-restore', authUtil.verifyAdmin, async (req, res) => {
 
 		try {
 
@@ -129,7 +129,7 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/', async (req, res) => {
+	router.get('/', authUtil.verifyUser, async (req, res) => {
 		try {
 			// get all employees
 			let employees = await db.findAll('employee');
@@ -158,7 +158,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/enroll', async (req, res) => {
+	router.post('/enroll', authUtil.verifyAdmin, async (req, res) => {
 
 		try {
 
@@ -229,7 +229,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/csv/import', async (req, res) => { 
+	router.post('/csv/import', authUtil.verifyUser, async (req, res) => { 
 		
 		try{
 
@@ -321,7 +321,7 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.delete('/:id', async (req, res) => { // might want to use router.patch() method instead since it just updates to --> {terminated: true}
+	router.delete('/:id', authUtil.verifyAdmin, async (req, res) => { // might want to use router.patch() method instead since it just updates to --> {terminated: true}
 		try {
 
 			// user credentials from req body	
@@ -353,8 +353,73 @@ module.exports = (io) => {
 		}
 	});
 
+	/*----------------------------------------------------------------------------------------------------------------------
+	Route:
+	POST /api/employees/change-employee-profile
+
+	Description:
+	This route is used for changing employee profile
+
+	Author:
+	Nathaniel Saludes
+	----------------------------------------------------------------------------------------------------------------------*/
+	router.post('/:id/change-employee-profile', authUtil.verifyAdmin, async (req, res) => { 
+
+		try {
+
+			// user credentials from req body	
+			const { userId, loggedInUsername } = req.body;
+			
+			const id = req.params.id;
+			const {
+				employeeId, 
+				firstName,
+				lastName,
+				email,
+				isMale,
+				employmentStatus,
+				department,
+				jobTitle,
+				fingerprintId
+			} = req.body;
+
+			
+
+			const updatedEmp = await db.updateById('employee',id,{
+				employeeId, 
+				firstName,
+				lastName,
+				email,
+				isMale,
+				employmentStatus,
+				department,
+				jobTitle,
+				fingerprintId
+			});
+			
+
+			if(updatedEmp.value){
+				
+				logger.employeeRelatedLog(userId,loggedInUsername,5,undefined,'Error in updating employee profile');
+				return res.send(updatedEmp.statusCode).send(updatedEmp.message);
+				
+			}
+			
+			logger.employeeRelatedLog(userId,loggedInUsername,5,`${updatedEmp.output.firstName} ${updatedEmp.output.lastName}`);
+			//TODO: add notif
+			return res.status(200).send('Successfully updated employee profile');
+			
+		} catch (error) {
+
+			const { userId, loggedInUsername } = req.body;
+			//---------------- log -------------------//
+			logger.employeeRelatedLog(userId,loggedInUsername,9,null, error.message);
+			return res.status(500).send('Server error. Unable to delete employee.');
+		}
+	});
+
 	// Get Specific Employee Data by employeeId for 'Employee Profile Page'
-	router.get('/:employeeId', async (req, res) => {
+	router.get('/:employeeId', authUtil.verifyUser, async (req, res) => {
 
 		try {
 			

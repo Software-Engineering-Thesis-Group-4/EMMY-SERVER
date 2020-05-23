@@ -2,6 +2,7 @@ const router 	=  require('express').Router();
 
 const autoEmail = require('../utility/autoEmail');
 const logger = require('../utility/logger');
+const authUtil = require('../utility/authUtil');
 
 module.exports = (io) => {
 	
@@ -17,7 +18,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-    router.post('/change-autoemail-template', async (req, res) => {
+    router.post('/change-autoemail-template',authUtil.verifyAdmin, async (req, res) => {
 
         try{
 
@@ -61,7 +62,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-    router.post('/change-autoemail-status', async (req, res) => {
+    router.post('/change-autoemail-status',authUtil.verifyAdmin, async (req, res) => {
 
         try{
 

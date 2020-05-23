@@ -1,7 +1,8 @@
 const router 	=  require('express').Router();
 
+// import utility
 const dbQuery = require('../utility/mongooseQue');
-
+const authUtil = require('../utility/authUtil');
 
 module.exports = (io) => {
 	
@@ -17,7 +18,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/', async (req, res) => {
+	router.get('/', authUtil.verifyUser, async (req, res) => {
 
 		try {
 
@@ -54,7 +55,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/admin', async (req, res) => {
+	router.get('/admin',authUtil.verifyAdmin, async (req, res) => {
 		
 		try {
 			
