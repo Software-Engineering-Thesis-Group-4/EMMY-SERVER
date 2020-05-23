@@ -40,7 +40,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/', authUtil.verifyAdmin ,async (req, res) => {
+	router.get('/', authUtil.verifyAdminGetMethod ,async (req, res) => {
 
 		try {
 

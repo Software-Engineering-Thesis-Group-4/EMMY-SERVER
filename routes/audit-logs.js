@@ -18,7 +18,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/', authUtil.verifyUser, async (req, res) => {
+	router.get('/', authUtil.verifyUserGetMethod, async (req, res) => {
 
 		try {
 
@@ -55,7 +55,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/admin',authUtil.verifyAdmin, async (req, res) => {
+	router.get('/admin',authUtil.verifyAdminGetMethod, async (req, res) => {
 		
 		try {
 			

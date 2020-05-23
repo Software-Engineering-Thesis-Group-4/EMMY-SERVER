@@ -19,7 +19,7 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/', authUtil.verifyUser, async (req, res) => {
+	router.get('/', authUtil.verifyUserGetMethod, async (req, res) => {
 		
 		try {
 
@@ -180,7 +180,7 @@ module.exports = (io) => {
 		}
 	});
 
-	router.get('/:_id', authUtil.verifyUser, async (req, res) => {
+	router.get('/:_id', authUtil.verifyUserGetMethod, async (req, res) => {
 		//objectID of employeeRef as Logs for Specific Employee ---> Employee Profile Page
 		try {
 			let id = req.params._id;

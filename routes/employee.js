@@ -129,7 +129,7 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/', authUtil.verifyUser, async (req, res) => {
+	router.get('/', authUtil.verifyUserGetMethod, async (req, res) => {
 		try {
 			// get all employees
 			let employees = await db.findAll('employee');
@@ -419,7 +419,7 @@ module.exports = (io) => {
 	});
 
 	// Get Specific Employee Data by employeeId for 'Employee Profile Page'
-	router.get('/:employeeId', authUtil.verifyUser, async (req, res) => {
+	router.get('/:employeeId', authUtil.verifyUserGetMethod, async (req, res) => {
 
 		try {
 			
