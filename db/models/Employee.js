@@ -63,6 +63,15 @@ const EmployeeSchema = Schema({
       type: LatestLogSchema,
       default: null,
    },
+   leaderboardEmoCount : {
+      type : Number,
+      default: 0
+   },
+   sendAutoEmail : {
+      type : Boolean,
+      default : false
+   }
+
 });
 
 const Employee = mongoose.model('Employee', EmployeeSchema);

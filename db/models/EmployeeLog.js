@@ -5,6 +5,7 @@ const EmployeeLogSchema = Schema({
    employeeRef: {
       type: Schema.Types.ObjectId,
       ref: 'Employee',
+      autopopulate: true,
       required: true
    },
    in: {
@@ -32,6 +33,9 @@ const EmployeeLogSchema = Schema({
 		default: false
 	}
 });
+
+
+EmployeeLogSchema.plugin(require('mongoose-autopopulate'));
 
 const EmployeeLog = mongoose.model('EmployeeLog', EmployeeLogSchema);
 

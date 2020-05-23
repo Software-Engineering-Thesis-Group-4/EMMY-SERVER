@@ -1,6 +1,23 @@
 const jwt = require('jsonwebtoken');
 require('colors');
 
+
+const tokenPicker = (token) => {
+
+	switch(token.toLowerCase()){
+
+		case 'refreshtoken':
+			return tokenKey = process.env.REFRESH_KEY;
+
+		case 'authtoken':
+			return tokenKey = process.env.JWT_KEY;
+
+		default:
+			return null;
+	}
+}
+
+
 // import model
 const { RefreshToken } = require("../db/models/RefreshToken");
 
@@ -15,6 +32,21 @@ exports.createAccessToken = (payload) => {
 	});
 
 	return access_token;
+}
+
+
+/**
+ * @param payload - email of user to be stored in the "reset Token"
+ * @returns an reset token with an expiration equal to config variable "RESET_PASS_TOKEN" (default = 1m | 1 minute)
+ * @description used for creating "reset tokens" for the user when requesting a reset password email.
+ */
+
+exports.createResetPassToken = (payload) => {
+	const resetToken = jwt.sign({ email: payload.email }, process.env.JWT_KEY, {
+		expiresIn: process.env.RESET_PASS_TOKEN
+	});
+
+	return resetToken;
 }
 
 /**
@@ -65,8 +97,32 @@ exports.removeRefreshToken = async (email) => {
 			console.log('Succesfully removed/deleted refresh token'.yellow);
 		}
 
-	} catch ({ error }) {
+	} catch (error) {
 		console.log('Failed to removed/delete refresh token'.red);
 		throw new Error(error.message)
+	}
+}
+
+exports.verify = async (token, tokenKind) => {
+
+	try{
+
+		const tokKey = tokenPicker(tokenKind);
+		
+		if(!tokKey){
+			return isErr = { value : true, message : 'Invalid token kind' };
+		}
+		
+		const verifiedToken = jwt.verify(token, tokKey);
+		
+		if(verifiedToken.name){
+			return isErr = { value : true, message : verifiedToken.message, errName : err.name };
+		}
+
+		return isErr = { value : false, output : verifiedToken };
+
+	} catch (err) {
+		console.log(err.message);
+		return isErr = { value : true, message : err.message, errName : err.name }
 	}
 }

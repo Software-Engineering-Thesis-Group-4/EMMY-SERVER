@@ -1,17 +1,14 @@
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-require('colors').enable();
 
 // import utilities
 const { createAccessToken, createRefreshToken, removeRefreshToken } = require('../utility/jwt');
 const { loginRules, logoutRules, verifyTokenRules, validate } = require('../utility/validator');
 const { validationResult } = require('express-validator');
 const logger = require('../utility/logger');
-
-// import models
-const { User } = require("../db/models/User");
-const { RefreshToken } = require("../db/models/RefreshToken");
+const db = require('../utility/mongooseQue');
+const token = require('../utility/jwt')
+const authUtil = require('../utility/authUtil');
 
 // error messages
 const ERR_INVALID_CREDENTIALS = "Invalid email or password.";
@@ -42,38 +39,39 @@ module.exports = (io) => {
 			}
 
 			// check if email exists in the database
-			const user = await User.findOne({ email: req.body.email });
-			if (!user) {
+			const user = await db.findOne('user', { email: req.body.email });
+			if (user.value) {
 				console.error('Invalid Email. User not found.'.red);
 				return res.status(401).send(ERR_INVALID_CREDENTIALS); // USER NOT FOUND
 			}
 
 			// validate password
-			let passwordIsValid = await bcrypt.compare(req.body.password, user.password);
+			let passwordIsValid = await bcrypt.compare(req.body.password, user.output.password);
 
 			// if submitted password invalid, return an error
 			if (passwordIsValid) {
 
-				//create refresh token
-				createRefreshToken(user.email);
+				createRefreshToken(user.output.email);
 
 				// create access token
 				const access_token = createAccessToken();
 
 				//---------------- log -------------------//
-				logger.userRelatedLog(user._id, user.username, 2);
+				logger.userRelatedLog(user.output._id,user.output.username,2);
 
+			
+				console.log(access_token);
 				// return user credentials and access token
 				console.log('User Authenticated. Login Success'.green);
 				return res.status(200).send({
 					token: access_token,
-					email: user.email,
-					username: user.username,
-					firstname: user.firstname,
-					lastname: user.lastname,
-					isAdmin: user.isAdmin,
-					photo: user.photo,
-					userId: user._id
+					email: user.output.email,
+					username: user.output.username,
+					firstname: user.output.firstname,
+					lastname : user.output.lastname,
+					isAdmin  : user.output.isAdmin,
+					photo    : user.output.photo,
+					userId   : user.output._id
 				});
 
 			} else {
@@ -82,10 +80,10 @@ module.exports = (io) => {
 			}
 
 		} catch (error) {
-
-			const user = await User.findOne({ email: req.body.email });
+			
+			const user = await db.findOne('user', { email: req.body.email });
 			//---------------- log -------------------//
-			logger.userRelatedLog(user._id, user.username, 2, null, error.message);
+			logger.userRelatedLog(user.output._id,user.output.username,2,null,error.message);
 
 			console.log(error.message);
 			return res.status(500).send(ERR_SERVER_ERROR);
@@ -118,78 +116,48 @@ module.exports = (io) => {
 
 				// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-				let { access_token, email } = req.body;
+				let { email, access_token } = req.body;
+				let user = await db.findOne('user',{ email });
 
-				let user = await User.findOne({ email });
-				if (!user) {
+				if (user.value) {
 					console.error('User not found'.red)
 					return res.status(401).send(ERR_UNAUTHENTICATED)
 				}
 
-				// if user exists, verify access token
-				jwt.verify(access_token, process.env.JWT_KEY, (err) => {
+				const verifiedToken = await token.verify(access_token,'authtoken');
 
-					// if there are no errors...
-					if (!err) {
-						console.log('Valid Access Token. Verification Success.'.green)
-						return res.sendStatus(200);
+				if(verifiedToken.value){
+
+					if(verifiedToken.errName == 'TokenExpiredError'){
+						const refTok = await db.findOne('refreshtoken', { email });
+
+						if(refTok.value){
+							console.error('Refresh Token Not Found.'.red);
+							return res.status(404).send(ERR_UNAUTHORIZED);	
+						}
+
+						const verifiedRefToken = await token.verify(refTok.output.token,'refreshtoken');
+
+						if(verifiedRefToken.value){
+							removeRefreshToken(email);
+							console.error('Refresh Token Expired'.red)
+							return res.status(401).send(ERR_UNAUTHORIZED);
+						}
+
+						console.log('Refresh Token Valid.'.green);
+						let token = createAccessToken(email);
+
+						console.log('Access Token Renewed'.green)
+						return res.status(200).send({ token });
+
 					}
+					console.log(verifiedToken.message.red);
+					return res.status(401).send(ERR_UNAUTHORIZED);
+				}
 
-					if (err.name === 'JsonWebTokenError') {
-						console.error('Invalid Access Token.'.red)
-						return res.status(401).send(ERR_UNAUTHORIZED);
-					}
-
-					// if token is expired check, get refresh token of user
-					if (err.name === 'TokenExpiredError') {
-						console.log('Access Token Expired.'.yellow);
-
-						// if refresh token is VALID, renew token
-						RefreshToken.findOne({ email }, (err, refresh_token) => {
-
-							if (err) {
-								console.error('Refresh Token Retrieval Error.'.red);
-								return res.status(500).send(ERR_SERVER_ERROR);
-							}
-
-							if (!refresh_token) {
-								console.error('Refresh Token Not Found.'.red);
-								return res.status(404).send(ERR_UNAUTHORIZED);
-							}
-
-							// validate refresh token
-							jwt.verify(refresh_token.token, process.env.REFRESH_KEY, (err, decoded) => {
-
-								if (!err) {
-									console.log('Refresh Token Valid.'.green);
-									let token = createAccessToken(email);
-
-									console.log('Access Token Renewed'.green)
-									return res.status(200).send({ token });
-								}
-
-								switch (err.name) {
-									case 'TokenExpiredError':
-										removeRefreshToken(email);
-										console.error('Refresh Token Expired'.red)
-										return res.status(401).send(ERR_UNAUTHORIZED);
-
-									case 'JsonWebTokenError':
-										removeRefreshToken(email);
-										console.error('Invalid Refresh Token'.red)
-										return res.status(401).send(ERR_UNAUTHORIZED);
-
-									default:
-										removeRefreshToken(email);
-										console.error('Invalid Refresh Token'.red)
-										return res.status(401).send(ERR_UNAUTHORIZED);
-								}
-
-							});
-						});
-					}
-				});
-
+				console.log('Valid Access Token. Verification Success.'.green)
+				return res.sendStatus(200);
+				
 			} catch (error) {
 				console.log(error.message);
 				return res.status(500).send(ERR_SERVER_ERROR);
@@ -210,29 +178,32 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/logout', logoutRules, validate, (req, res) => {
+	router.post('/logout', logoutRules, validate, authUtil.verifyUser, (req, res) => {
 		try {
 
+			//  I need this details loggedInUsername, userId
+			const {loggedInUsername, userId} = req.body;
+
 			const errors = validationResult(req);
+			
 			if (!errors.isEmpty()) {
 				res.status(401).send(ERR_UNAUTHENTICATED);
 			}
 
-			const { userUsername, userId } = req.body;
-
+			
 			removeRefreshToken(req.body.email);
-
+			
 			//---------------- log -------------------//
-			logger.userRelatedLog(userId, userUsername, 3);
+			logger.userRelatedLog(userId,loggedInUsername,3);
+
 
 			return res.sendStatus(200);
 
 		} catch (error) {
 
-			const { userUsername, userId } = req.body;
-
+			const {loggedInUsername, userId} = req.body;
 			//---------------- log -------------------//
-			logger.userRelatedLog(userId, userUsername, 3, null, error.message);
+			logger.userRelatedLog(userId,loggedInUsername,3,null,error.message);
 
 			console.log(error.message);
 			return res.status(500).send(ERR_SERVER_ERROR);

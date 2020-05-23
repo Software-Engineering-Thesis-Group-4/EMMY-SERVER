@@ -1,4 +1,0 @@
-
-exports.findAll = async () => {
-    
-}

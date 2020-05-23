@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
 
-// import Employee and EmployeeLog
-const { EmployeeLog } = require('../db/models/EmployeeLog');
-
 // import utilities
 const { handleEmployeeLog } = require('../utility/EmployeeLogHandler.js');
+const logger = require('../utility/logger');
+const autoEmail = require('../utility/autoEmail');
+const db = require('../utility/mongooseQue');
 const { save_emotionNotif } = require('../utility/notificationHandler');
+const authUtil = require('../utility/authUtil');
 
 module.exports = (io) => {
 	/*----------------------------------------------------------------------------------------------------------------------
@@ -18,12 +19,15 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/', async (req, res) => {
+	router.get('/', authUtil.verifyUserGetMethod, async (req, res) => {
+		
 		try {
-			let employeeLogs = await EmployeeLog.find({}).populate('employeeRef');
-			return res.status(200).send(employeeLogs);
+
+			let employeeLogs = await db.findAll('employeelog');
+			return res.status(200).send(employeeLogs.output);
 
 		} catch (error) {
+			console.log(error)
 			return res.status(500).send('Server error. could not retrieve employee logs.');
 		}
 
@@ -60,25 +64,76 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	// SUGGESTION: require a valid user session (access_token and email) before performing employee log deletion
-	router.delete('/:id', async (req, res) => {
+	router.delete('/:id', authUtil.verifyAdmin, async (req, res) => {
+
 		try {
+
+			// user credentials
+			const { loggedInUsername,userId } = req.body;
+
 			let id = req.params.id;
 
-			let log = await EmployeeLog.findById(id);
+			const empLog = await db.updateById('employeelog',id,{ deleted: true });
 
-			if (!log) {
-				return res.status(404).send('Log not found.');
+			if(empLog.value) {
+				logger.employeelogsRelatedLog(userId,loggedInUsername,0,undefined,empLog.message);
+				return res.status(404).send('Error deleting log(mark as deleted)');
 			}
 
-			log.deleted = true;
-			log.save();
-
+			
+			logger.employeelogsRelatedLog(userId,loggedInUsername,0,empLog.output._id);
 			res.status(200);
+
 		} catch (error) {
+			
+			const { loggedInUsername,userId } = req.body;
+			logger.employeelogsRelatedLog(userId,loggedInUsername,1,undefined,error.message);
+
+			console.log(error.message);
 			res.status(500).send('Server error. Unable to delete employee log.');
 		}
 	})
+
+
+	/*----------------------------------------------------------------------------------------------------------------------
+	-> PATCH /api/employeelogs/id:
+   
+	Description: 
+	edit employee logs 
+
+	Author:
+	Michael Ong
+	----------------------------------------------------------------------------------------------------------------------*/
+	router.patch('/:id', authUtil.verifyAdmin, async (req, res) => {
+
+		try {
+			
+			//user credentials
+			const { loggedInUsername,userId } = req.body;
+
+			const logId = req.params.id;
+			const { emotionIn,emotionOut } = req.body;
+
+			const empLog = await db.updateById('employeelog',logId,{ emotionIn, emotionOut });
+
+			if(empLog.value) {
+				logger.employeelogsRelatedLog(userId,loggedInUsername,1,undefined,empLog.message);
+				return res.status(404).send('Error on editing log.');
+			}
+
+			logger.employeelogsRelatedLog(userId,loggedInUsername,1,empLog.output._id);
+			res.status(200).send('Successfully edited employee log');
+
+		} catch (error) {
+
+			const { loggedInUsername,userId } = req.body;
+			logger.employeelogsRelatedLog(userId,loggedInUsername,1,undefined,error.message);
+
+			res.status(500).send(error.message);
+		}
+	});
+
+
 
 
 	/*----------------------------------------------------------------------------------------------------------------------
@@ -95,9 +150,9 @@ module.exports = (io) => {
 
 		try {
 			const { emotion, employeeLog, status } = req.body;
-			let log = await EmployeeLog.findById(employeeLog);
+			let log = await db.findById('employeelog',employeeLog);
 
-			if (!log) {
+			if (log.value) {
 				throw new Error('Log not found!');
 			} else {
 
@@ -106,14 +161,17 @@ module.exports = (io) => {
 				}
 
 				switch (status) {
+
 					case "in":
 						log.emotionIn = emotion;
 						await log.save();
+						if(emotion === 1) autoEmail.angryEmoIncrementer(log.output.employeeRef._id);
 						return res.sendStatus(200);
 
 					case "out":
 						log.emotionOut = emotion;
 						await log.save();
+						if(emotion === 1) autoEmail.putToEmailQueue(log.output.employeeRef._id);
 						return res.sendStatus(200);
 				}
 			}
@@ -123,28 +181,16 @@ module.exports = (io) => {
 		}
 	});
 
-
-	
-	/*----------------------------------------------------------------------------------------------------------------------
-	-> POST /api/employeelogs/:_id
-
-	Description:
-	get daily attendance logs of a specific employee
-
-	Author:
-	Paolo Latoja
-	----------------------------------------------------------------------------------------------------------------------*/
-	// SUGGESTION: require a valid user session (access_token and email) before proceeding to the retrieval of employee logs
-	router.get('/:_id', async (req, res) => {
+	router.get('/:_id', authUtil.verifyUserGetMethod, async (req, res) => {
 		//objectID of employeeRef as Logs for Specific Employee ---> Employee Profile Page
 		try {
 			let id = req.params._id;
-			const emplog = await EmployeeLog.find({ employeeRef: id })
+			const emplog = await db.findAll('employeelog',{ employeeRef: id })
 
-			if(!emplog){
-				console.error("Logs Not Found");
+			if(emplog.value){
+				console.error(emplog.message);
 				res.status(404).send("Logs not found");
-			}else {
+			} else {
 				console.log("Logs Found");
 				res.status(200).send(emplog);
 			}

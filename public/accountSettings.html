@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta http-equiv="X-UA-Compatible" content="ie=edge">
+   <link rel="shortcut icon" href="/favicon.png">
+   <title>Account settings</title>
+</head>
+<body>
+   <h1>CHANGE ACCOUNT SETTINGS</h1>
+   <form action="/api/users/change-account-photo" method="post"  enctype="multipart/form-data">
+        <label for="accImage">Select a photo:</label>
+        <input type="file" id="accImage" name="accPhoto" accept="image/*"><br><br>
+        <input type="submit" style="background-color:greenyellow; border: none; padding: 11px;" value="submit">
+        <input type="reset" style="background-color: #fff; border: 1px solid #cecece; padding: 10px;" value="Reset">
+   </form>
+</body>
+</html>

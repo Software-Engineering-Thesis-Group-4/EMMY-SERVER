@@ -1,149 +1,319 @@
-const { AuditLog } = require('../db/models/AuditLog');
+const db = require('./mongooseQue');
 
-exports.userRelatedLog = (logerId, logUsername, log, inputUser, errMessage) => {
+const pickActionLog = (actionNumb) => {
 
-	/*/======================================// 
-		DONE LOGS : 3/8		 
-		2,3,4
-	//======================================/*/
+    let action = null;
 
-	try {
+    switch(actionNumb){
 
-		let audLog = null;
+        case 0 : action = 'Create'          ; break;
+        case 1 : action = 'Delete'          ; break;
+        case 2 : action = 'Update'          ; break;
+        case 3 : action = 'Import'          ; break;
+        case 4 : action = 'Export'          ; break;
+        case 5 : action = 'Authenticate'    ; break;
+        case 6 : action = 'Download'        ; break;
+        case 7 : action = 'Upload'          ; break;
+        case 8 : action = 'E-mail'          ; break;
+        case 9 : action = 'Reset'           ; break;
 
-		switch (log) {
+        default : action = 'Unknown action'; 
+    }
 
-			case 0: audLog = `${logUsername} recently changed account settings.`; break;
-			case 1: audLog = `Recently changed password for user ${logUsername}.`; break;
-			case 2: audLog = `${logUsername} logged in.`; break;
-			case 3: audLog = `${logUsername} logged out.`; break;
-
-			// admin privileges
-			case 4: audLog = `${logUsername} added new user ${inputUser}.`; break;
-			case 5: audLog = `${logUsername} deleted user ${inputUser}.`; break;
-			case 6: audLog = `${logUsername} recently changed account settings for ${inputUser}.`; break;
-			default: audLog = 'Unknown user related log.';
-		}
+    return action;
+}
 
 
-		if (errMessage) {
-			audLog = `ERROR: ${errMessage} on log: ${audLog}`;
-		}
 
-		const newLog = new AuditLog({
-			message: audLog,
-			user: logerId
-		})
+exports.userRelatedLog = async (loggerId,loggerUsername,log,input,errMessage) => {
 
-		newLog.save();
-		console.log('Succesfully added log');
+    /*/======================================//
+        TODO 
+        DONE LOGS : 7/10
+        
+        0,1,2,3,4,7,8
 
-	} catch (error) {
-		console.log(error);
-	}
+    //======================================/*/
+
+    try{
+
+        let audLog = null;
+        let actionLog = null;
+
+        switch(log){
+
+            case 0  : 
+                audLog      = `${loggerUsername} recently changed account settings.`;
+                actionLog   = pickActionLog(2);
+                break;
+            case 1  : 
+                audLog      = `Recently changed password for user ${loggerUsername}.`; 
+                actionLog   = pickActionLog(2);
+                break;
+            case 2  : 
+                audLog      = `${loggerUsername} logged in.`; 
+                actionLog   = pickActionLog(5);
+                break;
+            case 3  : 
+                audLog      = `${loggerUsername} logged out.`; 
+                actionLog   = pickActionLog(5);
+                break;
+            case 8  : 
+                audLog      = `Recently changed account image for user ${loggerUsername}.`; 
+                actionLog   = pickActionLog(2);
+                break;
+            
+
+            // admin privileges
+            case 4  : 
+                audLog      = `${loggerUsername} added new user ${input}.`;
+                actionLog   = pickActionLog(0); 
+                break;
+            case 5  : 
+                audLog      = `${loggerUsername} deleted user ${input}.`;
+                actionLog   = pickActionLog(1);
+                break;
+            case 6  : 
+                audLog      = `${loggerUsername} recently changed account settings for ${input}.`;
+                actionLog   = pickActionLog(2);
+                break;
+            case 7  : 
+                audLog      = `${loggerUsername} recently changed automated email ${input}.`;
+                actionLog   = pickActionLog(2);
+                break;
+
+            default : audLog = `Unknown employee-log related log for user ${loggerUsername}.`;               
+        }
+
+
+        if(errMessage){
+            audLog = `ERROR: ${errMessage} on log: ${audLog}`;
+        }
+        
+        const newLog = await db.save('AuditLog',{
+            description : audLog,
+            action      : actionLog,
+            user        : loggerId
+        });
+      
+        if(newLog.value){
+            console.log('Error adding log'.red);
+        } else {
+            console.log('Succesfully added log'.grey);
+        }
+       
+
+    } catch (error) {
+        console.log(error);
+    }
 };
 
-exports.employeeRelatedLog = (logerId, logUsername, log, emp, errMessage) => {
+exports.employeeRelatedLog = async (loggerId,loggerUsername,log,emp,errMessage) => {
 
-	/*/======================================//
-	   
-		DONE LOGS : 6/8
-	   
-		0,3,4,6,7,8
+     /*/======================================//
+        TODO 
+        DONE LOGS : 7/9
+        
+        0,3,4,5,6,7,8,
 
-  //======================================/*/
+    //======================================/*/
 
-	try {
+    try{
 
-		let audLog = null;
-
-		switch (log) {
-
-			case 0: audLog = `${logUsername} imported CSV file.`; break;
-			case 1: audLog = `${logUsername} exported CSV file.`; break;
-			case 2: audLog = `${logUsername} exported PDF file.`; break;
-
-			// admin privileges 
-			case 3: audLog = `${logUsername} added Employee ${emp}.`; break;
-			case 4: audLog = `${logUsername} deleted Employee (marks as terminated) ${emp}.`; break;
-			case 5: audLog = `${logUsername} updated Employee ${emp}.`; break;
-			case 6: audLog = `${logUsername} sent an email to ${emp}.`; break;
-			case 7: audLog = `${logUsername} downloaded database backup.`; break;
-			case 8: audLog = `${logUsername} restored database backup.`; break;
-			default: audLog = 'Unknown employee related log.';
-		}
+        let audLog = null;
+        let actionLog = null;
 
 
-		if (errMessage) {
-			audLog = `ERROR: ${errMessage} on log: ${audLog}`;
-		}
-		const newLog = new AuditLog({
-			message: audLog,
-			user: logerId
-		})
+        switch(log){
 
-		newLog.save();
-		console.log('Succesfully added log');
+            case 0  : 
+                audLog      = `${loggerUsername} imported CSV file.`; 
+                actionLog   = pickActionLog(3);
+                break;
+            case 1  : 
+                audLog      = `${loggerUsername} exported CSV file.`;
+                actionLog   = pickActionLog(4);
+                break;
+            case 2  : 
+                audLog      = `${logUsername} exported PDF file.`; 
+                actionLog   = pickActionLog(4);
+                break;
 
-	} catch (error) {
-		console.log(error);
-	}
+            
+            // admin privileges 
+            case 3  : 
+                audLog      = `${loggerUsername} added Employee ${emp}.`; 
+                actionLog   = pickActionLog(0);
+                break;
+            case 4  : 
+                audLog      = `${loggerUsername} deleted Employee ${emp} (marks as terminated).`;
+                actionLog   = pickActionLog(1);
+                break;
+            case 5  : 
+                audLog      = `${loggerUsername} updated employee profile of ${emp}.`; 
+                actionLog   = pickActionLog(2);
+                break;
+            case 6  : 
+                audLog      = `${loggerUsername} sent an email to ${emp}.`; 
+                actionLog   = pickActionLog(8);
+                break;
+            case 7  :  
+                audLog      = `${loggerUsername} downloaded database backup.`; 
+                actionLog   = pickActionLog(6);
+                break;
+            case 8  : 
+                audLog      = `${loggerUsername} restored database backup.`; 
+                actionLog   = pickActionLog(7);
+                break;
+
+            default : audLog = `Unknown employee-log related log for user ${loggerUsername}.`;                
+        }
+
+
+        if(errMessage){
+            audLog = `ERROR: ${errMessage} on log: ${audLog}`;
+        }
+        
+
+        const newLog = await db.save('AuditLog',{
+            description : audLog,
+            action      : actionLog,
+            user        : loggerId
+        });
+      
+        if(newLog.value){
+            console.log('Error adding log'.red);
+        } else {
+            console.log('Succesfully added log'.grey);
+        }
+        
+
+    } catch (error) {
+        console.log(error);
+    }  
 };
 
 
-exports.employeelogsRelatedLog = (logMail, log, errMessage) => {
+exports.employeelogsRelatedLog = async (loggerId,loggerUsername,log,employeeLogId,errMessage) => {
 
-	/*/======================================//
-	   
-		DONE LOGS :
-	   
+    /*/======================================//
+       
+       DONE LOGS : 2/2
+        
+        DONE
 
-  //======================================/*/
+   //======================================/*/
+
+    try{
+       
+        let audLog = null;
+        let actionLog = null;
 
 
-	try {
+        switch(log){
+
+            //admin privileges
+            case 0  : 
+                audLog      = `${loggerUsername} deleted employee log ${employeeLogId}.`; 
+                actionLog   = pickActionLog(1);
+                break;
+            case 1  : 
+                audLog      = `${loggerUsername} edited employee log ${employeeLogId}.`; 
+                actionLog   = pickActionLog(2);
+                break;
+
+            default : audLog = `Unknown employee-log related log for user ${loggerUsername}.` ;                
+        }
 
 
 
-	} catch (error) {
-		console.log(error);
-	}
+        if(errMessage){
+            audLog = `ERROR: ${errMessage} on log: ${audLog}`;
+        }
+
+        const newLog = await db.save('AuditLog',{
+            description : audLog,
+            action      : actionLog,
+            user        : loggerId
+        });
+      
+        if(newLog.value){
+            console.log('Error adding log'.red);
+        } else {
+            console.log('Succesfully added log'.grey);
+        }
+
+    } catch (error) {
+        console.log(error);
+    }  
 };
 
-exports.serverRelatedLog = (logMail, log, errMessage) => {
+exports.serverRelatedLog = async (output,log,errMessage) => {
 
-	/*/======================================//
-	   
-		DONE LOGS : 2/2
-	   
-		DONE
+     /*/======================================//
+        
+        DONE LOGS : 7/7
+        
+        0,1,2,3,4,5,6
 
-  //======================================/*/
+    //======================================/*/
 
 
-	try {
+    try{
+        
+        let audLog = null;
+        let actionLog = null;
 
-		let audLog = null;
+        switch(log){
 
-		switch (log) {
+            case 0  : 
+                audLog      = 'Made database backup (SERVER)'; 
+                actionLog   = pickActionLog(0);
+                break;
+            case 1  : 
+                audLog      = `EMMY sent a changed password key email to ${output}.`; 
+                actionLog   = pickActionLog(8);
+                break;
+            case 2  : 
+                audLog      = `EMMY sent extreme emotion automated email to ${output}.`; 
+                actionLog   = pickActionLog(8);
+                break;
+            case 3  : 
+                audLog      = `Duration for automated email ${output}`;
+                actionLog   = pickActionLog(8);
+                break;
+            case 4  : 
+                audLog      = `Updating fields for ${output} collection`; 
+                actionLog   = pickActionLog(9);
+                break;
+            case 5  : 
+                audLog      = `${output} submitted key for reset password`; 
+                actionLog   = pickActionLog(1);
+                break;   
 
-			case 0: audLog = 'Made database backup (SERVER)'; break;
-			case 1: audLog = `EMMY sent a changed password key email to ${logMail}.`; break;
-			default: audLog = 'Unknown server related log';
-		}
+            default : audLog = 'Unknown server related log';               
+        }
 
-		if (errMessage) {
-			audLog = `ERROR: ${errMessage} on log: ${audLog}`;
-		}
+        if(errMessage){
+            audLog = `ERROR: ${errMessage} on log: ${audLog}`;
+        }
 
-		const newLog = new AuditLog({
-			message: audLog,
-			user: null
-		});
+        const newLog = await db.save('AuditLog',{
+            description : audLog,
+            action      : actionLog,
+            user        : null,
+            isServer    : true
+        })
+      
+        if(newLog.value){
+            console.log('Error adding log'.red);
+        } else {
+            console.log('Succesfully added log'.grey);
+        }
+        
 
-		newLog.save();
-
-	} catch (error) {
-		console.log(error);
-	}
+    } catch (error) {
+        console.log(error);
+    }  
 };
+

@@ -1,12 +1,12 @@
-const express = require('express');
-const router = express.Router();
+const router 	=  require('express').Router();
 
-// import models
-const { AuditLog } = require('../db/models/AuditLog');
-const { User } = require('../db/models/User');
-
+// import utility
+const dbQuery = require('../utility/mongooseQue');
+const authUtil = require('../utility/authUtil');
 
 module.exports = (io) => {
+	
+
 
 	/* ---------------------------------------------------------------------------------------------------------------------
 	Route:
@@ -18,18 +18,23 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/', async (req, res) => {
+	router.get('/', authUtil.verifyUserGetMethod, async (req, res) => {
 
 		try {
 
 			const userId = req.body.userId
-			const auditLogs = await AuditLog.find({ user: userId }).populate({
-				path: 'user',
-				select: { password: 0 }
+			const auditLogs = await dbQuery.findAllPopulate(
+				`AuditLog`,
+				{ user : userId, isServer : false },
+				{ path	: 'user' , select	: {password: 0}
 			});
 
 
-			return res.status(200).send(auditLogs);
+			if (auditLogs.value){
+				return res.send(auditLogs.statusCode).send(auditLogs.message)
+			}
+
+			return res.status(200).send(auditLogs.output);
 
 		} catch (error) {
 			console.error(error);
@@ -37,56 +42,54 @@ module.exports = (io) => {
 		}
 
 	});
-
+    
 
 	/* ---------------------------------------------------------------------------------------------------------------------
 	Route:
-	POST /api/auditlogs
+	GET /api/auditlogs
 
 	Description:
+
 	Api for fetching all the audit logs of the users and the app
 
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/admin', async (req, res) => {
+	router.get('/admin',authUtil.verifyAdminGetMethod, async (req, res) => {
+		
 		try {
+			
+			let auditLogs = await dbQuery.findAllPopulate(`AuditLog`,null,{
+												path	: 'user' , 
+												select	: {password: 0}
+											});
+			
+			if (auditLogs.value){
+				return res.send(auditLogs.statusCode).send(auditLogs.message)
+			}
 
-			// get all employees
-			const auditLogs = await AuditLog.find().populate({
-				path: 'user',
-				select: { password: 0 }
-			});
-
-			return res.status(200).send(auditLogs);
+			return res.status(200).send(auditLogs.output);
 
 		} catch (error) {
 			console.error(error);
 			res.status(500).send('Server error. A problem occured when retrieving the audit logs');
 		}
+
 	});
 
 
-	////////////////////////////// FOR TESTING PURPOSES ONLY ////////////////////////////////////
-	router.post('/add-log', async (req, res) => {
+////////////////////////////// FOR TESTING PURPOSES  ONLY ////////////////////////////////////
+	router.post('/add-log', async (req,res) => {
 
-		try {
-			const { userID, log } = req.body;
-			console.log({ userID, log })
-			const newLog = new AuditLog({
-				message: log.trim(),
-				user: userID
+		try{
 
-			})
-
-			newLog.save();
-			res.send("done")
-			res.send("done")
+			const {numb} = req.body;
+			console.log(typeof numb, numb)
+			
+			
+			res.send('asd')
 		} catch (err) {
-			console.log(err.message)
-			const { userID, log } = req.body;
-			console.log({ userID, log })
-
+			console.log(err)
 		}
 	})
 
