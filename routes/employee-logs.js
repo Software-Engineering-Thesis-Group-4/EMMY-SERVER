@@ -100,9 +100,9 @@ module.exports = (io) => {
 
 	/*----------------------------------------------------------------------------------------------------------------------
 	-> PUT /api/employeelogs/id:
-   
-	Description: 
-	edit employee logs 
+
+	Description:
+	edit employee logs
 
 	Author:
 	Michael Ong
@@ -160,8 +160,8 @@ module.exports = (io) => {
 				throw new Error('Log not found!');
 			} else {
 
-				if (emotion === '4' || emotion === '5') { //sad or angry
-					save_emotionNotif(emotion, employeeLog); // employeeID == employeeLog
+				if (emotion === 1 || emotion === 2) { //angry and sad
+					save_emotionNotif(emotion, log.output.employeeRef._id); // employeeID == employeeLog ng id
 				}
 
 				switch (status) {
@@ -180,37 +180,6 @@ module.exports = (io) => {
 
 		} catch (error) {
 			res.status(500).send(error.message);
-		}
-	});
-
-
-
-	/*----------------------------------------------------------------------------------------------------------------------
-	-> GET /api/employeelogs/:_id
-
-	Description:
-	endpoint for getting the employee emotion input and update the employee log
-
-	Author:
-	Nathaniel Saludes
-	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/:_id', verifyUser_GET, async (req, res) => {
-		//objectID of employeeRef as Logs for Specific Employee ---> Employee Profile Page
-		try {
-			let id = req.params._id;
-			const emplog = await db.findAll('employeelog', { employeeRef: id })
-
-			if (emplog.value) {
-				console.error(emplog.message);
-				res.status(404).send("Logs not found");
-			} else {
-				console.log("Logs Found");
-				res.status(200).send(emplog);
-			}
-		} catch (error) {
-			console.log(error);
-			console.log("Server Error".red);
-			res.status(500).send("SERVER ERROR");
 		}
 	});
 

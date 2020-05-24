@@ -5,14 +5,24 @@ const fs = require('fs');
 
 // Document elements creation
 const doc = new pdfDocument();
-const myname = 'PAOLO';
+const myname = 'Paolo';
 
 //PDF file creation output
-doc.pipe(fs.createWriteStream('outputsample123.pdf'));
+doc.pipe(fs.createWriteStream('../../outputsample123.pdf'));
+
+doc.fontSize(15).text('LOGO HERE');
 
 doc
 .fontSize(15)
-.text('MY NAME IS ' + myname, 100, 100);
+.text('Employee Mood Monitoring System');
+
+doc
+.fontSize(15)
+.text('My name is ' + myname);
+
+// Dashboard
+// Employee Satisfaction - Sentiment of the Week - Positive Sentiment By Gender - Negative Sentiment By Gender - Overall Sentiment By Month
+
 
 // doc.image('../public/favicon.png', {
 //    fit: [250, 300],

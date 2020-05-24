@@ -26,7 +26,7 @@ const ERR_DUPLICATE = "Already Exists."
 module.exports = (io) => {
 
 
-	
+
 
 	/* ---------------------------------------------------------------------------------------------------------------------
 	Route:
@@ -119,7 +119,7 @@ module.exports = (io) => {
 				return res.status(422).send(`Error registering a new user`);
 			}
 
-	
+
 			logger.userRelatedLog(userId,loggedInUsername,4,username);
 			return res.status(200).send(`Successfully registered a new user (${newUser.output.email})`);
 
@@ -153,13 +153,13 @@ module.exports = (io) => {
 			// user credentials from req body
 			const { userId, loggedInUsername} = req.body;
 			const { emailBod, empEmail } = req.body;
-			
+
 			const netStatus = await isOnline();
 
 			if (netStatus) {
 
 				const isErr = await mailer.sendEmailNotif(empEmail, loggedInUsername, emailBod);
-				
+
 				if(isErr.value){
 					logger.employeeRelatedLog(userId,loggedInUsername,6,empEmail,isErr.message);
 					console.log('Error sending email'.yellow);
@@ -170,21 +170,57 @@ module.exports = (io) => {
 				}
 
 			} else {
-				logger.employeeRelatedLog(userId,loggedInUsername,6,empEmail,'CONNECTION ERROR: Check internet connection!');	
+				logger.employeeRelatedLog(userId,loggedInUsername,6,empEmail,'CONNECTION ERROR: Check internet connection!');
 				res.status(502).send('Please check your internet connection!');
 			}
 
-			
+
 		} catch (err) {
-			
+
 			const { userId, loggedInUsername} = req.body;
 			logger.employeeRelatedLog(userId,loggedInUsername,6,undefined,err.message);
-		
+
 			console.log(err);
 			return res.status(500).send(ERR_SERVER_ERROR);
 		}
 
 	})
+
+	// TODO Work in Progress due to changes from mongooseQue
+	router.get('/emotion-notifications', async (req, res) => {
+
+		try{
+			const emotionNotif = await db.findAll('EmotionNotification');
+			console.log(`Successfully Fetched Emotion Notification`);
+
+			if(emotionNotif.value){
+				return res.status(emotionNotif.statusCode).send(emotionNotif.message);
+			}
+			return res.status(200).send(emotionNotif.output);
+
+		}catch (error) {
+			console.log(error);
+			return res.status(500).send("Error Server: Could not fetch Emotion Notifications");
+		}
+	});
+
+	// TODO Work in Progress due to changes from mongooseQue
+	router.get('/crud-notifications', async (req, res) => {
+		// Notifications Regarding Create, Update, Delete of Employee Data with author based on who initiated the action (admin)
+		try{
+			const empDataNotif = await db.findAll('EmployeeDataNotification');
+			console.log(`Successfully Fetched Employee CRUD Notification`);
+
+			if(empDataNotif.value){
+				return res.status(empDataNotif.statusCode).send(empDataNotif.message);
+			}
+			return res.status(200).send(empDataNotif.output);
+
+		}catch (error) {
+			console.log(error);
+			return res.status(500).send("Error Server: Could not fetch Employee CRUD Notifications");
+		}
+	});
 
 
 	/* ---------------------------------------------------------------------------------------------------------------------
@@ -204,15 +240,15 @@ module.exports = (io) => {
 
 			// user credentials from request body
 			const { loggedInUsername, userId } = req.body;
-			
+
 			if(!req.files){
 				return res.status(204).send('Not selected a file or file is empty! Please select a file');
-			} 
+			}
 
 			const userPhoto = req.files.accPhoto;
 			const isErr = await accountSettings.changeUserPhoto(userPhoto,userId);
 
-		
+
 
 			if(isErr.value){
 				logger.userRelatedLog(userId,loggedInUsername,8,null,isErr.message);
@@ -221,7 +257,7 @@ module.exports = (io) => {
 
 				logger.userRelatedLog(userId,loggedInUsername,8);
 				return res.status(200).send(`Successfully changed user account photo for ${isErr.output.username}`)
-			
+
 		} catch (error) {
 			console.error(error.message);
 			return res.status(500).send('Server error. A problem occured when changing user account photo');
@@ -245,19 +281,19 @@ module.exports = (io) => {
 
 			// user credentials from request body
 			const { loggedInUsername, userId } = req.body;
-			
+
 			const { email,firstname,lastname,username } = req.body;
 
 			const updatedUser = await db.updateById('user',userId,{ email,firstname,lastname,username });
-			
+
 			if(updatedUser.value){
 				logger.userRelatedLog(userId,loggedInUsername,0,null,updatedUser.message);
 				return res.status(updatedUser.statusCode).send(updatedUser.message);
 			}
-		
-			
+
+
 			logger.userRelatedLog(userId,loggedInUsername,0,updatedUser.output.username);
-			return res.status(200).send(`Successfully changed user profile ${updatedUser.output.username}`) 
+			return res.status(200).send(`Successfully changed user profile ${updatedUser.output.username}`)
 
 
 		} catch (error) {
@@ -270,7 +306,7 @@ module.exports = (io) => {
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
 	POST /api/users/reset-password
-	
+
 	Description:
 	This is used for handling forgot password requests.
 
@@ -286,7 +322,7 @@ module.exports = (io) => {
 			}
 
 			const email = req.body.email;
-			
+
 
 			// check if user has internet access
 			const netStatus = await isOnline();
@@ -298,7 +334,7 @@ module.exports = (io) => {
 				if (user.value) {
 					return res.status(user.statusCode).send(user.message);
 				}
-				
+
 				const isErr = await accountSettings.resetPassword(user.output.email);
 
 				if(isErr.value){
@@ -336,7 +372,7 @@ module.exports = (io) => {
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/reset-password-key', resetKeyRules, validate, async (req, res) => {
-		
+
 		try {
 
 			const errors = validationResult(req);
@@ -345,10 +381,10 @@ module.exports = (io) => {
 			}
 
 			const { key, reset_token } = req.body;
-			
+
 
 			const keyChecker = await accountSettings.resetPasswordKey(reset_token,key);
-			
+
 			if (keyChecker.value) {
 				logger.serverRelatedLog(undefined,5,keyChecker.message);
 				return res.status(400).send(keyChecker.message);
@@ -393,10 +429,10 @@ module.exports = (io) => {
 
 		} catch (err) {
 			console.log(error.message);
-			
+
 			return res.status(500).send('Error on server!');
 		}
-	
+
 	});
 
 	/*----------------------------------------------------------------------------------------------------------------------
@@ -429,10 +465,10 @@ module.exports = (io) => {
 
 		} catch (err) {
 			console.log(error.message);
-			
+
 			return res.status(500).send('Error on server!');
 		}
-	
+
 	});
 
 	return router;
