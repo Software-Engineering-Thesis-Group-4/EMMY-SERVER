@@ -109,6 +109,10 @@ module.exports = (io) => {
 				isAdmin  : isAdmin
 			} )
 
+			io.sockets.emit('enrolledNewUser', {
+				user: `${firstname} ${lastname}`
+			})
+
 			// create a new User
 			if(newUser.value){
 				logger.userRelatedLog(userId,loggedInUsername,4,undefined,newUser.message);
