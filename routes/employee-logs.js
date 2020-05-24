@@ -7,7 +7,7 @@ const logger = require('../utility/logger');
 const autoEmail = require('../utility/autoEmail');
 const db = require('../utility/mongooseQue');
 const { save_emotionNotif } = require('../utility/notificationHandler');
-const authUtil = require('../utility/authUtil');
+const { verifyAdmin, verifyUser_GET } = require('../utility/authUtil');
 
 module.exports = (io) => {
 	/*----------------------------------------------------------------------------------------------------------------------
@@ -19,8 +19,8 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/', authUtil.verifyUserGetMethod, async (req, res) => {
-		
+	router.get('/', verifyUser_GET, async (req, res) => {
+
 		try {
 
 			let employeeLogs = await db.findAll('employeelog');
@@ -32,6 +32,7 @@ module.exports = (io) => {
 		}
 
 	});
+
 
 
 	/*----------------------------------------------------------------------------------------------------------------------
@@ -54,6 +55,8 @@ module.exports = (io) => {
 		}
 	})
 
+
+
 	/*----------------------------------------------------------------------------------------------------------------------
 	-> DELETE /api/employeelogs/:id
 
@@ -64,30 +67,30 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.delete('/:id', authUtil.verifyAdmin, async (req, res) => {
+	router.delete('/:id', verifyAdmin, async (req, res) => {
 
 		try {
 
 			// user credentials
-			const { loggedInUsername,userId } = req.body;
+			const { loggedInUsername, userId } = req.body;
 
 			let id = req.params.id;
 
-			const empLog = await db.updateById('employeelog',id,{ deleted: true });
+			const empLog = await db.updateById('employeelog', id, { deleted: true });
 
-			if(empLog.value) {
-				logger.employeelogsRelatedLog(userId,loggedInUsername,0,undefined,empLog.message);
+			if (empLog.value) {
+				logger.employeelogsRelatedLog(userId, loggedInUsername, 0, undefined, empLog.message);
 				return res.status(404).send('Error deleting log(mark as deleted)');
 			}
 
-			
-			logger.employeelogsRelatedLog(userId,loggedInUsername,0,empLog.output._id);
+
+			logger.employeelogsRelatedLog(userId, loggedInUsername, 0, empLog.output._id);
 			res.status(200);
 
 		} catch (error) {
-			
-			const { loggedInUsername,userId } = req.body;
-			logger.employeelogsRelatedLog(userId,loggedInUsername,1,undefined,error.message);
+
+			const { loggedInUsername, userId } = req.body;
+			logger.employeelogsRelatedLog(userId, loggedInUsername, 1, undefined, error.message);
 
 			console.log(error.message);
 			res.status(500).send('Server error. Unable to delete employee log.');
@@ -96,7 +99,7 @@ module.exports = (io) => {
 
 
 	/*----------------------------------------------------------------------------------------------------------------------
-	-> PATCH /api/employeelogs/id:
+	-> PUT /api/employeelogs/id:
    
 	Description: 
 	edit employee logs 
@@ -104,30 +107,30 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.patch('/:id', authUtil.verifyAdmin, async (req, res) => {
+	router.put('/:id', verifyAdmin, async (req, res) => {
 
 		try {
-			
+
 			//user credentials
-			const { loggedInUsername,userId } = req.body;
+			const { loggedInUsername, userId } = req.body;
 
 			const logId = req.params.id;
-			const { emotionIn,emotionOut } = req.body;
+			const { emotionIn, emotionOut } = req.body;
 
-			const empLog = await db.updateById('employeelog',logId,{ emotionIn, emotionOut });
+			const empLog = await db.updateById('employeelog', logId, { emotionIn, emotionOut });
 
-			if(empLog.value) {
-				logger.employeelogsRelatedLog(userId,loggedInUsername,1,undefined,empLog.message);
+			if (empLog.value) {
+				logger.employeelogsRelatedLog(userId, loggedInUsername, 1, undefined, empLog.message);
 				return res.status(404).send('Error on editing log.');
 			}
 
-			logger.employeelogsRelatedLog(userId,loggedInUsername,1,empLog.output._id);
+			logger.employeelogsRelatedLog(userId, loggedInUsername, 1, empLog.output._id);
 			res.status(200).send('Successfully edited employee log');
 
 		} catch (error) {
 
-			const { loggedInUsername,userId } = req.body;
-			logger.employeelogsRelatedLog(userId,loggedInUsername,1,undefined,error.message);
+			const { loggedInUsername, userId } = req.body;
+			logger.employeelogsRelatedLog(userId, loggedInUsername, 1, undefined, error.message);
 
 			res.status(500).send(error.message);
 		}
@@ -137,7 +140,7 @@ module.exports = (io) => {
 
 
 	/*----------------------------------------------------------------------------------------------------------------------
-	-> POST /api/employeelogs/sentiment
+	-> PATCH /api/employeelogs/sentiment
 
 	Description:
 	endpoint for getting the employee emotion input and update the employee log
@@ -149,14 +152,15 @@ module.exports = (io) => {
 	router.patch('/sentiment', async (req, res) => {
 
 		try {
+			console.log('Sentiment!')
 			const { emotion, employeeLog, status } = req.body;
-			let log = await db.findById('employeelog',{ _id : employeeLog });
+			let log = await db.findById('employeelog', employeeLog);
 
 			if (log.value) {
 				throw new Error('Log not found!');
 			} else {
 
-				if(emotion === '4' || emotion === '5'){ //sad or angry
+				if (emotion === '4' || emotion === '5') { //sad or angry
 					save_emotionNotif(emotion, employeeLog); // employeeID == employeeLog
 				}
 
@@ -179,13 +183,24 @@ module.exports = (io) => {
 		}
 	});
 
-	router.get('/:_id', authUtil.verifyUserGetMethod, async (req, res) => {
+
+
+	/*----------------------------------------------------------------------------------------------------------------------
+	-> GET /api/employeelogs/:_id
+
+	Description:
+	endpoint for getting the employee emotion input and update the employee log
+
+	Author:
+	Nathaniel Saludes
+	----------------------------------------------------------------------------------------------------------------------*/
+	router.get('/:_id', verifyUser_GET, async (req, res) => {
 		//objectID of employeeRef as Logs for Specific Employee ---> Employee Profile Page
 		try {
 			let id = req.params._id;
-			const emplog = await db.findAll('employeelog',{ employeeRef: id })
+			const emplog = await db.findAll('employeelog', { employeeRef: id })
 
-			if(emplog.value){
+			if (emplog.value) {
 				console.error(emplog.message);
 				res.status(404).send("Logs not found");
 			} else {

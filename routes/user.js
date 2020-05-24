@@ -13,7 +13,7 @@ const mailer = require('../utility/mailer');
 const { registerRules, resetPassRules, resetKeyRules, validate } = require("../utility/validator");
 const { validationResult } = require('express-validator');
 const db = require('../utility/mongooseQue');
-const authUtil = require('../utility/authUtil');
+const { verifyAdmin, verifyAdmin_GET, verifyUser, verifyUser_GET } = require('../utility/authUtil');
 const accountSettings = require('../utility/accountSettings');
 
 // error messages
@@ -39,7 +39,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/', authUtil.verifyAdminGetMethod ,async (req, res) => {
+	router.get('/', verifyAdmin_GET ,async (req, res) => {
 
 		try {
 
@@ -64,7 +64,7 @@ module.exports = (io) => {
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 	// SUGGESTION: require a valid admin access (access_token, email, and account_type) before proceeding to execute process
-	router.post('/enroll', authUtil.verifyAdmin, registerRules, validate, async (req, res) => {
+	router.post('/enroll', verifyAdmin, registerRules, validate, async (req, res) => {
 		try {
 
 			// user credentials from req body
@@ -141,7 +141,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/email-notif', authUtil.verifyAdmin, async (req, res) => { //TODO if admin only or for all users
+	router.post('/email-notif', verifyAdmin, async (req, res) => { //TODO if admin only or for all users
 
 		try {
 
@@ -193,7 +193,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/change-account-photo', authUtil.verifyUser, async (req, res) => {
+	router.post('/change-account-photo', verifyUser, async (req, res) => {
 
 		try {
 
@@ -234,7 +234,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/change-account-settings', authUtil.verifyUser, async (req, res) => {
+	router.post('/change-account-settings', verifyUser, async (req, res) => {
 
 		try {
 
@@ -369,7 +369,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.patch('/change-password', authUtil.verifyUser, async (req, res) => {
+	router.patch('/change-password', verifyUser, async (req, res) => {
 
 		try{
 			// user credentials from request body
@@ -404,7 +404,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.patch('/change-user-profile', authUtil.verifyUser, async (req, res) => {
+	router.patch('/change-user-profile', verifyUser, async (req, res) => {
 
 		try{
 			// user credentials from request body

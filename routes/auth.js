@@ -8,7 +8,7 @@ const { validationResult } = require('express-validator');
 const logger = require('../utility/logger');
 const db = require('../utility/mongooseQue');
 const token = require('../utility/jwt')
-const authUtil = require('../utility/authUtil');
+const { verifyUser } = require('../utility/authUtil');
 
 // error messages
 const ERR_INVALID_CREDENTIALS = "Invalid email or password.";
@@ -17,7 +17,7 @@ const ERR_UNAUTHORIZED = "Unauthorized Access.";
 const ERR_UNAUTHENTICATED = "Unauthenticated.";
 
 // start of route after middlewares
-module.exports = (io) => {
+module.exports = () => {
 
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
@@ -54,12 +54,12 @@ module.exports = (io) => {
 				createRefreshToken(user.output.email);
 
 				// create access token
-				const access_token = createAccessToken();
+				const access_token = createAccessToken({});
 
 				//---------------- log -------------------//
-				logger.userRelatedLog(user.output._id,user.output.username,2);
+				logger.userRelatedLog(user.output._id, user.output.username, 2);
 
-			
+
 				console.log(access_token);
 				// return user credentials and access token
 				console.log('User Authenticated. Login Success'.green);
@@ -68,10 +68,10 @@ module.exports = (io) => {
 					email: user.output.email,
 					username: user.output.username,
 					firstname: user.output.firstname,
-					lastname : user.output.lastname,
-					isAdmin  : user.output.isAdmin,
-					photo    : user.output.photo,
-					userId   : user.output._id
+					lastname: user.output.lastname,
+					isAdmin: user.output.isAdmin,
+					photo: user.output.photo,
+					userId: user.output._id
 				});
 
 			} else {
@@ -80,10 +80,10 @@ module.exports = (io) => {
 			}
 
 		} catch (error) {
-			
+
 			const user = await db.findOne('user', { email: req.body.email });
 			//---------------- log -------------------//
-			logger.userRelatedLog(user.output._id,user.output.username,2,null,error.message);
+			logger.userRelatedLog(user.output._id, user.output.username, 2, null, error.message);
 
 			console.log(error.message);
 			return res.status(500).send(ERR_SERVER_ERROR);
@@ -117,28 +117,28 @@ module.exports = (io) => {
 				// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 				let { email, access_token } = req.body;
-				let user = await db.findOne('user',{ email });
+				let user = await db.findOne('user', { email });
 
 				if (user.value) {
 					console.error('User not found'.red)
 					return res.status(401).send(ERR_UNAUTHENTICATED)
 				}
 
-				const verifiedToken = await token.verify(access_token,'authtoken');
+				const verifiedToken = await token.verify(access_token, 'authtoken');
 
-				if(verifiedToken.value){
+				if (verifiedToken.value) {
 
-					if(verifiedToken.errName == 'TokenExpiredError'){
+					if (verifiedToken.errName == 'TokenExpiredError') {
 						const refTok = await db.findOne('refreshtoken', { email });
 
-						if(refTok.value){
+						if (refTok.value) {
 							console.error('Refresh Token Not Found.'.red);
-							return res.status(404).send(ERR_UNAUTHORIZED);	
+							return res.status(404).send(ERR_UNAUTHORIZED);
 						}
 
-						const verifiedRefToken = await token.verify(refTok.output.token,'refreshtoken');
+						const verifiedRefToken = await token.verify(refTok.output.token, 'refreshtoken');
 
-						if(verifiedRefToken.value){
+						if (verifiedRefToken.value) {
 							removeRefreshToken(email);
 							console.error('Refresh Token Expired'.red)
 							return res.status(401).send(ERR_UNAUTHORIZED);
@@ -157,7 +157,7 @@ module.exports = (io) => {
 
 				console.log('Valid Access Token. Verification Success.'.green)
 				return res.sendStatus(200);
-				
+
 			} catch (error) {
 				console.log(error.message);
 				return res.status(500).send(ERR_SERVER_ERROR);
@@ -178,32 +178,32 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/logout', logoutRules, validate, authUtil.verifyUser, (req, res) => {
+	router.post('/logout', logoutRules, validate, verifyUser, (req, res) => {
 		try {
 
 			//  I need this details loggedInUsername, userId
-			const {loggedInUsername, userId} = req.body;
+			const { loggedInUsername, userId } = req.body;
 
 			const errors = validationResult(req);
-			
+
 			if (!errors.isEmpty()) {
 				res.status(401).send(ERR_UNAUTHENTICATED);
 			}
 
-			
+
 			removeRefreshToken(req.body.email);
-			
+
 			//---------------- log -------------------//
-			logger.userRelatedLog(userId,loggedInUsername,3);
+			logger.userRelatedLog(userId, loggedInUsername, 3);
 
 
 			return res.sendStatus(200);
 
 		} catch (error) {
 
-			const {loggedInUsername, userId} = req.body;
+			const { loggedInUsername, userId } = req.body;
 			//---------------- log -------------------//
-			logger.userRelatedLog(userId,loggedInUsername,3,null,error.message);
+			logger.userRelatedLog(userId, loggedInUsername, 3, null, error.message);
 
 			console.log(error.message);
 			return res.status(500).send(ERR_SERVER_ERROR);

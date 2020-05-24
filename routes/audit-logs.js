@@ -1,12 +1,10 @@
-const router 	=  require('express').Router();
+const router = require('express').Router();
 
 // import utility
 const dbQuery = require('../utility/mongooseQue');
-const authUtil = require('../utility/authUtil');
+const { verifyUser_GET, verifyAdmin_GET } = require('../utility/authUtil');
 
 module.exports = (io) => {
-	
-
 
 	/* ---------------------------------------------------------------------------------------------------------------------
 	Route:
@@ -18,19 +16,20 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/', authUtil.verifyUserGetMethod, async (req, res) => {
+	router.get('/', verifyUser_GET, async (req, res) => {
 
 		try {
 
 			const userId = req.body.userId
 			const auditLogs = await dbQuery.findAllPopulate(
 				`AuditLog`,
-				{ user : userId, isServer : false },
-				{ path	: 'user' , select	: {password: 0}
-			});
+				{ user: userId, isServer: false },
+				{
+					path: 'user', select: { password: 0 }
+				});
 
 
-			if (auditLogs.value){
+			if (auditLogs.value) {
 				return res.send(auditLogs.statusCode).send(auditLogs.message)
 			}
 
@@ -42,29 +41,28 @@ module.exports = (io) => {
 		}
 
 	});
-    
+
 
 	/* ---------------------------------------------------------------------------------------------------------------------
 	Route:
 	GET /api/auditlogs
 
 	Description:
-
 	Api for fetching all the audit logs of the users and the app
 
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/admin',authUtil.verifyAdminGetMethod, async (req, res) => {
-		
+	router.get('/admin', async (req, res) => {
+
 		try {
-			
-			let auditLogs = await dbQuery.findAllPopulate(`AuditLog`,null,{
-												path	: 'user' , 
-												select	: {password: 0}
-											});
-			
-			if (auditLogs.value){
+
+			let auditLogs = await dbQuery.findAllPopulate(`AuditLog`, null, {
+				path: 'user',
+				select: { password: 0 }
+			});
+
+			if (auditLogs.value) {
 				return res.send(auditLogs.statusCode).send(auditLogs.message)
 			}
 
@@ -78,15 +76,15 @@ module.exports = (io) => {
 	});
 
 
-////////////////////////////// FOR TESTING PURPOSES  ONLY ////////////////////////////////////
-	router.post('/add-log', async (req,res) => {
+	////////////////////////////// FOR TESTING PURPOSES  ONLY ////////////////////////////////////
+	router.post('/add-log', async (req, res) => {
 
-		try{
+		try {
 
-			const {numb} = req.body;
+			const { numb } = req.body;
 			console.log(typeof numb, numb)
-			
-			
+
+
 			res.send('asd')
 		} catch (err) {
 			console.log(err)

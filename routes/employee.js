@@ -11,7 +11,7 @@ const dbBackup = require('../utility/dbBackup');
 const logger = require('../utility/logger');
 const db = require('../utility/mongooseQue');
 const { save_employeeNotif } = require('../utility/notificationHandler');
-const authUtil = require('../utility/authUtil');
+const { verifyUser_GET, verifyUser, verifyAdmin } = require('../utility/authUtil');
 
 // TODO: IMPLEMENT DATABASE MODULE
 module.exports = (io) => {
@@ -28,31 +28,31 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/db-backup', authUtil.verifyAdmin, async (req,res) => {
-		
+	router.get('/db-backup', verifyAdmin, async (req, res) => {
+
 		try {
-			
+
 			// user credentials from request body
 			const { userId, loggedInUsername } = req.body;
 
-			const downloadPath = path.join(__dirname+'/../downloadables/backup.zip');
+			const downloadPath = path.join(__dirname + '/../downloadables/backup.zip');
 			const isErr = await dbBackup.zipBackup();
 
-			if(isErr.value) {
+			if (isErr.value) {
 
 				//---------------- log -------------------//
-				logger.employeeRelatedLog(userId,loggedInUsername,7,null,isErr.message);
-				res.status(400).send('Error on downloading zip file');	
+				logger.employeeRelatedLog(userId, loggedInUsername, 7, null, isErr.message);
+				res.status(400).send('Error on downloading zip file');
 			} else {
 				//---------------- log -------------------//
-				logger.employeeRelatedLog(userId,loggedInUsername,7);
+				logger.employeeRelatedLog(userId, loggedInUsername, 7);
 				res.download(downloadPath);
 			}
 		} catch (err) {
 
 			//---------------- log -------------------//
-			logger.employeeRelatedLog(userId,loggedInUsername,7,null,err.message);
-				
+			logger.employeeRelatedLog(userId, loggedInUsername, 7, null, err.message);
+
 			console.log(err);
 			res.status(500).send('Error on server');
 
@@ -71,7 +71,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/db-backup-restore', authUtil.verifyAdmin, async (req, res) => {
+	router.post('/db-backup-restore', verifyAdmin, async (req, res) => {
 
 		try {
 
@@ -80,39 +80,39 @@ module.exports = (io) => {
 			if (!req.files) {
 
 				//---------------- log -------------------//
-				logger.employeeRelatedLog(userId,loggedInUsername,8,null,'Not selected a folder or folder is empty! Please select a new folder');
+				logger.employeeRelatedLog(userId, loggedInUsername, 8, null, 'Not selected a folder or folder is empty! Please select a new folder');
 				return res.status(204).send('Not selected a folder or folder is empty! Please select a new folder!');
 
-			} 
+			}
 
 			const resFiles = req.files.bsonFiles;
-				
+
 			// clean uploads folder wether empty or not
 			dbBackup.cleanUploads();
 
 
 			const isErr = await dbBackup.dbRestore(resFiles);
 
-			if(isErr.value){
+			if (isErr.value) {
 
 				dbBackup.cleanUploads();
 				//---------------- log -------------------//
-				logger.employeeRelatedLog(userId,loggedInUsername,8,null,isErr.message);
+				logger.employeeRelatedLog(userId, loggedInUsername, 8, null, isErr.message);
 				return res.status(400).send(isErr.message);
-						
+
 			} else {
 				//---------------- log -------------------//
-				logger.employeeRelatedLog(userId,loggedInUsername,8);
+				logger.employeeRelatedLog(userId, loggedInUsername, 8);
 				console.log('Successfully restored database backup');
 				return res.status(200).send('Successfully restored database backup');
-						
+
 			}
 		} catch (err) {
 
 			const { userId, loggedInUsername } = req.body;
 			//---------------- log -------------------//
-			logger.employeeRelatedLog(userId,loggedInUsername,8,null,err.message);
-						
+			logger.employeeRelatedLog(userId, loggedInUsername, 8, null, err.message);
+
 			console.log(err)
 			return res.status(500).send('Error on server');
 		}
@@ -129,12 +129,12 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/', authUtil.verifyUserGetMethod, async (req, res) => {
+	router.get('/', verifyUser_GET, async (req, res) => {
 		try {
 			// get all employees
 			let employees = await db.findAll('employee');
 
-			if(employees.value){
+			if (employees.value) {
 				return res.status(employees.statusCode).send(employees.message);
 			}
 
@@ -158,13 +158,13 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/enroll', authUtil.verifyAdmin, async (req, res) => {
+	router.post('/enroll', verifyAdmin, async (req, res) => {
 
 		try {
 
 			// user credentials from req body
 			const { userId, loggedInUsername } = req.body;
-			
+
 
 			let {
 				employee_id,
@@ -180,7 +180,7 @@ module.exports = (io) => {
 
 			employment_status = (employment_status === "Part-time" ? 0 : 1);
 
-			const newEmployee = await db.save('employee',{
+			const newEmployee = await db.save('employee', {
 				employeeId: employee_id,
 				firstName: firstname,
 				lastName: lastname,
@@ -191,15 +191,15 @@ module.exports = (io) => {
 				jobTitle: job_title,
 				fingerprintId: fingerprint_id,
 			});
-			
 
-			if(newEmployee.value){
+
+			if (newEmployee.value) {
 				return res.status(newEmployee.statusCode).send(newEmployee.message);
 			}
-			
+
 			//---------------- log -------------------//
-			logger.employeeRelatedLog(userId,loggedInUsername,3,`${firstname} ${lastname}`);
-			
+			logger.employeeRelatedLog(userId, loggedInUsername, 3, `${firstname} ${lastname}`);
+
 			// TODO
 			// "created new employee" notification
 			save_employeeNotif(create, userId, employee_id);
@@ -210,8 +210,8 @@ module.exports = (io) => {
 
 			const { userId, loggedInUsername } = req.body;
 			//---------------- log -------------------//
-			logger.employeeRelatedLog(userId,loggedInUsername,3,undefined,error.message);
-			
+			logger.employeeRelatedLog(userId, loggedInUsername, 3, undefined, error.message);
+
 			console.log(error.message);
 			return res.status(500).send(`500 Internal Server Error. ${error.message}`);
 		}
@@ -229,75 +229,75 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/csv/import', authUtil.verifyUser, async (req, res) => { 
-		
-		try{
+	router.post('/csv/import', verifyUser, async (req, res) => {
+
+		try {
 
 			// user credentials from req bod
 			const { userId, loggedInUsername } = req.body;
 
-			if(!req.files){
+			if (!req.files) {
 				return res.status(204).send('Not selected a file or file is empty! Please select a file');
-			} 
-			
+			}
+
 			const csvFile = req.files.csvImport;
 			const isErr = await csvImport(csvFile);
 
-			if(isErr.value){
+			if (isErr.value) {
 				//---------------- log -------------------//
-				logger.employeeRelatedLog(userId,loggedInUsername,0,null, isErr.message);
+				logger.employeeRelatedLog(userId, loggedInUsername, 0, null, isErr.message);
 				return res.status(422).send({ message: isErr.message, duplicateValue: isErr.duplicateValue });
-					
+
 			} else {
 				console.log('Successfully imported csv file!'.green)
 				//---------------- log -------------------//
-				logger.employeeRelatedLog(userId,loggedInUsername,0);
+				logger.employeeRelatedLog(userId, loggedInUsername, 0);
 
-				
+
 				// TODO should I include this to the notification page? -Pao
 				// "imported employees from csv" notification
 				//save_employeeNotif(importEmployeesCSV, admin, employee);
-				
+
 				return res.status(200).send(isErr.message);
 			}
-						
-			
+
+
 		} catch (error) {
 
 			const { userId, loggedInUsername } = req.body;
 
 			//---------------- log -------------------//
-			logger.employeeRelatedLog(userId,loggedInUsername,0,null, error.message);
-			
+			logger.employeeRelatedLog(userId, loggedInUsername, 0, null, error.message);
+
 			console.log(error)
 			return res.status(500).send('Error on server');
-		}    
-   });
-	
-	
+		}
+	});
+
+
 	/*----------------------------------------------------------------------------------------------------------------------
 	TODO: export report must be used in logs ---- used in employees for testing purposes 
 	----------------------------------------------------------------------------------------------------------------------*/
-   router.get('/export-csv', async (req,res) => {
+	router.get('/export-csv', async (req, res) => {
 
-	try {
-		
-		const pathToDownload = path.join(__dirname, '/../downloadables/generated.csv')
-		let emp = await db.findAll('employee');
+		try {
 
-		await exportDb.toCsv(emp);
-		res.download(pathToDownload)
-	} catch (error) {
-		console.log(error.message);
-		res.send('error')
-	}
+			const pathToDownload = path.join(__dirname, '/../downloadables/generated.csv')
+			let emp = await db.findAll('employee');
 
-   });
+			await exportDb.toCsv(emp);
+			res.download(pathToDownload)
+		} catch (error) {
+			console.log(error.message);
+			res.send('error')
+		}
 
-  /*----------------------------------------------------------------------------------------------------------------------
-	export report must be used in logs ---- used in employees for testing purposes 
-	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/export-pdf', async (req,res) => {
+	});
+
+	/*----------------------------------------------------------------------------------------------------------------------
+	 export report must be used in logs ---- used in employees for testing purposes 
+	 ----------------------------------------------------------------------------------------------------------------------*/
+	router.get('/export-pdf', async (req, res) => {
 
 		try {
 
@@ -307,7 +307,7 @@ module.exports = (io) => {
 			console.log(err)
 			res.send('error')
 		}
-		
+
 
 	});
 
@@ -321,34 +321,34 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.delete('/:id', authUtil.verifyAdmin, async (req, res) => { // might want to use router.patch() method instead since it just updates to --> {terminated: true}
+	router.delete('/:id', verifyAdmin, async (req, res) => { // might want to use router.patch() method instead since it just updates to --> {terminated: true}
 		try {
 
 			// user credentials from req body	
 			const { userId, loggedInUsername } = req.body;
 
 			let id = req.params.id;
-			const emp = await db.updateById('employee',id, { terminated: true });
-			
+			const emp = await db.updateById('employee', id, { terminated: true });
 
-			if(emp.value){
+
+			if (emp.value) {
 				//---------------- log -------------------//
-				logger.employeeRelatedLog(userId,loggedInUsername,4,`undefined`,'Error in deleting employee');
+				logger.employeeRelatedLog(userId, loggedInUsername, 4, `undefined`, 'Error in deleting employee');
 				return res.send(400).send('Error in deleting employee');
-				
+
 			} else {
-				logger.employeeRelatedLog(userId,loggedInUsername,4,`${emp.output.firstName} ${emp.output.lastName}`);
+				logger.employeeRelatedLog(userId, loggedInUsername, 4, `${emp.output.firstName} ${emp.output.lastName}`);
 				// "successfully terminated employee" notification
 				save_employeeNotif(terminated, userId, id);
 				return res.status(200).send('Successfully deleted employee');
 			}
-			
+
 
 		} catch (error) {
 
 			const { userId, loggedInUsername } = req.body;
 			//---------------- log -------------------//
-			logger.employeeRelatedLog(userId,loggedInUsername,4,null, error.message);
+			logger.employeeRelatedLog(userId, loggedInUsername, 4, null, error.message);
 			return res.status(500).send('Server error. Unable to delete employee.');
 		}
 	});
@@ -363,16 +363,16 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/:id/change-employee-profile', authUtil.verifyAdmin, async (req, res) => { 
+	router.post('/:id/change-employee-profile', verifyAdmin, async (req, res) => {
 
 		try {
 
 			// user credentials from req body	
 			const { userId, loggedInUsername } = req.body;
-			
+
 			const id = req.params.id;
 			const {
-				employeeId, 
+				employeeId,
 				firstName,
 				lastName,
 				email,
@@ -383,10 +383,10 @@ module.exports = (io) => {
 				fingerprintId
 			} = req.body;
 
-			
 
-			const updatedEmp = await db.updateById('employee',id,{
-				employeeId, 
+
+			const updatedEmp = await db.updateById('employee', id, {
+				employeeId,
 				firstName,
 				lastName,
 				email,
@@ -396,44 +396,44 @@ module.exports = (io) => {
 				jobTitle,
 				fingerprintId
 			});
-			
 
-			if(updatedEmp.value){
-				
-				logger.employeeRelatedLog(userId,loggedInUsername,5,undefined,'Error in updating employee profile');
+
+			if (updatedEmp.value) {
+
+				logger.employeeRelatedLog(userId, loggedInUsername, 5, undefined, 'Error in updating employee profile');
 				return res.send(updatedEmp.statusCode).send(updatedEmp.message);
-				
+
 			}
-			
-			logger.employeeRelatedLog(userId,loggedInUsername,5,`${updatedEmp.output.firstName} ${updatedEmp.output.lastName}`);
+
+			logger.employeeRelatedLog(userId, loggedInUsername, 5, `${updatedEmp.output.firstName} ${updatedEmp.output.lastName}`);
 			//TODO: add notif
 			return res.status(200).send('Successfully updated employee profile');
-			
+
 		} catch (error) {
 
 			const { userId, loggedInUsername } = req.body;
 			//---------------- log -------------------//
-			logger.employeeRelatedLog(userId,loggedInUsername,9,null, error.message);
+			logger.employeeRelatedLog(userId, loggedInUsername, 9, null, error.message);
 			return res.status(500).send('Server error. Unable to delete employee.');
 		}
 	});
 
 	// Get Specific Employee Data by employeeId for 'Employee Profile Page'
-	router.get('/:employeeId', authUtil.verifyUserGetMethod, async (req, res) => {
+	router.get('/:employeeId', verifyUser_GET, async (req, res) => {
 
 		try {
-			
-			let empId = req.params.employeeId;
-			const employee = await db.findOne('Employee',{ employeeId: empId })
 
-			if(employee.value){
+			let empId = req.params.employeeId;
+			const employee = await db.findOne('Employee', { employeeId: empId })
+
+			if (employee.value) {
 				console.log("Error retrieving employee");
 				return res.status(404).send("Employee Not Found");
 			}
 
 			console.log("Employee Found");
 			return res.status(200).send(employee);
-			
+
 		} catch (error) {
 			console.log(error);
 			console.log("Error: Cannot fetch employee data for some reason".red);
