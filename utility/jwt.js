@@ -4,7 +4,7 @@ require('colors');
 
 const tokenPicker = (token) => {
 
-	switch(token.toLowerCase()){
+	switch (token.toLowerCase()) {
 
 		case 'refreshtoken':
 			return tokenKey = process.env.REFRESH_KEY;
@@ -55,7 +55,7 @@ exports.createResetPassToken = (payload) => {
  * @description used for creating "refresh token" for renewing expired access tokens. if expired, users have to reauthenticate
  */
 exports.createRefreshToken = async (email) => {
-	try {		
+	try {
 
 		// If token already exists, delete token to avoid duplicate
 		let tokenExists = await RefreshToken.findOneAndDelete({ email });
@@ -105,24 +105,24 @@ exports.removeRefreshToken = async (email) => {
 
 exports.verify = async (token, tokenKind) => {
 
-	try{
+	try {
 
 		const tokKey = tokenPicker(tokenKind);
-		
-		if(!tokKey){
-			return isErr = { value : true, message : 'Invalid token kind' };
-		}
-		
-		const verifiedToken = jwt.verify(token, tokKey);
-		
-		if(verifiedToken.name){
-			return isErr = { value : true, message : verifiedToken.message, errName : err.name };
+
+		if (!tokKey) {
+			return isErr = { value: true, message: 'Invalid token kind' };
 		}
 
-		return isErr = { value : false, output : verifiedToken };
+		const verifiedToken = jwt.verify(token, tokKey);
+
+		if (verifiedToken.name) {
+			return isErr = { value: true, message: verifiedToken.message, errName: err.name };
+		}
+
+		return isErr = { value: false, output: verifiedToken };
 
 	} catch (err) {
 		console.log(err.message);
-		return isErr = { value : true, message : err.message, errName : err.name }
+		return isErr = { value: true, message: err.message, errName: err.name }
 	}
 }
