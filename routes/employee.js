@@ -14,6 +14,11 @@ const { save_employeeNotif } = require('../utility/notificationHandler');
 const { verifyUser_GET, verifyUser, verifyAdmin } = require('../utility/authUtil');
 
 // TODO: IMPLEMENT DATABASE MODULE
+// import models
+// const { Employee } = require('../db/models/Employee');
+// const { EmployeeLog } = require('../db/models/EmployeeLog');
+// models already in mongooseQue
+
 module.exports = (io) => {
 
 
@@ -200,9 +205,11 @@ module.exports = (io) => {
 			//---------------- log -------------------//
 			logger.employeeRelatedLog(userId, loggedInUsername, 3, `${firstname} ${lastname}`);
 
-			// TODO
-			// "created new employee" notification
-			save_employeeNotif(create, userId, employee_id);
+			const saveNotif = await save_employeeNotif("create", userId, newEmployee.output._id); //
+
+			if(saveNotif.value){
+				return res.status(400).send("Unable to save notif");
+			}
 
 			return res.status(201).send("Successfully registered a new employee.")
 
@@ -227,6 +234,7 @@ module.exports = (io) => {
 	This route is used when the HR uploads a CSV file for adding multiple employees
 
 	Author:
+
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/csv/import', verifyUser, async (req, res) => {
@@ -253,11 +261,6 @@ module.exports = (io) => {
 				//---------------- log -------------------//
 				logger.employeeRelatedLog(userId, loggedInUsername, 0);
 
-
-				// TODO should I include this to the notification page? -Pao
-				// "imported employees from csv" notification
-				//save_employeeNotif(importEmployeesCSV, admin, employee);
-
 				return res.status(200).send(isErr.message);
 			}
 
@@ -276,7 +279,7 @@ module.exports = (io) => {
 
 
 	/*----------------------------------------------------------------------------------------------------------------------
-	TODO: export report must be used in logs ---- used in employees for testing purposes 
+	TODO: export report must be used in logs ---- used in employees for testing purposes
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.get('/export-csv', async (req, res) => {
 
@@ -295,7 +298,7 @@ module.exports = (io) => {
 	});
 
 	/*----------------------------------------------------------------------------------------------------------------------
-	 export report must be used in logs ---- used in employees for testing purposes 
+	 export report must be used in logs ---- used in employees for testing purposes
 	 ----------------------------------------------------------------------------------------------------------------------*/
 	router.get('/export-pdf', async (req, res) => {
 
@@ -324,12 +327,11 @@ module.exports = (io) => {
 	router.delete('/:id', verifyAdmin, async (req, res) => { // might want to use router.patch() method instead since it just updates to --> {terminated: true}
 		try {
 
-			// user credentials from req body	
+			// user credentials from req body
 			const { userId, loggedInUsername } = req.body;
 
 			let id = req.params.id;
 			const emp = await db.updateById('employee', id, { terminated: true });
-
 
 			if (emp.value) {
 				//---------------- log -------------------//
@@ -339,7 +341,11 @@ module.exports = (io) => {
 			} else {
 				logger.employeeRelatedLog(userId, loggedInUsername, 4, `${emp.output.firstName} ${emp.output.lastName}`);
 				// "successfully terminated employee" notification
-				save_employeeNotif(terminated, userId, id);
+				const saveNotif = await save_employeeNotif("terminated", userId, id);
+
+				if(saveNotif.value){
+					return res.status(400).send("Unable to save notif");
+				}
 				return res.status(200).send('Successfully deleted employee');
 			}
 
@@ -367,10 +373,10 @@ module.exports = (io) => {
 
 		try {
 
-			// user credentials from req body	
+			// user credentials from req body
 			const { userId, loggedInUsername } = req.body;
 
-			const id = req.params.id;
+			const employee_objectId = req.params.id;
 			const {
 				employeeId,
 				firstName,
@@ -385,7 +391,7 @@ module.exports = (io) => {
 
 
 
-			const updatedEmp = await db.updateById('employee', id, {
+			const updatedEmp = await db.updateById('employee', employee_objectId, {
 				employeeId,
 				firstName,
 				lastName,
@@ -406,8 +412,16 @@ module.exports = (io) => {
 			}
 
 			logger.employeeRelatedLog(userId, loggedInUsername, 5, `${updatedEmp.output.firstName} ${updatedEmp.output.lastName}`);
+
 			//TODO: add notif
+			const saveNotif = await save_employeeNotif("update", userId, employee_objectId);
+
+			if(saveNotif.value){
+				return res.status(400).send("Unable to save notif");
+			}
+
 			return res.status(200).send('Successfully updated employee profile');
+
 
 		} catch (error) {
 
@@ -418,28 +432,52 @@ module.exports = (io) => {
 		}
 	});
 
-	// Get Specific Employee Data by employeeId for 'Employee Profile Page'
+	// Get Employee Data and Logs for Specififc Employee using 'employeeId'
+	// for 'Employee Profile Page'
 	router.get('/:employeeId', verifyUser_GET, async (req, res) => {
 
 		try {
 
 			let empId = req.params.employeeId;
 			const employee = await db.findOne('Employee', { employeeId: empId })
+			console.log("Employee ID: " + empId);
 
-			if (employee.value) {
-				console.log("Error retrieving employee");
-				return res.status(404).send("Employee Not Found");
+			if(employee.value){
+				console.log("No Employee Found");
+				res.status(404).send("Employee Not Found");
+			} else{
+				console.log("Employee Found");
+
+				// fetch employeeLogs base on employeeRef ---> res.send({employee, employeeLogs})
+				const emplog = await db.find('EmployeeLog', { employeeRef: employee.output._id});
+				if(emplog.value){
+					console.error("Logs Not Found");
+					res.status(404).send("Employee Logs not found");
+				}else {
+					console.log("Logs Found");
+					res.status(200).send({ employee: employee.output, emplog: emplog.output });
+				}
 			}
-
-			console.log("Employee Found");
-			return res.status(200).send(employee);
-
 		} catch (error) {
 			console.log(error);
-			console.log("Error: Cannot fetch employee data for some reason".red);
+			console.log("Error: Cannot fetch employee data/logs for some reason".red);
 			res.status(500).send("Server Error");
 		}
 	});
+
+	// router.get('/:employeeId/:_id', async (req, res) => {
+	// 	//objectID of employeeRef as Logs for Specific Employee ---> Employee Profile Page
+	// 	try {
+	// 		let id = req.params._id;
+	// 		const emplog = await EmployeeLog.find({ employeeRef: id })
+
+
+	// 	} catch (error) {
+	// 		console.log(error);
+	// 		console.log("Server Error".red);
+	// 		res.status(500).send("SERVER ERROR");
+	// 	}
+	// });
 
 	return router;
 }
