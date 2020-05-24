@@ -14,7 +14,7 @@ exports.save_employeeNotif = async (action, admin_objectId, employee_objectId) =
 		//if(!employee.value){ // assumed true
 
 			const event = await db.save('employeedatanotif',{
-				date: new Date(),
+				dateCreated: new Date(),
 				author: admin_objectId,
 				employee: employee_objectId,
 				operation: action,
@@ -48,7 +48,7 @@ exports.save_emotionNotif = async (emotion, employee_objectId) => {
 		} else {
 
 			const event = await db.save('emotionnotification',{
-				date: new Date(),
+				dateCreated: new Date(),
 				employee: employeeObjectID.output._id,
 				emotion: emotion
 			})
