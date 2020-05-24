@@ -150,7 +150,7 @@ module.exports = (io) => {
 
 		try {
 			const { emotion, employeeLog, status } = req.body;
-			let log = await db.findById('employeelog',employeeLog);
+			let log = await db.findById('employeelog',{ _id : employeeLog });
 
 			if (log.value) {
 				throw new Error('Log not found!');
@@ -163,14 +163,12 @@ module.exports = (io) => {
 				switch (status) {
 
 					case "in":
-						log.emotionIn = emotion;
-						await log.save();
+						await db.updateById('employeelog',employeeLog,{ emotionIn : emotion });
 						if(emotion === 1) autoEmail.angryEmoIncrementer(log.output.employeeRef._id);
 						return res.sendStatus(200);
 
 					case "out":
-						log.emotionOut = emotion;
-						await log.save();
+						await db.updateById('employeelog',employeeLog,{ emotionOut : emotion });
 						if(emotion === 1) autoEmail.putToEmailQueue(log.output.employeeRef._id);
 						return res.sendStatus(200);
 				}

@@ -49,7 +49,7 @@ const modelPicker = (modelName) => {
 
 ----------------------------------------------------------------------------------------------/*/
 
-
+Employee.findById
 exports.findById = async (model,_id) => {
 
     try {

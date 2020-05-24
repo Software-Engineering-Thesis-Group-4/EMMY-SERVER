@@ -12,7 +12,6 @@ const { encrypt, decrypter } = require('../utility/aes');
 const mailer = require('../utility/mailer');
 const { registerRules, resetPassRules, resetKeyRules, validate } = require("../utility/validator");
 const { validationResult } = require('express-validator');
-const notifHandler = require('../utility/notificationHandler');
 const db = require('../utility/mongooseQue');
 const authUtil = require('../utility/authUtil');
 const accountSettings = require('../utility/accountSettings');
