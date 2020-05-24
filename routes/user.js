@@ -365,10 +365,39 @@ module.exports = (io) => {
 
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
+	POST /api/users/reset-password-final
+
+	Description:
+	This route is used for changing password when using the forgot password functionality
+
+	Author:
+	Michael Ong
+	----------------------------------------------------------------------------------------------------------------------*/
+	router.post('/reset-password-final', async (req, res) => {
+		
+		try {
+
+			const { password, confirmPassword } = req.body
+
+			if (confirmPassword !== password) {
+				console.error('Confirm password does not match'.red);
+				return res.status(400).send('Confirm password does not match.');
+			}
+			
+
+		} catch (error) {
+			console.log(error.message);
+			logger.serverRelatedLog(undefined,5,error.message);
+			return res.status(500).send('Error on server!');
+		}
+	});
+
+	/*----------------------------------------------------------------------------------------------------------------------
+	Route:
 	PATCH /api/users/change-password
 
 	Description:
-	This route is used for handling the reset key to access reset password page.
+	This route is used for changing the password while logged in
 
 	Author:
 	Michael Ong
@@ -379,7 +408,13 @@ module.exports = (io) => {
 			// user credentials from request body
 			const { loggedInUsername, userId } = req.body;
 
-			const { password } = req.body
+			const { password, confirmPassword } = req.body
+
+			if (confirmPassword !== password) {
+				console.error('Confirm password does not match'.red);
+				return res.status(400).send('Confirm password does not match.');
+			}
+
 			const user = await accountSettings.changePassword(userId,password);
 
 			if(user.value){
@@ -389,6 +424,8 @@ module.exports = (io) => {
 
 			logger.userRelatedLog(userId,loggedInUsername,1,user.output.username);
 			return res.status(200).send('Succesfully changed password!');
+
+			// TODO SHOULD AUTOMATICALLY LOG OUT WHEN PASSWORD IS CHANGED
 
 		} catch (err) {
 			console.log(error.message);

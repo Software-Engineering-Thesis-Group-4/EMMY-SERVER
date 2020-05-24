@@ -53,7 +53,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/admin', async (req, res) => {
+	router.get('/admin', verifyAdmin_GET, async (req, res) => {
 
 		try {
 
