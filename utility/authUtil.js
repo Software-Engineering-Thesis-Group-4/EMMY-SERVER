@@ -39,7 +39,7 @@ exports.verifyUser = async (req, res, next) => {
 	return next();
 }
 
-exports.verifyUserGetMethod = async (req, res, next) => {
+exports.verifyUser_GET = async (req, res, next) => {
 
 	const { userId, access_token } = req.query;
 
@@ -58,7 +58,7 @@ exports.verifyUserGetMethod = async (req, res, next) => {
 	return next();
 }
 
-exports.verifyAdminGetMethod = async (req, res, next) => {
+exports.verifyAdmin_GET = async (req, res, next) => {
 
 	const { userId, access_token } = req.query;
 
