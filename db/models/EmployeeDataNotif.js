@@ -6,17 +6,21 @@ const EmployeeDataNotifSchema = Schema({ // Employee CRUD Notif
 	author: {
 		//admin user reference
 		type: Schema.Types.ObjectId,
-		ref: "User"
+		ref: "User",
+		autopopulate: true
 	},
 	employee: {
 		type: Schema.Types.ObjectId,
 		ref: "Employee",
+		autopopulate: true
 	},
 	operation: {
 		type: String,
 	},
 	seenBy: []
 });
+
+EmployeeDataNotifSchema.plugin(require('mongoose-autopopulate'));
 
 const EmployeeDataNotification = mongoose.model("EmployeeDataNotifLog", EmployeeDataNotifSchema);
 
