@@ -2,6 +2,9 @@ const router = require('express').Router();
 
 // import utility
 const dbQuery = require('../utility/mongooseQue');
+const autoEmail = require('../utility/autoEmail')
+
+
 const { verifyUser_GET, verifyAdmin_GET } = require('../utility/authUtil');
 
 module.exports = (io) => {
@@ -18,6 +21,7 @@ module.exports = (io) => {
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.get('/', verifyUser_GET, async (req, res) => {
 
+		
 		try {
 
 			const userId = req.body.userId

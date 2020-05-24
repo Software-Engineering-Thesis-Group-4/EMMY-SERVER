@@ -283,7 +283,7 @@ exports.serverRelatedLog = async (output,log,errMessage) => {
                 actionLog   = pickActionLog(8);
                 break;
             case 4  : 
-                audLog      = `Updating fields for ${output} collection`; 
+                audLog      = `Updating fields of ${output} in the database`; 
                 actionLog   = pickActionLog(9);
                 break;
             case 5  : 

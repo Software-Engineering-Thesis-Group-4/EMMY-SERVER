@@ -152,7 +152,7 @@ module.exports = (io) => {
 	router.patch('/sentiment', async (req, res) => {
 
 		try {
-			console.log('Sentiment!')
+			
 			const { emotion, employeeLog, status } = req.body;
 			let log = await db.findById('employeelog', employeeLog);
 

@@ -64,7 +64,7 @@ module.exports = (io) => {
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 	// SUGGESTION: require a valid admin access (access_token, email, and account_type) before proceeding to execute process
-	router.post('/enroll', verifyAdmin, registerRules, validate, async (req, res) => {
+	router.post('/enroll', registerRules, validate, async (req, res) => {
 		try {
 
 			// user credentials from req body

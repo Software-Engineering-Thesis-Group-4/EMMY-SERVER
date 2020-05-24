@@ -45,19 +45,18 @@ exports.startEndDateChecker = async () => {
             const employees = await db.findAll('employee',{ sendAutoEmail : true }, 
                                                 { firstName : 1, lastName : 1, sendAutoEmail : 1 });
 
-            if(employees.value) {
-                logger.serverRelatedLog('Employee',4,'Error getting employees or employee collection is empty');
-                console.log('Error getting employees or employee collection is empty');
+            if(employees.value && employees.statusCode != 204) {
+                logger.serverRelatedLog('Employee',4,employees.message);
             } else {
     
                 employees.output.forEach(async emp => {
-
+                    
                     emp.sendAutoEmail = false;
 
-                    const updatedEmp = await db.updateById('employee',emp.employeeId, { sendAutoEmail : false });
-
-                    updatedEmp.value ? logger.serverRelatedLog(`Employee`,4,err.message) :
-                    logger.serverRelatedLog(`${doc.firstName} ${doc.lastName}`,4);
+                    const updatedEmp = await db.updateById('employee',emp._id, { sendAutoEmail : false });
+                    
+                    updatedEmp.value ? logger.serverRelatedLog(`Employee`,4,employees.message) :
+                    logger.serverRelatedLog(`${updatedEmp.output.firstName} ${updatedEmp.output.lastName}`,4);
                 });
 
                 // reset date 
@@ -85,10 +84,12 @@ exports.startEndDateChecker = async () => {
 exports.angryEmoIncrementer = async (employeeId) => {
 
     try{
-        const employee = await db.updateById('employee',employeeId, { leaderboardEmoCount : leaderboardEmoCount + 1 });
-       
-        employee.value ?
-        logger.serverRelatedLog(`employee`,4,err.message) :   
+
+        const employee = await db.findById('employee',employeeId);
+        employee.output.leaderboardEmoCount = employee.output.leaderboardEmoCount + 1;
+
+        await employee.output.save();
+
         logger.serverRelatedLog(`${employee.output.firstName} ${employee.output.lastName}`,4);
     } catch (err) {
         console.log(err.message);
@@ -101,14 +102,17 @@ exports.putToEmailQueue = async (employeeId) => {
     try{
         
         if(this.activateAutoEmailSystem == true){
-            const employee = await db.updateById('employee',employeeId,{ 
-                leaderboardEmoCount : leaderboardEmoCount + 1,
-                sendAutoEmail : true
-            });
+           
+            
+            const employee = await db.findById('employee',employeeId);
 
-            employee.value ?
-            logger.serverRelatedLog(`employee`,4,err.message):
+            employee.output.leaderboardEmoCount = employee.output.leaderboardEmoCount + 1;
+            employee.output.sendAutoEmail = true;
+
+            await employee.output.save();
+            
             logger.serverRelatedLog(`${employee.output.firstName} ${employee.output.lastName}`,4);
+
         } else {
             const employee = await db.updateById('employee',employeeId,{ 
                 leaderboardEmoCount : leaderboardEmoCount + 1,
@@ -135,8 +139,8 @@ exports.scheduledAutoEmail = async () => {
             logger.serverRelatedLog(`no employees.`,2);
         } else {
 
-            employees.forEach(async emp => {
-
+            employees.output.forEach(async emp => {
+                
                 const emailErr  = await mailer.sendAutoEmail(emp.email,emp.firstName);
                 
                 emailErr.value ?

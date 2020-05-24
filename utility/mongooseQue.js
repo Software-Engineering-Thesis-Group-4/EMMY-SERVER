@@ -45,7 +45,7 @@ const modelPicker = (modelName) => {
 
 ----------------------------------------------------------------------------------------------/*/
 
-Employee.findById
+
 exports.findById = async (model,_id) => {
 
     try {
@@ -74,6 +74,7 @@ exports.updateById = async (model,id,data) => {
     try {
 
         const Model = modelPicker(model);
+        
         const updatedModeling = await Model.findByIdAndUpdate(
             id,
             { $set: data },
@@ -81,7 +82,7 @@ exports.updateById = async (model,id,data) => {
         );
 
         if(!updatedModeling){
-            return isErr = { value : true, message : `Error updating a document in ${Model.name} collection`, statusCode : 204 };
+            return isErr = { value : true, message : `Error updating a document in ${Model.modelName} collection`, statusCode : 204 };
         }
 
         return isErr = { value : false, output : updatedModeling }
@@ -98,14 +99,14 @@ exports.save = async (model,data) => {
     try {
 
         const Model = modelPicker(model);
-
+       
         const modeling = new Model(data);
 
 
         const savedModeling = await modeling.save();
 
         if(!savedModeling){
-            return isErr = { value : true, message : `Error saving document for ${Model.name}`, statusCode : 204 };
+            return isErr = { value : true, message : `Error saving document for ${Model.modelName}`, statusCode : 204 };
         }
 
         return isErr = { value : false, output : savedModeling };
@@ -175,3 +176,4 @@ exports.findAllPopulate = async (Model,field,populateOptions) => {
         return isErr = { value : true, message : err.message, statusCode : 500 };
     }
 }
+

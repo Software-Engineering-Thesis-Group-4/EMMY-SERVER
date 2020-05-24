@@ -2,7 +2,7 @@ const nodemailer = require("nodemailer");
 const autoEmailSettings = require('./autoEmail');
 
 const gmail = nodemailer.createTransport({
-	service: 'gmail',
+	service: 'Gmail',
 	auth: {
 		user: process.env.EMAIL_USERNAME,
 		pass: process.env.EMAIL_PASSWORD
