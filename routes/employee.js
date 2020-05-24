@@ -13,6 +13,7 @@ const { save_employeeNotif } = require('../utility/notificationHandler');
 
 // import models
 const { Employee } = require('../db/models/Employee');
+const { EmployeeLog } = require('../db/models/EmployeeLog');
 
 module.exports = (io) => {
 
@@ -218,8 +219,6 @@ module.exports = (io) => {
 			//---------------- log -------------------//
 			logger.employeeRelatedLog(userId, userUsername, 3, `${firstname} ${lastname}`);
 
-			// TODO
-			// "created new employee" notification
 			save_employeeNotif(create, userId, employee_id);
 
 			return res.status(201).send("Successfully registered a new employee.")
@@ -245,6 +244,7 @@ module.exports = (io) => {
 	This route is used when the HR uploads a CSV file for adding multiple employees
 
 	Author:
+
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/csv/import', async (req, res) => {
@@ -362,9 +362,8 @@ module.exports = (io) => {
 			//---------------- log -------------------//
 			logger.employeeRelatedLog(userId, userUsername, 4, emp);
 
-			// TODO
-			// "successfully terminated employee" notification
 			save_employeeNotif(terminated, userId, id);
+
 			res.status(200).send('Successfully deleted employee');
 
 		} catch (error) {
@@ -376,26 +375,51 @@ module.exports = (io) => {
 		}
 	});
 
-	// Get Specific Employee Data by employeeId for 'Employee Profile Page'
+
+	// Get Employee Data and Logs for Specififc Employee using 'employeeId'
+	// for 'Employee Profile Page'
 	router.get('/:employeeId', async (req, res) => {
 		try {
 			let empId = req.params.employeeId;
 			const employee = await Employee.findOne({ employeeId: empId })
+			console.log("Employee ID: " + empId);
 
 			if(!employee){
 				console.log("No Employee Found");
 				res.status(404).send("Employee Not Found");
 			} else{
 				console.log("Employee Found");
-				res.status(200).send(employee);
-			}
 
+				// fetch employeeLogs base on employeeRef ---> res.send({employee, employeeLogs})
+				const emplog = await EmployeeLog.find({ employeeRef: employee._id});
+				if(!emplog){
+					console.error("Logs Not Found");
+					res.status(404).send("Employee Logs not found");
+				}else {
+					console.log("Logs Found");
+					res.status(200).send({ employee, emplog});
+				}
+			}
 		} catch (error) {
 			console.log(error);
-			console.log("Error: Cannot fetch employee data for some reason".red);
+			console.log("Error: Cannot fetch employee data/logs for some reason".red);
 			res.status(500).send("Server Error");
 		}
 	});
+
+	// router.get('/:employeeId/:_id', async (req, res) => {
+	// 	//objectID of employeeRef as Logs for Specific Employee ---> Employee Profile Page
+	// 	try {
+	// 		let id = req.params._id;
+	// 		const emplog = await EmployeeLog.find({ employeeRef: id })
+
+
+	// 	} catch (error) {
+	// 		console.log(error);
+	// 		console.log("Server Error".red);
+	// 		res.status(500).send("SERVER ERROR");
+	// 	}
+	// });
 
 	return router;
 }
