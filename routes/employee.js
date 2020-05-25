@@ -11,7 +11,7 @@ const dbBackup = require('../utility/dbBackup');
 const logger = require('../utility/logger');
 const db = require('../utility/mongooseQue');
 const { save_employeeNotif } = require('../utility/notificationHandler');
-const { verifyUser_GET, verifyUser, verifyAdmin } = require('../utility/authUtil');
+const { verifyUser_GET, verifyUser, verifyAdmin, verifyAdmin_GET } = require('../utility/authUtil');
 
 // TODO: IMPLEMENT DATABASE MODULE
 // import models
@@ -316,7 +316,7 @@ module.exports = (io) => {
 
    /*----------------------------------------------------------------------------------------------------------------------
 	Route:
-	POST /api/employees/:id
+	DELETE /api/employees/:id
 
 	Description:
 	This route is used for marking employees as "terminated"
@@ -324,7 +324,7 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.delete('/:id', verifyAdmin, async (req, res) => { // might want to use router.patch() method instead since it just updates to --> {terminated: true}
+	router.delete('/:id', verifyAdmin_GET, async (req, res) => { // might want to use router.patch() method instead since it just updates to --> {terminated: true}
 		try {
 
 			// user credentials from req body
