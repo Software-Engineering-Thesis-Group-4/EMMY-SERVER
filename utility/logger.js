@@ -289,6 +289,10 @@ exports.serverRelatedLog = async (output,log,errMessage) => {
             case 5  : 
                 audLog      = `${output} submitted key for reset password`; 
                 actionLog   = pickActionLog(1);
+                break;
+            case 6  : 
+                audLog      = `Duration for leaderboard ranking ${output}`;
+                actionLog   = pickActionLog(8);
                 break;   
 
             default : audLog = 'Unknown server related log';               

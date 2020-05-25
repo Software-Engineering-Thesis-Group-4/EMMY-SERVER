@@ -8,6 +8,7 @@ const autoEmail = require('../utility/autoEmail');
 const db = require('../utility/mongooseQue');
 const { save_emotionNotif } = require('../utility/notificationHandler');
 const { verifyAdmin, verifyUser_GET } = require('../utility/authUtil');
+const leaderBoard = require('../utility/leaderBoards');
 
 module.exports = (io) => {
 	/*----------------------------------------------------------------------------------------------------------------------
@@ -168,7 +169,7 @@ module.exports = (io) => {
 
 					case "in":
 						await db.updateById('employeelog',employeeLog,{ emotionIn : emotion });
-						if(emotion === 1) autoEmail.angryEmoIncrementer(log.output.employeeRef._id);
+						if(emotion === 1) leaderBoard.angryEmoIncrementer(log.output.employeeRef._id);
 						return res.sendStatus(200);
 
 					case "out":

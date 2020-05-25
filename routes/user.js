@@ -263,43 +263,7 @@ module.exports = (io) => {
 		}
 	});
 
-		/* ---------------------------------------------------------------------------------------------------------------------
-	Route:
-	POST /api/users/change-account-settings
-
-	Description:
-
-	Api for changing account settings of user
-
-	Author:
-	Michael Ong
-	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/change-account-settings', verifyUser, async (req, res) => {
-
-		try {
-
-			// user credentials from request body
-			const { loggedInUsername, userId } = req.body;
-
-			const { email,firstname,lastname,username } = req.body;
-
-			const updatedUser = await db.updateById('user',userId,{ email,firstname,lastname,username });
-
-			if(updatedUser.value){
-				logger.userRelatedLog(userId,loggedInUsername,0,null,updatedUser.message);
-				return res.status(updatedUser.statusCode).send(updatedUser.message);
-			}
-
-
-			logger.userRelatedLog(userId,loggedInUsername,0,updatedUser.output.username);
-			return res.status(200).send(`Successfully changed user profile ${updatedUser.output.username}`)
-
-
-		} catch (error) {
-			console.error(error.message);
-			return res.status(500).send('Server error. A problem occured when changing user account photo');
-		}
-	});
+	
 
 
 	/*----------------------------------------------------------------------------------------------------------------------
@@ -476,7 +440,7 @@ module.exports = (io) => {
 	PATCH /api/users/change-user-profile
 
 	Description:
-	This route is used for handling the reset key to access reset password page.
+	Api for changing account settings of user
 
 	Author:
 	Michael Ong

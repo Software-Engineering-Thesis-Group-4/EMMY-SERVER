@@ -37,10 +37,12 @@ exports.activateAutoEmailSystem = true;
 exports.startEndDateChecker = async () => {
 
     try{
+        
         console.log('Checking if duration is finished for automated email')
+        startDate = new Date();
 
         // if day and month is the same for start date and end date clean db then reset startDate and endDate
-        if(startDate.getDate() == endDate.getDate() && startDate.getMonth() == endDate.getMonth()){
+        if(startDate.getDate() == endDate.getDate()){
 
             const employees = await db.findAll('employee',{ sendAutoEmail : true }, 
                                                 { firstName : 1, lastName : 1, sendAutoEmail : 1 });
@@ -51,7 +53,6 @@ exports.startEndDateChecker = async () => {
     
                 employees.output.forEach(async emp => {
                     
-                    emp.sendAutoEmail = false;
 
                     const updatedEmp = await db.updateById('employee',emp._id, { sendAutoEmail : false });
                     
@@ -80,22 +81,6 @@ exports.startEndDateChecker = async () => {
     }
 }
 
-
-exports.angryEmoIncrementer = async (employeeId) => {
-
-    try{
-
-        const employee = await db.findById('employee',employeeId);
-        employee.output.leaderboardEmoCount = employee.output.leaderboardEmoCount + 1;
-
-        await employee.output.save();
-
-        logger.serverRelatedLog(`${employee.output.firstName} ${employee.output.lastName}`,4);
-    } catch (err) {
-        console.log(err.message);
-        logger.serverRelatedLog(`employee`,4,err.message)
-    }
-}
 
 exports.putToEmailQueue = async (employeeId) => {
 

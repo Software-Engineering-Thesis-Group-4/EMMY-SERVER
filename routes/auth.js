@@ -2,12 +2,11 @@ const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 
 // import utilities
-const { createAccessToken, createRefreshToken, removeRefreshToken } = require('../utility/jwt');
+const { createAccessToken, createRefreshToken, removeRefreshToken, verify } = require('../utility/jwt');
 const { loginRules, logoutRules, verifyTokenRules, validate } = require('../utility/validator');
 const { validationResult } = require('express-validator');
 const logger = require('../utility/logger');
 const db = require('../utility/mongooseQue');
-const token = require('../utility/jwt')
 const { verifyUser } = require('../utility/authUtil');
 
 // error messages
@@ -124,19 +123,20 @@ module.exports = () => {
 					return res.status(401).send(ERR_UNAUTHENTICATED)
 				}
 
-				const verifiedToken = await token.verify(access_token, 'authtoken');
+				const verifiedToken = await verify(access_token, 'authtoken');
 
 				if (verifiedToken.value) {
 
 					if (verifiedToken.errName == 'TokenExpiredError') {
+						
 						const refTok = await db.findOne('refreshtoken', { email });
-
+					
 						if (refTok.value) {
 							console.error('Refresh Token Not Found.'.red);
 							return res.status(404).send(ERR_UNAUTHORIZED);
 						}
 
-						const verifiedRefToken = await token.verify(refTok.output.token, 'refreshtoken');
+						const verifiedRefToken = await verify(refTok.output.token, 'refreshtoken');
 
 						if (verifiedRefToken.value) {
 							removeRefreshToken(email);
