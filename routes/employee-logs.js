@@ -7,7 +7,7 @@ const logger = require('../utility/logger');
 const autoEmail = require('../utility/autoEmail');
 const db = require('../utility/mongooseQue');
 const { save_emotionNotif } = require('../utility/notificationHandler');
-const { verifyAdmin, verifyUser_GET } = require('../utility/authUtil');
+const { verifyAdmin, verifyUser_GET, verifyAdmin_GET } = require('../utility/authUtil');
 const leaderBoard = require('../utility/leaderBoards');
 
 module.exports = (io) => {
@@ -68,7 +68,7 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.delete('/:id', verifyAdmin, async (req, res) => {
+	router.delete('/:id', verifyAdmin_GET, async (req, res) => {
 
 		try {
 
