@@ -254,8 +254,8 @@ module.exports = (io) => {
 				return res.status(422).send('Error changing user account photo');
 			}
 
-				logger.userRelatedLog(userId,loggedInUsername,8);
-				return res.status(200).send(`Successfully changed user account photo for ${isErr.output.username}`)
+			logger.userRelatedLog(userId,loggedInUsername,8);
+			return res.status(200).send(`Successfully changed user account photo for ${isErr.output.username}`)
 
 		} catch (error) {
 			console.error(error.message);
@@ -377,17 +377,38 @@ module.exports = (io) => {
 		
 		try {
 
-			const { password, confirmPassword } = req.body
+			let { user,password, confirmPassword } = req.body
 
 			if (confirmPassword !== password) {
 				console.error('Confirm password does not match'.red);
 				return res.status(400).send('Confirm password does not match.');
 			}
+
+			const updatedUser = await db.findOne('user',{ email  : user });
+			
+			if(updatedUser.value){
+				return res.status(updatedUser.statusCode).send(updatedUser.message);
+			}
+
+			password = bcrypt.hashSync(password);
+			const changedPass = await accountSettings.changePassword(updatedUser.output._id,{password});
+
+			if(changedPass.value){
+				logger.userRelatedLog(updatedUser.output._id,updatedUser.output.username,1,updatedUser.output.username,updatedUser.message);
+				return res.status(updatedUser.statusCode).send(updatedUser.message);
+			}
+
+			logger.userRelatedLog(updatedUser.output._id,updatedUser.output.username,1,updatedUser.output.username);
+			return res.status(200).send('Succesfully changed password!');
+
+
 			
 
 		} catch (error) {
+			let { user } = req.body;
 			console.log(error.message);
-			logger.serverRelatedLog(undefined,5,error.message);
+			const updatedUser = await db.findOne('user',{ email : user });
+			logger.userRelatedLog(updatedUser.output._id,updatedUser.output.username,1,updatedUser.output.username,error.message);
 			return res.status(500).send('Error on server!');
 		}
 	});
@@ -408,14 +429,16 @@ module.exports = (io) => {
 			// user credentials from request body
 			const { loggedInUsername, userId } = req.body;
 
-			const { password, confirmPassword } = req.body
+			let { password, confirmPassword } = req.body
 
 			if (confirmPassword !== password) {
 				console.error('Confirm password does not match'.red);
 				return res.status(400).send('Confirm password does not match.');
 			}
-
-			const user = await accountSettings.changePassword(userId,password);
+			
+			password = bcrypt.hashSync(password);
+			const user = await accountSettings.changePassword(userId,{password});
+			
 
 			if(user.value){
 				logger.userRelatedLog(userId,loggedInUsername,1,undefined,user.message);
@@ -429,7 +452,6 @@ module.exports = (io) => {
 
 		} catch (err) {
 			console.log(error.message);
-
 			return res.status(500).send('Error on server!');
 		}
 

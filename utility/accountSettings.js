@@ -5,6 +5,7 @@ const mailer = require('./mailer')
 const jwt = require('./jwt');
 const aes = require('./aes');
 
+
 exports.resetPassword = async (email) => {
 
     try{
@@ -78,7 +79,7 @@ exports.changeUserPhoto = async (imageFile,userId) => {
 
         await imageFile.mv(pathToImage);
 
-        const updatedUser = await mongooseQue.updateById('user',userId,{ photo : pathToImage})
+        const updatedUser = await mongooseQue.updateById('user',userId,{ photo : userId + fileType })
 
         if(updatedUser.value){
             return isErr = { value: true, message: updatedUser.message };
