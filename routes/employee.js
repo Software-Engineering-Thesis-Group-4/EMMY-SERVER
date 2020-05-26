@@ -237,7 +237,7 @@ module.exports = (io) => {
 
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/csv/import', verifyUser, async (req, res) => {
+	router.post('/csv/import', verifyAdmin, async (req, res) => {
 
 		try {
 
@@ -278,24 +278,6 @@ module.exports = (io) => {
 	});
 
 
-	/*----------------------------------------------------------------------------------------------------------------------
-	TODO: export report must be used in logs ---- used in employees for testing purposes
-	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/export-csv', async (req, res) => {
-
-		try {
-
-			const pathToDownload = path.join(__dirname, '/../downloadables/generated.csv')
-			let emp = await db.findAll('employee');
-
-			await exportDb.toCsv(emp);
-			res.download(pathToDownload)
-		} catch (error) {
-			console.log(error.message);
-			res.send('error')
-		}
-
-	});
 
 	/*----------------------------------------------------------------------------------------------------------------------
 	 export report must be used in logs ---- used in employees for testing purposes
@@ -490,7 +472,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/change-employee-profile-picture/:id', async (req,res) => {
+	router.post('/change-employee-profile-picture/:id', verifyAdmin, async (req,res) => {
 		
 		try{
 
