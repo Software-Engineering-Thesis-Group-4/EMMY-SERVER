@@ -377,17 +377,38 @@ module.exports = (io) => {
 		
 		try {
 
-			const { password, confirmPassword } = req.body
+			let { email,password, confirmPassword } = req.body
 
 			if (confirmPassword !== password) {
 				console.error('Confirm password does not match'.red);
 				return res.status(400).send('Confirm password does not match.');
 			}
+
+			const user = await db.findOne('user',{ email });
+			console.log(user)
+			if(user.value){
+				return res.status(user.statusCode).send(user.message);
+			}
+
+			password = bcrypt.hashSync(password);
+			const changedPass = await accountSettings.changePassword(user.output._id,{password});
+
+			if(changedPass.value){
+				logger.userRelatedLog(user.output._id,user.output.username,1,user.output.username,user.message);
+				return res.status(user.statusCode).send(user.message);
+			}
+
+			logger.userRelatedLog(user.output._id,user.output.username,1,user.output.username);
+			return res.status(200).send('Succesfully changed password!');
+
+
 			
 
 		} catch (error) {
+			let { email } = req.body;
 			console.log(error.message);
-			logger.serverRelatedLog(undefined,5,error.message);
+			const user = await db.findOne('user',{ email });
+			logger.userRelatedLog(user.output._id,user.output.username,1,user.output.username,error.message);
 			return res.status(500).send('Error on server!');
 		}
 	});
@@ -408,14 +429,16 @@ module.exports = (io) => {
 			// user credentials from request body
 			const { loggedInUsername, userId } = req.body;
 
-			const { password, confirmPassword } = req.body
+			let { password, confirmPassword } = req.body
 
 			if (confirmPassword !== password) {
 				console.error('Confirm password does not match'.red);
 				return res.status(400).send('Confirm password does not match.');
 			}
-
-			const user = await accountSettings.changePassword(userId,password);
+			
+			password = bcrypt.hashSync(password);
+			const user = await accountSettings.changePassword(userId,{password});
+			
 
 			if(user.value){
 				logger.userRelatedLog(userId,loggedInUsername,1,undefined,user.message);
@@ -429,7 +452,6 @@ module.exports = (io) => {
 
 		} catch (err) {
 			console.log(error.message);
-
 			return res.status(500).send('Error on server!');
 		}
 
