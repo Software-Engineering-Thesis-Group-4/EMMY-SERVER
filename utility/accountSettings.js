@@ -79,7 +79,7 @@ exports.changeUserPhoto = async (imageFile,userId) => {
 
         await imageFile.mv(pathToImage);
 
-        const updatedUser = await mongooseQue.updateById('user',userId,{ photo : pathToImage})
+        const updatedUser = await mongooseQue.updateById('user',userId,{ photo : userId + fileType })
 
         if(updatedUser.value){
             return isErr = { value: true, message: updatedUser.message };

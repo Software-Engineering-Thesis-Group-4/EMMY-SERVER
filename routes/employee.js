@@ -367,7 +367,7 @@ module.exports = (io) => {
 	This route is used for changing employee profile
 
 	Author:
-	Nathaniel Saludes
+	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/:id/change-employee-profile', verifyAdmin, async (req, res) => {
 
@@ -478,6 +478,61 @@ module.exports = (io) => {
 	// 		res.status(500).send("SERVER ERROR");
 	// 	}
 	// });
+
+
+	/*----------------------------------------------------------------------------------------------------------------------
+	Route:
+	POST /api/employees/change-employee-profile-picture
+
+	Description:
+	This route is used for changing employee profile
+
+	Author:
+	Michael Ong
+	----------------------------------------------------------------------------------------------------------------------*/
+	router.post('/change-employee-profile-picture/:id', async (req,res) => {
+		
+		try{
+
+			const { loggedInUsername, userId } = req.body;
+
+			const empId = req.params;
+
+			if(!req.files){
+				return res.status(204).send('Not selected a file or file is empty! Please select a file');
+			}
+
+			const empPhoto = req.files.photo;
+			const fileType = empPhoto.mimetype.split('/')[1];
+
+			const emp = await db.findById('employee',empId);
+
+
+			const pathToImage = path.join(__dirname,`../images/employees/${emp.output._id}.${fileType}`);
+			await imageFile.mv(pathToImage);
+
+
+			const updatedEmp = await db.updateById('employee',empId,{ photo : empId + fileType })
+
+			if(updatedEmp.value){
+				logger.employeeRelatedLog(userId,loggedInUsername,5,undefined,updatedEmp.message)
+				return res.status(400).send('Error uploading employee photo');
+			}
+
+			logger.employeeRelatedLog(userId,loggedInUsername,5,`${emp.output.firstName} ${emp.output.lastName}`)
+			return res.status(200).send('Successfully updated employee photo');
+			
+
+		} catch (err) {
+			const { loggedInUsername, userId } = req.body;s
+			console.log(err);
+			logger.employeeRelatedLog(userId,loggedInUsername,5,undefined,updatedEmp.message)
+			res.status(500).send("Server Error");
+		}
+
+	})
+
+
 
 	return router;
 }

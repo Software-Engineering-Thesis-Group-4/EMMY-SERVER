@@ -254,8 +254,8 @@ module.exports = (io) => {
 				return res.status(422).send('Error changing user account photo');
 			}
 
-				logger.userRelatedLog(userId,loggedInUsername,8);
-				return res.status(200).send(`Successfully changed user account photo for ${isErr.output.username}`)
+			logger.userRelatedLog(userId,loggedInUsername,8);
+			return res.status(200).send(`Successfully changed user account photo for ${isErr.output.username}`)
 
 		} catch (error) {
 			console.error(error.message);
@@ -377,38 +377,38 @@ module.exports = (io) => {
 		
 		try {
 
-			let { email,password, confirmPassword } = req.body
+			let { user,password, confirmPassword } = req.body
 
 			if (confirmPassword !== password) {
 				console.error('Confirm password does not match'.red);
 				return res.status(400).send('Confirm password does not match.');
 			}
 
-			const user = await db.findOne('user',{ email });
-			console.log(user)
-			if(user.value){
-				return res.status(user.statusCode).send(user.message);
+			const updatedUser = await db.findOne('user',{ email  : user });
+			
+			if(updatedUser.value){
+				return res.status(updatedUser.statusCode).send(updatedUser.message);
 			}
 
 			password = bcrypt.hashSync(password);
-			const changedPass = await accountSettings.changePassword(user.output._id,{password});
+			const changedPass = await accountSettings.changePassword(updatedUser.output._id,{password});
 
 			if(changedPass.value){
-				logger.userRelatedLog(user.output._id,user.output.username,1,user.output.username,user.message);
-				return res.status(user.statusCode).send(user.message);
+				logger.userRelatedLog(updatedUser.output._id,updatedUser.output.username,1,updatedUser.output.username,updatedUser.message);
+				return res.status(updatedUser.statusCode).send(updatedUser.message);
 			}
 
-			logger.userRelatedLog(user.output._id,user.output.username,1,user.output.username);
+			logger.userRelatedLog(updatedUser.output._id,updatedUser.output.username,1,updatedUser.output.username);
 			return res.status(200).send('Succesfully changed password!');
 
 
 			
 
 		} catch (error) {
-			let { email } = req.body;
+			let { user } = req.body;
 			console.log(error.message);
-			const user = await db.findOne('user',{ email });
-			logger.userRelatedLog(user.output._id,user.output.username,1,user.output.username,error.message);
+			const updatedUser = await db.findOne('user',{ email : user });
+			logger.userRelatedLog(updatedUser.output._id,updatedUser.output.username,1,updatedUser.output.username,error.message);
 			return res.status(500).send('Error on server!');
 		}
 	});

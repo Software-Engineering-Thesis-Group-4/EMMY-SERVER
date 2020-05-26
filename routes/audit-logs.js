@@ -18,7 +18,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/', verifyAdmin_GET, async (req, res) => {
+	router.get('/admin', verifyAdmin_GET, async (req, res) => {
 
 		try {
 
