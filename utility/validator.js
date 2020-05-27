@@ -51,7 +51,7 @@ exports.registerEmployeeRules = [
 
 	body('fingerprint_id').trim().escape()
 		.notEmpty().withMessage('Register Error: Fingerprint ID cannot be empty')
-		.isNumeric().withMessage('Register Error: Invalid Fingerprint ID Format'),
+		.isNumeric({ no_symbols: true }).withMessage('Register Error: Invalid Fingerprint ID Format'), // no symbols: true == negative or float number not allowed
 ]
 
 // Register New Standard/Admin Account
