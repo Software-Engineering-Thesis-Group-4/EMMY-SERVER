@@ -2,7 +2,10 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const EmotionNotificationSchema = Schema({
-	dateCreated: Date,
+	dateCreated: {
+		type: Date,
+		default: Date.now
+	},
 	employee: {
 		type: Schema.Types.ObjectId,
 		ref: 'Employee',

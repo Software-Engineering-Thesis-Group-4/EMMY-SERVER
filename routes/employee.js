@@ -12,6 +12,7 @@ const logger = require('../utility/logger');
 const db = require('../utility/mongooseQue');
 const { save_employeeNotif } = require('../utility/notificationHandler');
 const { verifyUser_GET, verifyUser, verifyAdmin, verifyAdmin_GET } = require('../utility/authUtil');
+const { registerEmployeeRules, validate } = require('../utility/validator');
 
 // TODO: IMPLEMENT DATABASE MODULE
 // import models
@@ -163,7 +164,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/enroll', verifyAdmin, async (req, res) => {
+	router.post('/enroll', verifyAdmin, registerEmployeeRules, validate, async (req, res) => {
 
 		try {
 
@@ -237,6 +238,7 @@ module.exports = (io) => {
 
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
+	// TODO: Sanitize Imported CSV
 	router.post('/csv/import', verifyUser, async (req, res) => {
 
 		try {
@@ -300,6 +302,7 @@ module.exports = (io) => {
 	/*----------------------------------------------------------------------------------------------------------------------
 	 export report must be used in logs ---- used in employees for testing purposes
 	 ----------------------------------------------------------------------------------------------------------------------*/
+	// TODO: exportDB-to-PDF???
 	router.get('/export-pdf', async (req, res) => {
 
 		try {
@@ -369,7 +372,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/:id/change-employee-profile', verifyAdmin, async (req, res) => {
+	router.post('/:id/change-employee-profile', verifyAdmin, registerEmployeeRules, validate, async (req, res) => {
 
 		try {
 
@@ -377,30 +380,30 @@ module.exports = (io) => {
 			const { userId, loggedInUsername } = req.body;
 
 			const employee_objectId = req.params.id;
-			const {
-				employeeId,
-				firstName,
-				lastName,
+			let {
+				employee_id,
+				firstname,
+				lastname,
 				email,
 				isMale,
-				employmentStatus,
+				employment_status,
 				department,
-				jobTitle,
-				fingerprintId
+				job_title,
+				fingerprint_id
 			} = req.body;
 
 
 
 			const updatedEmp = await db.updateById('employee', employee_objectId, {
-				employeeId,
-				firstName,
-				lastName,
+				employee_id,
+				firstname,
+				lastname,
 				email,
 				isMale,
-				employmentStatus,
+				employment_status,
 				department,
-				jobTitle,
-				fingerprintId
+				job_title,
+				fingerprint_id
 			});
 
 
@@ -491,7 +494,7 @@ module.exports = (io) => {
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/change-employee-profile-picture/:id', async (req,res) => {
-		
+
 		try{
 
 			const { loggedInUsername, userId } = req.body;
@@ -521,7 +524,7 @@ module.exports = (io) => {
 
 			logger.employeeRelatedLog(userId,loggedInUsername,5,`${emp.output.firstName} ${emp.output.lastName}`)
 			return res.status(200).send('Successfully updated employee photo');
-			
+
 
 		} catch (err) {
 			const { loggedInUsername, userId } = req.body;s

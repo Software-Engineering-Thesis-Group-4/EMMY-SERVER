@@ -9,15 +9,11 @@ const db = require('./mongooseQue');
 exports.save_employeeNotif = async (action, admin_objectId, employee_objectId) => {
 	try {
 
-		// const employee = await db.findOne('Employee',{ employeeId : employee_objectId });
-
-		//if(!employee.value){ // assumed true
-
 			const event = await db.save('employeedatanotification',{
 				dateCreated: new Date(),
 				author: admin_objectId,
 				employee: employee_objectId,
-				operation: action,
+				operation: action.toString(),
 			})
 
 			if(event.value){

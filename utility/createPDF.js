@@ -1,7 +1,62 @@
-// It easily overwrites existing pdf file if same name
-
 const pdfDocument = require('pdfkit');
 const fs = require('fs');
+const moment = require('moment');
+
+// Import Models to get necessary data
+const { Employee } = require('../db/models/Employee'); // per specified month
+const { EmployeeLog } = require('../db/models/EmployeeLog'); // per specified month
+const { EmotionNotification } = require('../db/models/EmotionNotification'); //total number of emotion (angry/sad) per specified month
+
+// output all these following data
+// Employee Satisfaction
+// Sentiment of the Week
+// Positive Sentiment by Gender
+// Negative Sentiment by Gender
+// Overall Sentiment by Month
+
+getLogsPerMonth = async (month) => {
+   try {
+      const logs = await EmployeeLog.find({  });
+
+      if (!logs){
+         console.log("No logs found for " + month);
+         return null;
+      }
+      console.log("Logs found for " + month);
+      return logs;
+
+   } catch(error){
+      console.log(error);
+      return null;
+   }
+
+}
+
+
+getEmotionNotifNumber = async(month, emotion) => {
+   try {
+      // const notifs = await EmotionNotification.find({ dateCreated: { $eq: month.toString() }, emotion: { $eq: emotion });
+      // then count the number of notifications
+      if (!notifs) {
+         console.log("PDF Create: No notifications found for " + month);
+         return null;
+      }
+      // let sadNotifs = notifs.sad.length;
+      // let angryNotifs = notifs.sad.length;
+
+      let numberOfNotifs = notifs.length;
+      console.log("PDF Create: Notifs found for " + month);
+      return numberOfNotifs;
+   } catch(error) {
+      console.log(error);
+      return null;
+   }
+}
+
+exports.createPDF = (specifiedMonth) => {
+   console.log('Create PDF - Month: ' + specifiedMonth);
+   const logs = getLogsPerMonth(specifiedMonth) //returns object 'logs' or 'null'
+}
 
 // Document elements creation
 const doc = new pdfDocument();

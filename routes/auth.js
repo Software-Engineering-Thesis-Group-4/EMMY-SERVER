@@ -29,11 +29,14 @@ module.exports = () => {
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 
-	router.post('/login', loginRules, validate, async (req, res) => {
+	router.post('/login', loginRules, /*validate,*/ async (req, res) => {
 		try {
 
 			const errors = validationResult(req);
 			if (!errors.isEmpty()) {
+				const extractedErrors = []
+				errors.array().map(err => extractedErrors.push({ [err.param]: err.msg }));
+				console.log({ validationErrors: extractedErrors, });
 				res.status(401).send(ERR_INVALID_CREDENTIALS);
 			}
 
@@ -128,9 +131,9 @@ module.exports = () => {
 				if (verifiedToken.value) {
 
 					if (verifiedToken.errName == 'TokenExpiredError') {
-						
+
 						const refTok = await db.findOne('refreshtoken', { email });
-					
+
 						if (refTok.value) {
 							console.error('Refresh Token Not Found.'.red);
 							return res.status(404).send(ERR_UNAUTHORIZED);
