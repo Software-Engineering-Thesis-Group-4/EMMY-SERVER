@@ -17,7 +17,7 @@ exports.loginRules = [
 exports.registerEmployeeRules = [
 	body('employee_id').trim().escape()
 		.notEmpty().withMessage('Register Error: Employee ID cannot be empty')
-		.isNumeric().withMessage('Register Error: Employee ID numerical only'),
+		.isNumeric({ no_symbols: true }).withMessage('Register Error: Employee ID numerical only'),
 
 	body('firstname').trim().escape()
 		.notEmpty().withMessage('Register Error: FirstName cannot be empty')
