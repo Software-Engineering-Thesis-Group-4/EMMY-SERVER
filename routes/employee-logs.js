@@ -163,6 +163,7 @@ module.exports = (io) => {
 
 				if (emotion === 1 || emotion === 2) { //angry and sad
 					save_emotionNotif(emotion, log.output.employeeRef._id); // employeeID == employeeLog ng id
+					io.sockets.emit('newEmotionNotification')
 				}
 
 				switch (status) {
