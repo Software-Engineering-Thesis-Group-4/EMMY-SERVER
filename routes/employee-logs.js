@@ -11,6 +11,9 @@ const db = require('../utility/mongooseQue');
 const { save_emotionNotif } = require('../utility/notificationHandler');
 const { verifyAdmin, verifyUser_GET, verifyAdmin_GET } = require('../utility/authUtil');
 const leaderBoard = require('../utility/leaderBoards');
+
+const { scannerRules, validate } = require('../utility/validator');
+const { save_employeeNotif } = require('../utility/notificationHandler');
 const exportDb = require('../utility/export');
 
 module.exports = (io) => {
@@ -48,7 +51,7 @@ module.exports = (io) => {
 	Author:
 	Nathaniel Saludes
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/scanner', async (req, res) => {
+	router.post('/scanner', scannerRules, validate, async (req, res) => {
 		try {
 			const fingerprintNumber = req.body.enrollNumber;
 			let { status, message } = await handleEmployeeLog(io, fingerprintNumber);
@@ -87,7 +90,8 @@ module.exports = (io) => {
 				return res.status(404).send('Error deleting log(mark as deleted)');
 			}
 
-
+			// TODO
+			//save_employeeNotif("deleted", userId, id);
 			logger.employeelogsRelatedLog(userId, loggedInUsername, 0, empLog.output._id);
 			res.status(200);
 
@@ -128,7 +132,10 @@ module.exports = (io) => {
 				return res.status(404).send('Error on editing log.');
 			}
 
+			// TODO
+			//save_employeeNotif(action, admin_objectId, employee_objectId);
 			logger.employeelogsRelatedLog(userId, loggedInUsername, 1, empLog.output._id);
+			// notifHandler --> employeeNotif
 			res.status(200).send('Successfully edited employee log');
 
 		} catch (error) {
@@ -156,7 +163,7 @@ module.exports = (io) => {
 	router.patch('/sentiment', async (req, res) => {
 
 		try {
-			
+
 			const { emotion, employeeLog, status } = req.body;
 			let log = await db.findById('employeelog', employeeLog);
 

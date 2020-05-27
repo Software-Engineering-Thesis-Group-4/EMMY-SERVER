@@ -12,8 +12,50 @@ exports.loginRules = [
 ]
 
 // Prevent Stored/Database/Persistent XSS attack
-// Register New User
-exports.registerRules = [
+
+// Register new Employee
+exports.registerEmployeeRules = [
+	body('employee_id').trim().escape()
+		.notEmpty().withMessage('Register Error: Employee ID cannot be empty')
+		.isNumeric().withMessage('Register Error: Employee ID numerical only'),
+
+	body('firstname').trim().escape()
+		.notEmpty().withMessage('Register Error: FirstName cannot be empty')
+		.isAlpha().withMessage('Register Error: Employee FirstName Invalid Format'),
+
+	body('lastname').trim().escape()
+		.notEmpty().withMessage('Register Error: Employee LastName cannot be empty')
+		.isAlpha().withMessage('Register Error: Employee LastName Invalid Format'),
+
+
+	body('email').trim().escape()
+		.notEmpty().withMessage('Register Error: Email Address cannot be empty')
+		.isEmail().withMessage('Register Error: Invalid Email Format'),
+
+
+	body('isMale').trim().escape()
+		.notEmpty().withMessage('Register Error: Gender cannot be empty')
+		.isBoolean().withMessage('Register Error: Invalid Gender Format'),
+
+	body('employment_status').trim().escape()
+		.notEmpty().withMessage('Register Error: Employment Status cannot be empty')
+		.isNumeric().withMessage('Register Error: Employment Status numeric only'), //employmentStatus datatype?
+
+	body('department').trim().escape()
+		.notEmpty().withMessage('Register Error: Department cannot be empty')
+		.isAlpha().withMessage("Register Error: Invalid 'Department' Format"),
+
+	body('job_title').trim().escape()
+		.notEmpty().withMessage('Register Error: Job Title cannot be empty')
+		.isAlpha().withMessage('Register Error: Invalid Job Title Format'),
+
+	body('fingerprint_id').trim().escape()
+		.notEmpty().withMessage('Register Error: Fingerprint ID cannot be empty')
+		.isNumeric({ no_symbols: true }).withMessage('Register Error: Invalid Fingerprint ID Format'), // no symbols: true == negative or float number not allowed
+]
+
+// Register New Standard/Admin Account
+exports.registerUserRules = [
 	body('email').trim().escape()
 		.notEmpty().withMessage('Register Error: Email cannot be empty')
 		.isEmail().withMessage('Register Error: Invalid Email Format'),
@@ -75,12 +117,32 @@ exports.verifyTokenRules = [
 		.isEmail().withMessage('Verify Error: Not a valid email')
 ]
 
-exports.validate = (req, res, next) => {
-	let { errors } = validationResult(req);
+exports.scannerRules = [
+	body('enrollNumber').trim()
+	.notEmpty().withMessage('Scanner Error: Fingerprint Number cannot be empty')
+	.isNumeric().withMessage('Scanner Error: Invalid Fingerprint Number')
+]
 
-	if (errors.length > 0) {
-		console.log(errors);
+// exports.validate = (req, res, next) => {
+// 	let { errors } = validationResult(req);
+
+// 	if (errors.length > 0) {
+// 		console.log(errors);
+// 	}
+// 	if (errors)
+
+// 	return next();
+// }
+
+exports.validate = (req, res, next) => {
+	const errors = validationResult(req)
+
+	if(!errors.isEmpty()){
+		const extractedErrors = []
+		errors.array().map(err => extractedErrors.push({ [err.param]: err.msg }))
+
+		return res.status(422).json({ errors: extractedErrors, });
 	}
-	
+
 	return next();
-}
+ }
