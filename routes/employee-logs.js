@@ -174,11 +174,13 @@ module.exports = (io) => {
 					case "in":
 						await db.updateById('employeelog',employeeLog,{ emotionIn : emotion });
 						if(emotion === 1) leaderBoard.angryEmoIncrementer(log.output.employeeRef._id);
+						io.sockets.emit('employeeSentiment')
 						return res.sendStatus(200);
 
 					case "out":
 						await db.updateById('employeelog',employeeLog,{ emotionOut : emotion });
 						if(emotion === 1) autoEmail.putToEmailQueue(log.output.employeeRef._id);
+						io.sockets.emit('employeeSentiment')
 						return res.sendStatus(200);
 				}
 			}
