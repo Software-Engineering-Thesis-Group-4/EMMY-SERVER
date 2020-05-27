@@ -2,10 +2,14 @@
 
 db/backup/Emmy/*
 downloadables/*
+uploaded-images/*
+db-uploads/*
 
 # exception to the rule
 !db/backup/Emmy/.gitkeep
 !downloadables/.gitkeep
+!uploaded-images/.gitkeep
+!db-uploads/.gitkeep
 
 
 # Logs

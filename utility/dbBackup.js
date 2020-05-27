@@ -71,7 +71,7 @@ exports.dbRestore = async (files) => {
 
 	try {
 
-		const uploadPath = path.join(__dirname, '/../uploads/');
+		const uploadPath = path.join(__dirname, '/../db-uploads/');
 
 		let correctFormat = true;
 
