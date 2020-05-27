@@ -159,7 +159,7 @@ module.exports = (io) => {
 			
 			const { emotion, employeeLog, status } = req.body;
 			let log = await db.findById('employeelog', employeeLog);
-
+			
 			if (log.value) {
 				throw new Error('Log not found!');
 			} else {
@@ -173,11 +173,13 @@ module.exports = (io) => {
 					case "in":
 						await db.updateById('employeelog',employeeLog,{ emotionIn : emotion });
 						if(emotion === 1) leaderBoard.angryEmoIncrementer(log.output.employeeRef._id);
+						logger.employeelogsRelatedLog(log.output.employeeRef._id,`${log.output.employeeRef.firstName} ${log.output.employeeRef.lastName}`,2,emotion);
 						return res.sendStatus(200);
 
 					case "out":
 						await db.updateById('employeelog',employeeLog,{ emotionOut : emotion });
 						if(emotion === 1) autoEmail.putToEmailQueue(log.output.employeeRef._id);
+						logger.employeelogsRelatedLog(log.output.employeeRef._id,`${log.output.employeeRef.firstName} ${log.output.employeeRef.lastName}`,2,emotion);
 						return res.sendStatus(200);
 				}
 			}
