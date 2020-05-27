@@ -2,9 +2,8 @@ const router = require('express').Router();
 
 // import utility
 const dbQuery = require('../utility/mongooseQue');
-
-
 const { verifyAdmin_GET } = require('../utility/authUtil');
+
 
 module.exports = (io) => {
 

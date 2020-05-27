@@ -112,9 +112,9 @@ exports.employeeRelatedLog = async (loggerId,loggerUsername,log,emp,errMessage) 
 
      /*/======================================//
         TODO 
-        DONE LOGS : 7/9
+        DONE LOGS : 8/9
         
-        0,3,4,5,6,7,8,
+        0,1,3,4,5,6,7,8,
 
     //======================================/*/
 
