@@ -261,6 +261,7 @@ module.exports = (io) => {
 				//---------------- log -------------------//
 				logger.employeeRelatedLog(userId, loggedInUsername, 0);
 
+				io.sockets.emit('csvFileImportSuccess')
 				return res.status(200).send(isErr.message);
 			}
 
