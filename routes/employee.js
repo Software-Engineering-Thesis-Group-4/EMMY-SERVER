@@ -395,15 +395,15 @@ module.exports = (io) => {
 
 
 			const updatedEmp = await db.updateById('employee', employee_objectId, {
-				employee_id,
-				firstname,
-				lastname,
-				email,
-				isMale,
-				employment_status,
-				department,
-				job_title,
-				fingerprint_id
+				employeeId: employee_id,
+				firstName: firstname,
+				lastName: lastname,
+				email: email,
+				isMale: isMale,
+				employmentStatus: employment_status,
+				department: department,
+				jobTitle: job_title,
+				fingerprintId: fingerprint_id
 			});
 
 
