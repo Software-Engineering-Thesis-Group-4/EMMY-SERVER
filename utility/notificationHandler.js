@@ -41,15 +41,15 @@ exports.save_emotionNotif = async (emotion, employee_objectId) => {
 	try {
 
 		//const employeeObjectID = await db.findOne('Employee',{ employeeId : employeeID });
-		const employeeObjectID = await db.findById('employee', employee_objectId);
+		const employee = await db.findById('employee', employee_objectId);
 
-		if(employeeObjectID.value){
+		if(employee.value){
 			console.log('No document found')
 		} else {
 
 			const event = await db.save('emotionnotification',{
 				dateCreated: new Date(),
-				employee: employeeObjectID.output._id,
+				employee: employee.output._id,
 				emotion: emotion
 			})
 
