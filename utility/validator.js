@@ -39,7 +39,7 @@ exports.registerEmployeeRules = [
 
 	body('employment_status').trim().escape()
 		.notEmpty().withMessage('Employment Status cannot be empty')
-		.isAlpha().withMessage('Invalid Employment Status'), //employmentStatus datatype?
+		.isNumeric().withMessage('Invalid Employment Status'), //employmentStatus datatype?
 
 	body('department').trim().escape()
 		.notEmpty().withMessage('Department cannot be empty')
@@ -47,7 +47,7 @@ exports.registerEmployeeRules = [
 
 	body('job_title').trim().escape()
 		.notEmpty().withMessage('Job Title cannot be empty')
-		.isAlpha().withMessage('Invalid Job Title Format'),
+		.isString().withMessage('Invalid Job Title Format'),
 
 	body('fingerprint_id').trim().escape()
 		.notEmpty().withMessage('Fingerprint ID cannot be empty')
@@ -144,11 +144,11 @@ exports.updateUserInfoRules = [
 exports.updatePasswordRules = [
 	body('password').trim()
 	.notEmpty().withMessage('Password cannot be empty')
-	.isAlphaNumeric().withMessage('Invalid Password Format'),
+	.isAlphanumeric().withMessage('Invalid Password Format'),
 
 	body('confirmPassword').trim()
 	.notEmpty().withMessage('Confirm Password cannot be empty')
-	.isAlphaNumeric().withMessage('Invalid Confirm Password Format'),
+	.isAlphanumeric().withMessage('Invalid Confirm Password Format'),
 ]
 
 exports.resetPassFinalRules = [
@@ -156,11 +156,11 @@ exports.resetPassFinalRules = [
 	.notEmpty().withMessage('User cannot be empty'),
 
 	body('password').trim()
-	.isAlphaNumeric().withMessage('Invalid Password Format'),
+	.isAlphanumeric().withMessage('Invalid Password Format'),
 
 	body('confirmPassword').trim()
 	.notEmpty().withMessage('Confirm Password cannot be empty')
-	.isAlphaNumeric().withMessage('Invalid Confirm Password Format'),
+	.isAlphanumeric().withMessage('Invalid Confirm Password Format'),
 ]
 
 
