@@ -15,6 +15,8 @@ const { validationResult } = require('express-validator');
 const db = require('../utility/mongooseQue');
 const { verifyAdmin, verifyAdmin_GET, verifyUser, verifyUser_GET } = require('../utility/authUtil');
 const accountSettings = require('../utility/accountSettings');
+const { EmotionNotification } = require('../db/models/EmotionNotification');
+const { EmployeeDataNotification } = require('../db/models/EmployeeDataNotif');
 
 // error messages
 const ERR_INVALID_CREDENTIALS = "Invalid email or password.";
@@ -218,6 +220,60 @@ module.exports = (io) => {
 			return res.status(500).send("Error Server: Could not fetch Employee CRUD Notifications");
 		}
 	});
+
+	router.post('/seenEmotionNotifs', async(req, res) => {
+		try {
+			let { notifArray, email } = req.body;
+			//console.log(typeof notifArray); //test
+			//console.log(notifArray); //test
+			//console.log(email); //test
+
+			notifArray.forEach (async _id => {
+				let matchedDocs = await EmotionNotification.findById(_id);
+				matchedDocs.seenBy.push(email);
+				matchedDocs.save();
+				//console.log(matchedDocs); //test
+			});
+
+		} catch(error){
+			console.log(error);
+			console.log("Unable to set seenBy[] for Emotion notifs");
+			res.status(500).send("Unable to set seenBy[] for Emotion notifs")
+		}
+
+	});
+
+	router.post('/seenEmployeeNotifs', async(req, res) => {
+		try {
+			let { notifArray, email } = req.body;
+			//console.log(typeof notifArray); //test
+			//console.log(notifArray); //test
+			//console.log(email); //test
+
+			notifArray.forEach(async _id => {
+				let matchedDocs = await EmployeeDataNotification.findById(_id);
+				matchedDocs.seenBy.push(email);
+				matchedDocs.save();
+				//console.log(matchedDocs); //test
+			});
+
+		} catch(error){
+			console.log(error);
+			console.log("Unable to set seenBy[] for Employee notifs");
+			res.status(500).send("Unable to set seenBy[] for Employee notifs");
+		}
+
+	});
+
+	// router.post('/setSettings', (req, res) => {
+	// 	try{
+
+	// 	} catch(error){
+
+	// 	};
+
+	// });
+
 
 
 	/* ---------------------------------------------------------------------------------------------------------------------
@@ -464,7 +520,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.patch('/change-user-profile', verifyUser, async (req, res) => {
+	router.patch('/change-user-profile', verifyUser, registerUserRules, validate, async (req, res) => {
 
 		try{
 			// user credentials from request body
