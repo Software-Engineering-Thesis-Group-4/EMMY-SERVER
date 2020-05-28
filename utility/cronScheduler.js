@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const dbBackup = require('./dbbackup.js');
 const autoEmail = require('./autoEmail');
+const appSettings = require('./appSettings');
 const leaderboard = require('./leaderBoards')
 const logger = require('./logger');
 
@@ -82,7 +83,7 @@ cron.schedule(DB_BACKUP_SCHEDULE, async () => {
 // AUTOMATED EMAIL DATE CHECKER
 // EVERY 2:00 am
 cron.schedule(DATE_CHECKER_SCHEDULE, () => {
-	autoEmail.startEndDateChecker();
+	if(appSettings.activateAutoEmailSystem) autoEmail.startEndDateChecker();
 },{ 
 	scheduled : true, 
 	timezone  : "Asia/Kuala_Lumpur" 

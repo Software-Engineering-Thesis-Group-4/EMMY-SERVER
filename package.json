@@ -39,8 +39,7 @@
 		"rate-limit-mongo": "^2.1.0",
 		"replace-string": "^3.0.0",
 		"socket.io": "^2.3.0",
-		"zip-a-folder": "0.0.12",
-		"zlib": "^1.0.5"
+		"zip-a-folder": "0.0.12"
 	},
 	"devDependencies": {
 		"axios": "^0.19.2",
