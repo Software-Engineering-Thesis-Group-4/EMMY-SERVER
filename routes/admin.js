@@ -99,7 +99,7 @@ module.exports = (io) => {
 
 	/*----------------------------------------------------------------------------------------------------------------------
   Route:
-  GET /api/appsettings/
+  GET /api/admin
 	
   Description:
 	Route for getting all application settings
@@ -108,10 +108,11 @@ module.exports = (io) => {
   Michael Ong
   ----------------------------------------------------------------------------------------------------------------------*/
 	router.get('/', verifyAdmin_GET, async (req, res) => {
-		
-		try{
-			return res.status(200).send({ emailTemplateTemplate : appSettings.emailTemplate, 
-										autoEmailButton : appSettings.activateAutoEmailSystem });
+		try {
+			return res.status(200).send({
+				emailTemplateTemplate: appSettings.emailTemplate,
+				autoEmailButton: appSettings.activateAutoEmailSystem
+			});
 		} catch (err) {
 			console.log(err);
 			return res.status(500).send('Error getting application settings');
