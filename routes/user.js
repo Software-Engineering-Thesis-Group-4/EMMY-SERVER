@@ -10,7 +10,7 @@ const isOnline = require('is-online');
 const logger = require('../utility/logger');
 const { encrypt, decrypter } = require('../utility/aes');
 const mailer = require('../utility/mailer');
-const { registerUserRules, resetPassRules, updateUserInfoRules, resetKeyRules, validate } = require("../utility/validator");
+const { registerUserRules, resetPassRules, updateUserInfoRules, resetKeyRules, validate, resetPassFinalRules, updatePasswordRules } = require("../utility/validator");
 const { validationResult } = require('express-validator');
 const db = require('../utility/mongooseQue');
 const { verifyAdmin, verifyAdmin_GET, verifyUser, verifyUser_GET } = require('../utility/authUtil');
@@ -476,7 +476,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.patch('/change-password', verifyUser, updatePasswordRules, validate, async (req, res) => {
+	router.post('/change-password', verifyUser, updatePasswordRules, validate, async (req, res) => {
 
 		try{
 			// user credentials from request body
