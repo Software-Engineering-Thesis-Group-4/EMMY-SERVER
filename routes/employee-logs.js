@@ -302,7 +302,7 @@ module.exports = (io) => {
 			});
 
 			const madePdf = exportDb.toPdf(arrEmp,moment(startLogDate).format('ll'),moment(endLogDate).format('ll'));
-			console.log(madePdf)
+			
 			if(madePdf.value){
 				logger.employeeRelatedLog(userId,loggedInUsername,2,null,madePdf.message);
 				return res.status(500).send('Error making pdf file');
