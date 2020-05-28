@@ -7,7 +7,7 @@ exports.loginRules = [
 		.isEmail().withMessage('Invalid Email Format'),
 
 	body('password').escape()
-		.notEmpty().withMessage('password cannot be empty')
+		.notEmpty().withMessage('Password cannot be empty')
 		.isAlphanumeric().withMessage('Invalid Password Format'),
 ]
 
@@ -17,7 +17,7 @@ exports.loginRules = [
 exports.registerEmployeeRules = [
 	body('employee_id').trim().escape()
 		.notEmpty().withMessage('Employee ID cannot be empty')
-		.isNumeric({ no_symbols: true }).withMessage('Employee ID numerical only'),
+		.isNumeric({ no_symbols: true }).withMessage('Invalid Employee ID format'),
 
 	body('firstname').trim().escape()
 		.notEmpty().withMessage('FirstName cannot be empty')
@@ -39,11 +39,11 @@ exports.registerEmployeeRules = [
 
 	body('employment_status').trim().escape()
 		.notEmpty().withMessage('Employment Status cannot be empty')
-		.isNumeric().withMessage('Employment Status numeric only'), //employmentStatus datatype?
+		.isAlpha().withMessage('Invalid Employment Status'), //employmentStatus datatype?
 
 	body('department').trim().escape()
 		.notEmpty().withMessage('Department cannot be empty')
-		.isAlpha().withMessage("Invalid 'Department' Format"),
+		.isString().withMessage('Invalid Department Format'),
 
 	body('job_title').trim().escape()
 		.notEmpty().withMessage('Job Title cannot be empty')
@@ -109,19 +109,60 @@ exports.logoutRules = [
 
 exports.verifyTokenRules = [
 	body('access_token')
-		.notEmpty().withMessage('Token Empty')
-		.isJWT().withMessage('Not a valid token'),
+		.notEmpty().withMessage('Token cannot be empty')
+		.isJWT().withMessage('Invalid Token'),
 
 	body('email')
 		.trim().notEmpty().withMessage('Email cannot be empty')
-		.isEmail().withMessage('Not a valid email')
+		.isEmail().withMessage('Token email invalid format')
 ]
 
 exports.scannerRules = [
 	body('enrollNumber').trim()
-		.notEmpty().withMessage('Fingerprint Number cannot be empty')
-		.isNumeric().withMessage('Invalid Fingerprint Number')
+	.notEmpty().withMessage('Fingerprint Number cannot be empty')
+	.isNumeric().withMessage('Invalid Fingerprint Number')
 ]
+
+exports.updateUserInfoRules = [
+	body('firstname').trim()
+	.notEmpty().withMessage('Firstname cannot be empty')
+	.isAlpha().withMessage('Invalid Fingerprint Number'),
+
+	body('lastname').trim()
+	.notEmpty().withMessage('Lastname cannot be empty')
+	.isAlpha().withMessage('Invalid Fingerprint Number'),
+
+	body('username').trim()
+	.notEmpty().withMessage('Username cannot be empty')
+	.isAlpha().withMessage('Invalid Fingerprint Number'),
+
+	body('email').trim()
+	.notEmpty().withMessage('Email cannot be empty')
+	.isEmail().withMessage('Invalid Email Format'),
+]
+
+exports.updatePasswordRules = [
+	body('password').trim()
+	.notEmpty().withMessage('Password cannot be empty')
+	.isAlphaNumeric().withMessage('Invalid Password Format'),
+
+	body('confirmPassword').trim()
+	.notEmpty().withMessage('Confirm Password cannot be empty')
+	.isAlphaNumeric().withMessage('Invalid Confirm Password Format'),
+]
+
+exports.resetPassFinalRules = [
+	body('user').trim()
+	.notEmpty().withMessage('User cannot be empty'),
+
+	body('password').trim()
+	.isAlphaNumeric().withMessage('Invalid Password Format'),
+
+	body('confirmPassword').trim()
+	.notEmpty().withMessage('Confirm Password cannot be empty')
+	.isAlphaNumeric().withMessage('Invalid Confirm Password Format'),
+]
+
 
 // exports.validate = (req, res, next) => {
 // 	let { errors } = validationResult(req);

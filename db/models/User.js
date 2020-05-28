@@ -32,10 +32,6 @@ const UserSchema = Schema({
 	photo: {
 		type: String,
 		default: null,
-   },
-   isActive: {
-      type: Boolean,
-      default : false
    }
 });
 
