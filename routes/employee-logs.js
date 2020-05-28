@@ -191,7 +191,7 @@ module.exports = (io) => {
 
 
 	/*----------------------------------------------------------------------------------------------------------------------
-	POST /api/employeelogs/export-csv
+	GET /api/employeelogs/export-csv
 
 	Description:
 	Api for exporting employee logs through csv
@@ -200,7 +200,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/export-csv', verifyAdmin_GET,async (req, res) => {
+	router.get('/export-csv', verifyAdmin_GET, async (req, res) => {
 
 		try {
 
@@ -224,12 +224,13 @@ module.exports = (io) => {
 			empLogs.output.forEach(element => {
 				
 				if(element.dateCreated >= startLogDate && element.dateCreated <= endLogDate){
+					
 					arrEmp.push({ employee 		: `${element.employeeRef.firstName} ${element.employeeRef.lastName}`,
-									in  		: moment(element.in).format('lll'),
-									out 		: moment(element.out).format('lll'),
-									emotionIn 	: element.emotionIn,
-									emotionOut 	: element.emotionOut,
-									dateCreated : moment(element.dateCreated).format('lll')
+									in  		: moment(element.in).format('LT'),
+									out 		: moment(element.out).format('LT'),
+									emotionIn 	: exportDb.emotionPicker(element.emotionIn),
+									emotionOut 	: exportDb.emotionPicker(element.emotionOut),
+									dateCreated : moment(element.dateCreated).format('ll')
 								})
 				}
 			});
@@ -252,6 +253,85 @@ module.exports = (io) => {
 
 	});
 
+	/*----------------------------------------------------------------------------------------------------------------------
+	POST /api/employeelogs/export-pdf
+
+	Description:
+	Api for making pdf file from exported employee logs
+
+	Author:
+	Michael Ong
+	----------------------------------------------------------------------------------------------------------------------*/
+	router.post('/export-pdf', verifyAdmin, async (req,res) => {
+
+		try{
+
+			const { userId, loggedInUsername, startDate, endDate } = req.body;
+		
+			const empLogs = await db.findAll('employeelog');
+
+			const startLogDate = new Date(startDate)
+			const endLogDate = new Date(endDate)
+
+			let arrEmp = [];
+
+			empLogs.output.forEach(element => {
+
+				if(element.dateCreated >= startLogDate && element.dateCreated <= endLogDate){
+					arrEmp.push({ employee 		: `${element.employeeRef.firstName} ${element.employeeRef.lastName}`,
+								in  		: moment(element.in).format('LT'),
+								out 		: moment(element.out).format('LT'),
+								emotionIn 	: element.emotionIn,
+								emotionOut 	: element.emotionOut,
+								dateCreated : moment(element.dateCreated).format('ll')
+					})
+				}
+			});
+
+			const madePdf = exportDb.toPdf(arrEmp,moment(startLogDate).format('ll'),moment(endLogDate).format('ll'));
+			console.log(madePdf)
+			if(madePdf.value){
+				logger.employeeRelatedLog(userId,loggedInUsername,2,null,madePdf.message);
+				return res.status(500).send('Error making pdf file');
+			}
+
+			
+			return res.status(200).send('Done making Pdf file')
+		} catch (err) {
+			console.log(err)
+			const { userId, loggedInUsername } = req.body;
+			logger.employeeRelatedLog(userId,loggedInUsername,2,null,err.message);
+			res.status(500).send('Error making pdf')
+		} 
+	})
+
+
+	/*----------------------------------------------------------------------------------------------------------------------
+	GET /api/employeelogs/export-pdf-download
+
+	Description:
+	Api for downloading employee logs through pdf
+
+
+	Author:
+	Michael Ong
+	----------------------------------------------------------------------------------------------------------------------*/
+	router.get('/export-pdf-download', verifyAdmin_GET, (req,res) => {
+
+		try{
+
+			const { userId, loggedInUsername } = req.params;
+
+			const pathToDownload = path.join(__dirname,'../downloadables/employee-logs.pdf');
+			logger.employeeRelatedLog(userId,loggedInUsername,2);
+			return res.download(pathToDownload);
+		} catch (err) {
+			console.log(err)
+			const { userId, loggedInUsername } = req.params;
+			logger.employeeRelatedLog(userId,loggedInUsername,2,null,madePdf.message);
+			return res.status(500).send('Error downloading pdf')
+		}
+	})
 
 	return router;
 }

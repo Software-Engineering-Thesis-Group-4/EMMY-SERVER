@@ -135,7 +135,7 @@ exports.employeeRelatedLog = async (loggerId,loggerUsername,log,emp,errMessage) 
                 actionLog   = pickActionLog(4);
                 break;
             case 2  : 
-                audLog      = `${logUsername} exported PDF file.`; 
+                audLog      = `${loggerUsername} exported PDF file.`; 
                 actionLog   = pickActionLog(4);
                 break;
 
