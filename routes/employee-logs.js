@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const moment = require('moment');
+const fs = require('fs');
 
 // import utilities
 const { handleEmployeeLog } = require('../utility/EmployeeLogHandler.js');
@@ -253,6 +254,7 @@ module.exports = (io) => {
 
 	});
 
+	
 	/*----------------------------------------------------------------------------------------------------------------------
 	POST /api/employeelogs/export-pdf
 
@@ -323,12 +325,18 @@ module.exports = (io) => {
 			const { userId, loggedInUsername } = req.params;
 
 			const pathToDownload = path.join(__dirname,'../downloadables/employee-logs.pdf');
+
+			if (!fs.existsSync(pathToDownload)){
+				logger.employeeRelatedLog(userId,loggedInUsername,2,null,'No downloaded pdf file');
+				return res.status(404).send('No downloaded pdf file');
+			}
+
 			logger.employeeRelatedLog(userId,loggedInUsername,2);
 			return res.download(pathToDownload);
 		} catch (err) {
 			console.log(err)
 			const { userId, loggedInUsername } = req.params;
-			logger.employeeRelatedLog(userId,loggedInUsername,2,null,madePdf.message);
+			logger.employeeRelatedLog(userId,loggedInUsername,2,null,err.message);
 			return res.status(500).send('Error downloading pdf')
 		}
 	})
