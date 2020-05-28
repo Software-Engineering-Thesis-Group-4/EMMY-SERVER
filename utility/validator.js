@@ -43,7 +43,7 @@ exports.registerEmployeeRules = [
 
 	body('department').trim().escape()
 		.notEmpty().withMessage('Department cannot be empty')
-		.isAlpha().withMessage('Invalid Department Format'),
+		.isString().withMessage('Invalid Department Format'),
 
 	body('job_title').trim().escape()
 		.notEmpty().withMessage('Job Title cannot be empty')
@@ -98,7 +98,7 @@ exports.resetKeyRules = [
 	// validate input code from sent email. 'Code' possibly alphanumeric only
 	body('key').trim().escape()
 		.notEmpty().withMessage('Key cannot be empty')
-		.isAlphanumeric().withMessage('Key Invalid Format'),
+		.isAlphanumeric().withMessage('Numbers and Letters only'),
 ]
 
 exports.logoutRules = [
@@ -178,12 +178,10 @@ exports.resetPassFinalRules = [
 exports.validate = (req, res, next) => {
 	const errors = validationResult(req)
 
-	if(!errors.isEmpty()){
-		const extractedErrors = []
-		errors.array().map(err => extractedErrors.push({ [err.param]: err.msg }))
+	if (!errors.isEmpty()) {
 
-		return res.status(422).json({ errors: extractedErrors, });
+		return res.status(422).json(errors.mapped());
 	}
 
 	return next();
- }
+}

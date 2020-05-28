@@ -1,7 +1,7 @@
 const db = require('./mongooseQue');
 const mailer = require('./mailer');
 const logger = require('./logger');
-
+const appSettings = require('./appSettings');
 ////--------------------------------- GLOBAL VARIABLES ---------------------------------
 // TODO: LEADERBOARDS
 let startDate   = new Date();
@@ -14,21 +14,6 @@ endDate.setDate(endDate.getDate() + dayDuration);
 ////--------------------------------- GLOBAL VARIABLES ---------------------------------
 
 
-
-////--------------------------------- AUTO EMAIL SETTINGS ---------------------------------
-
-// email template
-exports.emailTemplate = `<p>We noticed that you are not feeling alright this past few days.` 
-						+ ` Please know that your HR team cares for you and we'd like to hear you out.</p>\n`
-						+ `<p>Having said, may we invite you on your convenient availability over the next couple`
-						+ ` of weeks for a casual and friendly chat? Please reply to (email) to set an appointment.</p>\n`
-                        + `<p>Thanks!</p>\n`
-                        + `<p>See you!</p>`;
-
-// button for turning auto email system on or off (default on)
-exports.activateAutoEmailSystem = true;
-
-////--------------------------------- AUTO EMAIL SETTINGS ---------------------------------
 
 
 
@@ -86,7 +71,7 @@ exports.putToEmailQueue = async (employeeId) => {
 
     try{
         
-        if(this.activateAutoEmailSystem == true){
+        if(appSettings.activateAutoEmailSystem){
            
             
             const employee = await db.findById('employee',employeeId);

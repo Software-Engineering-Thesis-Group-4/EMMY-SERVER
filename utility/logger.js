@@ -135,7 +135,7 @@ exports.employeeRelatedLog = async (loggerId,loggerUsername,log,emp,errMessage) 
                 actionLog   = pickActionLog(4);
                 break;
             case 2  : 
-                audLog      = `${logUsername} exported PDF file.`; 
+                audLog      = `${loggerUsername} exported PDF file.`; 
                 actionLog   = pickActionLog(4);
                 break;
 
@@ -194,13 +194,13 @@ exports.employeeRelatedLog = async (loggerId,loggerUsername,log,emp,errMessage) 
 };
 
 
-exports.employeelogsRelatedLog = async (loggerId,loggerUsername,log,employeeLogId,errMessage) => {
+exports.employeelogsRelatedLog = async (loggerId,loggerUsername,log,input,errMessage) => {
 
     /*/======================================//
        
-       DONE LOGS : 2/2
+       DONE LOGS : 3/3
         
-        DONE
+        0,1,2
 
    //======================================/*/
 
@@ -214,12 +214,35 @@ exports.employeelogsRelatedLog = async (loggerId,loggerUsername,log,employeeLogI
 
             //admin privileges
             case 0  : 
-                audLog      = `${loggerUsername} deleted employee log ${employeeLogId}.`; 
+                audLog      = `${loggerUsername} deleted employee log ${input}.`; 
                 actionLog   = pickActionLog(1);
                 break;
             case 1  : 
-                audLog      = `${loggerUsername} edited employee log ${employeeLogId}.`; 
+                audLog      = `${loggerUsername} edited employee log ${input}.`; 
                 actionLog   = pickActionLog(2);
+                break;
+            case 2  : 
+                switch(input){
+                    case 0 :
+                        audLog      = `${actionMaker} didn't submit any sentiment`; 
+                        break;
+                    case 1 :
+                        audLog      = `${loggerUsername} entered angry sentiment`; 
+                        break;
+                    case 2 :
+                        audLog      = `${loggerUsername} entered sad sentiment`; 
+                        break;
+                    case 3 :
+                        audLog      = `${loggerUsername} entered ok sentiment`; 
+                        break;
+                    case 4 :
+                        audLog      = `${loggerUsername} entered happy sentiment`; 
+                        break;
+                    case 5 :
+                        audLog      = `${loggerUsername} entered amazing sentiment`; 
+                        break;
+                }
+                actionLog   = pickActionLog(0);
                 break;
 
             default : audLog = `Unknown employee-log related log for user ${loggerUsername}.` ;                
@@ -284,7 +307,7 @@ exports.serverRelatedLog = async (output,log,errMessage) => {
                 break;
             case 4  : 
                 audLog      = `Updating fields of ${output} in the database`; 
-                actionLog   = pickActionLog(9);
+                actionLog   = pickActionLog(2);
                 break;
             case 5  : 
                 audLog      = `${output} submitted key for reset password`; 
@@ -320,4 +343,5 @@ exports.serverRelatedLog = async (output,log,errMessage) => {
         console.log(error);
     }  
 };
+
 

@@ -207,7 +207,7 @@ module.exports = (io) => {
 
 			const saveNotif = await save_employeeNotif("create", userId, newEmployee.output._id); //
 
-			if(saveNotif.value){
+			if (saveNotif.value) {
 				return res.status(400).send("Unable to save notif");
 			}
 
@@ -238,8 +238,7 @@ module.exports = (io) => {
 
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	// TODO: Sanitize Imported CSV
-	router.post('/csv/import', verifyUser, async (req, res) => {
+	router.post('/csv/import', verifyAdmin, async (req, res) => {
 
 		try {
 
@@ -331,7 +330,7 @@ module.exports = (io) => {
 		try {
 
 			// user credentials from req body
-			const { userId, loggedInUsername } = req.body;
+			const { userId, loggedInUsername } = req.query;
 
 			let id = req.params.id;
 			const emp = await db.updateById('employee', id, { terminated: true });
@@ -348,7 +347,7 @@ module.exports = (io) => {
 				// console.log(userId);
 				// console.log(id);
 
-				if(saveNotif.value){
+				if (saveNotif.value) {
 					return res.status(400).send("Unable to save notif");
 				}
 				return res.status(200).send('Successfully deleted employee');
@@ -420,7 +419,7 @@ module.exports = (io) => {
 			//TODO: add notif
 			const saveNotif = await save_employeeNotif("update", userId, employee_objectId);
 
-			if(saveNotif.value){
+			if (saveNotif.value) {
 				return res.status(400).send("Unable to save notif");
 			}
 
@@ -446,18 +445,18 @@ module.exports = (io) => {
 			const employee = await db.findOne('Employee', { employeeId: empId })
 			console.log("Employee ID: " + empId);
 
-			if(employee.value){
+			if (employee.value) {
 				console.log("No Employee Found");
 				res.status(404).send("Employee Not Found");
-			} else{
+			} else {
 				console.log("Employee Found");
 
 				// fetch employeeLogs base on employeeRef ---> res.send({employee, employeeLogs})
-				const emplog = await db.find('EmployeeLog', { employeeRef: employee.output._id});
-				if(emplog.value){
+				const emplog = await db.find('EmployeeLog', { employeeRef: employee.output._id });
+				if (emplog.value) {
 					console.error("Logs Not Found");
 					res.status(404).send("Employee Logs not found");
-				}else {
+				} else {
 					console.log("Logs Found");
 					res.status(200).send({ employee: employee.output, emplog: emplog.output });
 				}
@@ -494,46 +493,44 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/change-employee-profile-picture/:id', async (req,res) => {
-
-		try{
+	router.post('/change-employee-profile-picture/:id', verifyAdmin, async (req, res) => {
+		try {
 
 			const { loggedInUsername, userId } = req.body;
 
 			const empId = req.params;
 
-			if(!req.files){
+			if (!req.files) {
 				return res.status(204).send('Not selected a file or file is empty! Please select a file');
 			}
 
 			const empPhoto = req.files.photo;
 			const fileType = empPhoto.mimetype.split('/')[1];
 
-			const emp = await db.findById('employee',empId);
+			const emp = await db.findById('employee', empId);
 
 
-			const pathToImage = path.join(__dirname,`../images/employees/${emp.output._id}.${fileType}`);
+			const pathToImage = path.join(__dirname, `../images/employees/${emp.output._id}.${fileType}`);
 			await imageFile.mv(pathToImage);
 
 
-			const updatedEmp = await db.updateById('employee',empId,{ photo : empId + fileType })
+			const updatedEmp = await db.updateById('employee', empId, { photo: empId + fileType })
 
-			if(updatedEmp.value){
-				logger.employeeRelatedLog(userId,loggedInUsername,5,undefined,updatedEmp.message)
+			if (updatedEmp.value) {
+				logger.employeeRelatedLog(userId, loggedInUsername, 5, undefined, updatedEmp.message)
 				return res.status(400).send('Error uploading employee photo');
 			}
 
-			logger.employeeRelatedLog(userId,loggedInUsername,5,`${emp.output.firstName} ${emp.output.lastName}`)
+			logger.employeeRelatedLog(userId, loggedInUsername, 5, `${emp.output.firstName} ${emp.output.lastName}`)
 			return res.status(200).send('Successfully updated employee photo');
 
 
 		} catch (err) {
-			const { loggedInUsername, userId } = req.body;s
+			const { loggedInUsername, userId } = req.body; s
 			console.log(err);
-			logger.employeeRelatedLog(userId,loggedInUsername,5,undefined,updatedEmp.message)
+			logger.employeeRelatedLog(userId, loggedInUsername, 5, undefined, updatedEmp.message)
 			res.status(500).send("Server Error");
 		}
-
 	})
 
 

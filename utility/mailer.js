@@ -1,5 +1,5 @@
 const nodemailer = require("nodemailer");
-const autoEmailSettings = require('./autoEmail');
+const appSettings = require('./appSettings');
 
 const gmail = nodemailer.createTransport({
 	service: 'Gmail',
@@ -63,7 +63,7 @@ exports.sendAutoEmail = async (sendToEmail, employeeFirstName) => {
 
 	try{
 
-		const message = `<h3>Dear ${employeeFirstName}</h3>` + autoEmailSettings.emailTemplate;
+		const message = `<h3>Dear ${employeeFirstName}</h3>` + appSettings.emailTemplate;
 
 		await gmail.sendMail({
 			from    : 'Emmy',

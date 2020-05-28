@@ -1,8 +1,9 @@
 const router = require('express').Router();
 
-const autoEmail = require('../utility/autoEmail');
+// utilities
+const appSettings = require('../utility/appSettings');
 const logger = require('../utility/logger');
-const { verifyAdmin } = require('../utility/authUtil');
+const { verifyAdmin, verifyAdmin_GET } = require('../utility/authUtil');
 
 module.exports = (io) => {
 
@@ -28,7 +29,7 @@ module.exports = (io) => {
 
 			const { emailTemplate } = req.body
 
-			const isErr = await autoEmail.changeEmailTemplate(emailTemplate);
+			const isErr = await appSettings.changeEmailTemplate(emailTemplate);
 
 			if (isErr.value) {
 
@@ -72,7 +73,7 @@ module.exports = (io) => {
 			// autoEmailStatus must be boolean
 			const { autoEmailStatus } = req.body
 
-			const isErr = await autoEmail.turnOnOffAutoEmail(autoEmailStatus);
+			const isErr = await appSettings.turnOnOffAutoEmail(autoEmailStatus);
 
 			if (isErr.value) {
 
@@ -106,9 +107,15 @@ module.exports = (io) => {
   Author:
   Michael Ong
   ----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/', async (req, res) => {
-
-
+	router.get('/', verifyAdmin_GET, async (req, res) => {
+		
+		try{
+			return res.status(200).send({ emailTemplateTemplate : appSettings.emailTemplate, 
+										autoEmailButton : appSettings.activateAutoEmailSystem });
+		} catch (err) {
+			console.log(err);
+			return res.status(500).send('Error getting application settings');
+		}
 	});
 
 	return router;
