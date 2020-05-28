@@ -79,7 +79,7 @@ module.exports = (io) => {
 		try {
 
 			// user credentials
-			const { loggedInUsername, userId } = req.body;
+			const { loggedInUsername, userId } = req.query;
 
 			let id = req.params.id;
 
@@ -179,14 +179,14 @@ module.exports = (io) => {
 				switch (status) {
 
 					case "in":
-						await db.updateById('employeelog',employeeLog,{ emotionIn : emotion });
-						if(emotion === 1) leaderBoard.angryEmoIncrementer(log.output.employeeRef._id);
+						await db.updateById('employeelog', employeeLog, { emotionIn: emotion });
+						if (emotion === 1) leaderBoard.angryEmoIncrementer(log.output.employeeRef._id);
 						io.sockets.emit('employeeSentiment')
 						return res.sendStatus(200);
 
 					case "out":
-						await db.updateById('employeelog',employeeLog,{ emotionOut : emotion });
-						if(emotion === 1) autoEmail.putToEmailQueue(log.output.employeeRef._id);
+						await db.updateById('employeelog', employeeLog, { emotionOut: emotion });
+						if (emotion === 1) autoEmail.putToEmailQueue(log.output.employeeRef._id);
 						io.sockets.emit('employeeSentiment')
 						return res.sendStatus(200);
 				}
@@ -208,53 +208,54 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/export-csv', verifyAdmin_GET,async (req, res) => {
+	router.get('/export-csv', verifyAdmin_GET, async (req, res) => {
 
 		try {
 
 			const { userId, loggedInUsername, startDate, endDate } = req.params;
-			
-		
+
+
 			const pathToDownload = path.join(__dirname, `/../downloadables/employee-logs.csv`)
 			const empLogs = await db.findAll('employeelog');
-			
-			
+
+
 			const startLogDate = new Date(startDate)
 			const endLogDate = new Date(endDate)
-			
 
-			if(empLogs.value){
-				logger.employeeRelatedLog(userId,loggedInUsername,1,null,empLogs.message) 
+
+			if (empLogs.value) {
+				logger.employeeRelatedLog(userId, loggedInUsername, 1, null, empLogs.message)
 			}
 
 			let arrEmp = [];
 
 			empLogs.output.forEach(element => {
-				
-				if(element.dateCreated >= startLogDate && element.dateCreated <= endLogDate){
-					arrEmp.push({ employee 		: `${element.employeeRef.firstName} ${element.employeeRef.lastName}`,
-									in  		: moment(element.in).format('lll'),
-									out 		: moment(element.out).format('lll'),
-									emotionIn 	: element.emotionIn,
-									emotionOut 	: element.emotionOut,
-									dateCreated : moment(element.dateCreated).format('lll')
-								})
+
+				if (element.dateCreated >= startLogDate && element.dateCreated <= endLogDate) {
+					arrEmp.push({
+						employee: `${element.employeeRef.firstName} ${element.employeeRef.lastName}`,
+						in: moment(element.in).format('lll'),
+						out: moment(element.out).format('lll'),
+						emotionIn: element.emotionIn,
+						emotionOut: element.emotionOut,
+						dateCreated: moment(element.dateCreated).format('lll')
+					})
 				}
 			});
 
 			const exportedCsv = await exportDb.toCsv(arrEmp);
-			
-			if(exportedCsv.value){
-				logger.employeeRelatedLog(userId,loggedInUsername,1,null,exportedCsv.message)
+
+			if (exportedCsv.value) {
+				logger.employeeRelatedLog(userId, loggedInUsername, 1, null, exportedCsv.message)
 				return res.status(500).send(exportedCsv.message);
 			}
-			
-			logger.employeeRelatedLog(userId,loggedInUsername,1);
+
+			logger.employeeRelatedLog(userId, loggedInUsername, 1);
 			return res.download(pathToDownload);
 		} catch (error) {
 			const { userId, loggedInUsername } = req.params;
 			console.log(error.message);
-			logger.employeeRelatedLog(userId,loggedInUsername,1,null,exportedCsv.message)
+			logger.employeeRelatedLog(userId, loggedInUsername, 1, null, exportedCsv.message)
 			return res.status(500).send(error.message);
 		}
 
