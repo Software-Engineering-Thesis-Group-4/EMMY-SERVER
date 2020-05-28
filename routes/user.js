@@ -487,7 +487,33 @@ module.exports = (io) => {
 
 			return res.status(500).send('Error on server!');
 		}
+	});
 
+
+	/*----------------------------------------------------------------------------------------------------------------------
+	Route:
+	DELETE /api/users/:id
+
+	Description:
+	Api for changing account settings of user
+
+	Author:
+	Michael Ong
+	----------------------------------------------------------------------------------------------------------------------*/
+	router.delete('/:id', verifyUser, async (req, res) => {
+
+		try{
+			// user credentials from request body
+			const { loggedInUsername, userId } = req.query;
+
+			const { id } = req.params
+
+
+		} catch (err) {
+			console.log(error.message);
+
+			return res.status(500).send('Error on server!');
+		}
 	});
 
 	return router;

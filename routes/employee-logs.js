@@ -167,7 +167,7 @@ module.exports = (io) => {
 
 			const { emotion, employeeLog, status } = req.body;
 			let log = await db.findById('employeelog', employeeLog);
-			
+			console.log(typeof employeeLog)
 			if (log.value) {
 				throw new Error('Log not found!');
 			} else {
