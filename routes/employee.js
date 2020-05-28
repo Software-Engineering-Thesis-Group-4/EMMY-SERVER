@@ -313,7 +313,7 @@ module.exports = (io) => {
 		try {
 
 			// user credentials from req body
-			const { userId, loggedInUsername } = req.body;
+			const { userId, loggedInUsername } = req.query;
 
 			let id = req.params.id;
 			const emp = await db.updateById('employee', id, { terminated: true });
