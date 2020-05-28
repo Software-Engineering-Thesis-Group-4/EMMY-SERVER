@@ -412,7 +412,7 @@ module.exports = (io) => {
 
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
-	PATCH /api/users/change-password
+	POST /api/users/change-password
 
 	Description:
 	This route is used for changing the password while logged in
@@ -420,7 +420,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.patch('/change-password', verifyUser, async (req, res) => {
+	router.post('/change-password', verifyUser, async (req, res) => {
 
 		try{
 			// user credentials from request body
@@ -448,7 +448,9 @@ module.exports = (io) => {
 			// TODO SHOULD AUTOMATICALLY LOG OUT WHEN PASSWORD IS CHANGED
 
 		} catch (err) {
-			console.log(error.message);
+			console.log(err.message);
+			const { loggedInUsername, userId } = req.body;
+			logger.userRelatedLog(userId,loggedInUsername,1,undefined,err.message);
 			return res.status(500).send('Error on server!');
 		}
 
@@ -456,7 +458,7 @@ module.exports = (io) => {
 
 	/*----------------------------------------------------------------------------------------------------------------------
 	Route:
-	PATCH /api/users/change-user-profile
+	POST /api/users/change-user-profile
 
 	Description:
 	Api for changing account settings of user
@@ -464,7 +466,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.patch('/change-user-profile', verifyUser, async (req, res) => {
+	router.post('/change-user-profile', verifyUser, async (req, res) => {
 
 		try{
 			// user credentials from request body
@@ -483,8 +485,9 @@ module.exports = (io) => {
 			return res.status(200).send('Succesfully changed user profile!');
 
 		} catch (err) {
-			console.log(error.message);
-
+			const { loggedInUsername, userId } = req.body;
+			console.log(err.message);
+			logger.userRelatedLog(userId,loggedInUsername,0,undefined,err.message);
 			return res.status(500).send('Error on server!');
 		}
 	});
@@ -508,10 +511,21 @@ module.exports = (io) => {
 
 			const { id } = req.params
 
+			const user = await db.findOne('user', { _id: id});
+			const deletedUser = await db.deleteOne('user', { _id: id});
+
+			if(deletedUser.value){
+				logger.userRelatedLog(userId,loggedInUsername,5,user.output.username,deletedUser.message);
+				return res.status(500).send('Error deleting user!');
+			}
+
+			logger.userRelatedLog(userId,loggedInUsername,5,user.output.username)
+			return res.status(200).send(`Successfully deleted ${user.output.username}`)
 
 		} catch (err) {
-			console.log(error.message);
-
+			console.log(err.message);
+			const { loggedInUsername, userId } = req.query;
+			logger.userRelatedLog(userId,loggedInUsername,5,undefined,err.message);
 			return res.status(500).send('Error on server!');
 		}
 	});

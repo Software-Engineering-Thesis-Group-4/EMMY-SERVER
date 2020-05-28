@@ -29,9 +29,9 @@ exports.userRelatedLog = async (loggerId,loggerUsername,log,input,errMessage) =>
 
     /*/======================================//
         TODO 
-        DONE LOGS : 7/10
+        DONE LOGS : 8/9
         
-        0,1,2,3,4,7,8
+        0,1,2,3,4,5,7,8
 
     //======================================/*/
 

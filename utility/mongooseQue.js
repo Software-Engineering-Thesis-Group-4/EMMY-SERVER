@@ -122,7 +122,7 @@ exports.findOne = async (model, field, options) => {
 
 	try {
 
-		Model = modelPicker(model);
+		const Model = modelPicker(model);
 
 		const modelings = await Model.findOne(field, options);
 
@@ -143,7 +143,7 @@ exports.findAll = async (model, field, options) => {
 
 	try {
 
-		Model = modelPicker(model);
+		const Model = modelPicker(model);
 
 		const modelings = await Model.find(field, options);
 
@@ -158,11 +158,11 @@ exports.findAll = async (model, field, options) => {
 	}
 }
 
-exports.findAllPopulate = async (Model, field, populateOptions) => {
+exports.findAllPopulate = async (model, field, populateOptions) => {
 
 	try {
 
-		Model = modelPicker(Model);
+		const Model = modelPicker(model);
 
 		const modelings = await Model.find(field).populate(populateOptions);
 
@@ -175,5 +175,25 @@ exports.findAllPopulate = async (Model, field, populateOptions) => {
     } catch (err) {
         return isErr = { value : true, message : err.message, statusCode : 500 };
     }
+}
+
+
+exports.deleteOne = async (model, field) => {
+
+	try{
+
+		const Model = modelPicker(model);
+
+		const deletedDoc = await Model.deleteOne(field);
+
+		if(deletedDoc.ok){
+			return { value : false }
+		}
+
+		return { value : true, message : 'Error deleting employee' };
+	} catch (err) {
+		console.log(err);
+		return { value : true, message : err.message }
+	}
 }
 
