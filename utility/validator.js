@@ -123,6 +123,47 @@ exports.scannerRules = [
 	.isNumeric().withMessage('Invalid Fingerprint Number')
 ]
 
+exports.updateUserInfoRules = [
+	body('firstname').trim()
+	.notEmpty().withMessage('Firstname cannot be empty')
+	.isAlpha().withMessage('Invalid Fingerprint Number'),
+
+	body('lastname').trim()
+	.notEmpty().withMessage('Lastname cannot be empty')
+	.isAlpha().withMessage('Invalid Fingerprint Number'),
+
+	body('username').trim()
+	.notEmpty().withMessage('Username cannot be empty')
+	.isAlpha().withMessage('Invalid Fingerprint Number'),
+
+	body('email').trim()
+	.notEmpty().withMessage('Email cannot be empty')
+	.isEmail().withMessage('Invalid Email Format'),
+]
+
+exports.updatePasswordRules = [
+	body('password').trim()
+	.notEmpty().withMessage('Password cannot be empty')
+	.isAlphaNumeric().withMessage('Invalid Password Format'),
+
+	body('confirmPassword').trim()
+	.notEmpty().withMessage('Confirm Password cannot be empty')
+	.isAlphaNumeric().withMessage('Invalid Confirm Password Format'),
+]
+
+exports.resetPassFinalRules = [
+	body('user').trim()
+	.notEmpty().withMessage('User cannot be empty'),
+
+	body('password').trim()
+	.isAlphaNumeric().withMessage('Invalid Password Format'),
+
+	body('confirmPassword').trim()
+	.notEmpty().withMessage('Confirm Password cannot be empty')
+	.isAlphaNumeric().withMessage('Invalid Confirm Password Format'),
+]
+
+
 // exports.validate = (req, res, next) => {
 // 	let { errors } = validationResult(req);
 
