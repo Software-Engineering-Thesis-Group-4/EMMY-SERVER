@@ -10,7 +10,7 @@ const isOnline = require('is-online');
 const logger = require('../utility/logger');
 const { encrypt, decrypter } = require('../utility/aes');
 const mailer = require('../utility/mailer');
-const { registerRules, resetPassRules, resetKeyRules, validate } = require("../utility/validator");
+const { registerUserRules, resetPassRules, resetKeyRules, validate } = require("../utility/validator");
 const { validationResult } = require('express-validator');
 const db = require('../utility/mongooseQue');
 const { verifyAdmin, verifyAdmin_GET, verifyUser, verifyUser_GET } = require('../utility/authUtil');
@@ -64,7 +64,7 @@ module.exports = (io) => {
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 	// SUGGESTION: require a valid admin access (access_token, email, and account_type) before proceeding to execute process
-	router.post('/enroll', registerRules, validate, async (req, res) => {
+	router.post('/enroll', registerUserRules, validate, async (req, res) => {
 		try {
 
 			// user credentials from req body
@@ -185,7 +185,6 @@ module.exports = (io) => {
 
 	})
 
-	// TODO Work in Progress due to changes from mongooseQue
 	router.get('/emotion-notifications', async (req, res) => {
 
 		try{
@@ -203,7 +202,6 @@ module.exports = (io) => {
 		}
 	});
 
-	// TODO Work in Progress due to changes from mongooseQue
 	router.get('/crud-notifications', async (req, res) => {
 		// Notifications Regarding Create, Update, Delete of Employee Data with author based on who initiated the action (admin)
 		try{
@@ -263,7 +261,7 @@ module.exports = (io) => {
 		}
 	});
 
-	
+
 
 
 	/*----------------------------------------------------------------------------------------------------------------------
@@ -374,7 +372,7 @@ module.exports = (io) => {
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
 	router.post('/reset-password-final', async (req, res) => {
-		
+
 		try {
 
 			let { user,password, confirmPassword } = req.body
@@ -385,7 +383,7 @@ module.exports = (io) => {
 			}
 
 			const updatedUser = await db.findOne('user',{ email  : user });
-			
+
 			if(updatedUser.value){
 				return res.status(updatedUser.statusCode).send(updatedUser.message);
 			}
@@ -402,7 +400,6 @@ module.exports = (io) => {
 			return res.status(200).send('Succesfully changed password!');
 
 
-			
 
 		} catch (error) {
 			let { user } = req.body;
@@ -435,10 +432,10 @@ module.exports = (io) => {
 				console.error('Confirm password does not match'.red);
 				return res.status(400).send('Confirm password does not match.');
 			}
-			
+
 			password = bcrypt.hashSync(password);
 			const user = await accountSettings.changePassword(userId,{password});
-			
+
 
 			if(user.value){
 				logger.userRelatedLog(userId,loggedInUsername,1,undefined,user.message);

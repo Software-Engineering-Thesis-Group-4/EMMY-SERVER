@@ -3,84 +3,144 @@ const { body, validationResult } = require('express-validator')
 //Prevent Reflected XSS attack: request-based attack
 exports.loginRules = [
 	body('email').trim().escape()
-		.notEmpty().withMessage('Login Error: Email cannot be empty')
-		.isEmail().withMessage('Login Error: Invalid Email Format'),
+		.notEmpty().withMessage('Email cannot be empty')
+		.isEmail().withMessage('Invalid Email Format'),
 
 	body('password').escape()
-		.notEmpty().withMessage('Login Error: password cannot be empty')
-		.isAlphanumeric().withMessage('Login Error: Invalid Password Format'),
+		.notEmpty().withMessage('password cannot be empty')
+		.isAlphanumeric().withMessage('Invalid Password Format'),
 ]
 
 // Prevent Stored/Database/Persistent XSS attack
-// Register New User
-exports.registerRules = [
-	body('email').trim().escape()
-		.notEmpty().withMessage('Register Error: Email cannot be empty')
-		.isEmail().withMessage('Register Error: Invalid Email Format'),
+
+// Register new Employee
+exports.registerEmployeeRules = [
+	body('employee_id').trim().escape()
+		.notEmpty().withMessage('Employee ID cannot be empty')
+		.isNumeric({ no_symbols: true }).withMessage('Employee ID numerical only'),
 
 	body('firstname').trim().escape()
-		.notEmpty().withMessage('Register Error: Firstname cannot be empty')
-		.isAlpha().withMessage('Register Error: Invalid Firstname'),
+		.notEmpty().withMessage('FirstName cannot be empty')
+		.isAlpha().withMessage('Employee FirstName Invalid Format'),
 
 	body('lastname').trim().escape()
-		.notEmpty().withMessage('Register Error: Lastname cannot be empty')
-		.isAlpha().withMessage('Register Error: Invalid Lastname'),
+		.notEmpty().withMessage('Employee LastName cannot be empty')
+		.isAlpha().withMessage('Employee LastName Invalid Format'),
+
+
+	body('email').trim().escape()
+		.notEmpty().withMessage('Email Address cannot be empty')
+		.isEmail().withMessage('Invalid Email Format'),
+
+
+	body('isMale').trim().escape()
+		.notEmpty().withMessage('Gender cannot be empty')
+		.isBoolean().withMessage('Invalid Gender Format'),
+
+	body('employment_status').trim().escape()
+		.notEmpty().withMessage('Employment Status cannot be empty')
+		.isNumeric().withMessage('Employment Status numeric only'), //employmentStatus datatype?
+
+	body('department').trim().escape()
+		.notEmpty().withMessage('Department cannot be empty')
+		.isAlpha().withMessage("Invalid 'Department' Format"),
+
+	body('job_title').trim().escape()
+		.notEmpty().withMessage('Job Title cannot be empty')
+		.isAlpha().withMessage('Invalid Job Title Format'),
+
+	body('fingerprint_id').trim().escape()
+		.notEmpty().withMessage('Fingerprint ID cannot be empty')
+		.isNumeric({ no_symbols: true }).withMessage('Invalid Fingerprint ID Format'), // no symbols: true == negative or float number not allowed
+]
+
+// Register New Standard/Admin Account
+exports.registerUserRules = [
+	body('email').trim().escape()
+		.notEmpty().withMessage('Email cannot be empty')
+		.isEmail().withMessage('Invalid Email Format'),
+
+	body('firstname').trim().escape()
+		.notEmpty().withMessage('Firstname cannot be empty')
+		.isAlpha().withMessage('Invalid Firstname'),
+
+	body('lastname').trim().escape()
+		.notEmpty().withMessage('Lastname cannot be empty')
+		.isAlpha().withMessage('Invalid Lastname'),
 
 	body('username').trim().escape()
-		.notEmpty().withMessage('Register Error: Username cannot be empty')
-		.isAlphanumeric().withMessage('Register Error: Username can only contain numbers, letters or both'),
+		.notEmpty().withMessage('Username cannot be empty')
+		.isAlphanumeric().withMessage('Username can only contain numbers, letters or both'),
 
 	body('password')
-		.notEmpty().withMessage('Register Error: Password cannot be empty')
-		.isAlphanumeric().withMessage('Register Error: Password must only contain numbers, letters or both')
-		.isLength({ min: 6 }).withMessage('Register Error: Password must be a minimum of 6 characters'),
+		.notEmpty().withMessage('Password cannot be empty')
+		.isAlphanumeric().withMessage('Password must only contain numbers, letters or both')
+		.isLength({ min: 6 }).withMessage('Password must be a minimum of 6 characters'),
 
 	body('confirmPassword')
-		.notEmpty().withMessage('Register Error: Confirm password cannot be empty')
-		.isAlphanumeric().withMessage('Register Error: Confirm password must only contain numbers, letters or both'),
+		.notEmpty().withMessage('Confirm password cannot be empty')
+		.isAlphanumeric().withMessage('Confirm password must only contain numbers, letters or both'),
 
 	body('isAdmin').trim()
-		.notEmpty().withMessage('Register Error: Account role cannot be empty.')
-		.isBoolean().withMessage('Register Error: Account role must be boolean.'),
+		.notEmpty().withMessage('Account role cannot be empty.')
+		.isBoolean().withMessage('Account role must be boolean.'),
 ]
 
 // Prevent BOTH Reflected XSS and Stored/Persistent XSS attack
 exports.resetPassRules = [
 	// validate input email to start process
 	body('email').trim()
-		.notEmpty().withMessage('ResetPass Error: Email cannot be empty')
-		.isEmail().withMessage('ResetPass Error: Invalid Email format'),
+		.notEmpty().withMessage('Email cannot be empty')
+		.isEmail().withMessage('Invalid Email format'),
 ]
 
 exports.resetKeyRules = [
 	// validate input code from sent email. 'Code' possibly alphanumeric only
 	body('key').trim().escape()
-		.notEmpty().withMessage('ResetKey Error: Key cannot be empty')
-		.isAlphanumeric().withMessage('ResetKey Error: Numbers and Letters only'),
+		.notEmpty().withMessage('Key cannot be empty')
+		.isAlphanumeric().withMessage('Numbers and Letters only'),
 ]
 
 exports.logoutRules = [
 	body('email')
-		.trim().notEmpty().withMessage("Logout Error: Email is empty")
-		.isEmail().withMessage('Logout Error: Invalid Credential Format'),
+		.trim().notEmpty().withMessage("Email is empty")
+		.isEmail().withMessage('Invalid Credential Format'),
 ]
 
 exports.verifyTokenRules = [
 	body('access_token')
-		.notEmpty().withMessage('Verify Error: Token Empty')
-		.isJWT().withMessage('Verify Error: Not a valid token'),
+		.notEmpty().withMessage('Token Empty')
+		.isJWT().withMessage('Not a valid token'),
 
 	body('email')
-		.trim().notEmpty().withMessage('Verify Error: Email cannot be empty')
-		.isEmail().withMessage('Verify Error: Not a valid email')
+		.trim().notEmpty().withMessage('Email cannot be empty')
+		.isEmail().withMessage('Not a valid email')
 ]
 
-exports.validate = (req, res, next) => {
-	let { errors } = validationResult(req);
+exports.scannerRules = [
+	body('enrollNumber').trim()
+		.notEmpty().withMessage('Fingerprint Number cannot be empty')
+		.isNumeric().withMessage('Invalid Fingerprint Number')
+]
 
-	if (errors.length > 0) {
-		console.log(errors);
+// exports.validate = (req, res, next) => {
+// 	let { errors } = validationResult(req);
+
+// 	if (errors.length > 0) {
+// 		console.log(errors);
+// 	}
+// 	if (errors)
+
+// 	return next();
+// }
+
+exports.validate = (req, res, next) => {
+	const errors = validationResult(req)
+
+	if (!errors.isEmpty()) {
+
+		return res.status(422).json(errors.mapped());
 	}
-	
+
 	return next();
 }
