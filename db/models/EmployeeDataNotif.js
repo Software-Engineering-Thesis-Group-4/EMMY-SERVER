@@ -16,8 +16,7 @@ const EmployeeDataNotifSchema = Schema({ // Employee CRUD Notif
 	},
 	operation: {
 		type: String,
-	},
-	seenBy: []
+	}
 });
 
 EmployeeDataNotifSchema.plugin(require('mongoose-autopopulate'));
