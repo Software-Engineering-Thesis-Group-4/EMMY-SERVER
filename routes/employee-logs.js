@@ -116,14 +116,15 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.put('/:id', verifyAdmin, async (req, res) => {
+	router.post('/edit-logs/:id', verifyAdmin, async (req, res) => {
 
 		try {
-
+			
 			//user credentials
 			const { loggedInUsername, userId } = req.body;
 
 			const logId = req.params.id;
+
 			const { emotionIn, emotionOut } = req.body;
 
 			const empLog = await db.updateById('employeelog', logId, { emotionIn, emotionOut });
@@ -279,12 +280,14 @@ module.exports = (io) => {
 
 		try{
 
-			const { userId, loggedInUsername, startDate, endDate } = req.body;
+			const { userId, loggedInUsername } = req.body;
 		
 			const empLogs = await db.findAll('employeelog');
 
-			const startLogDate = new Date(startDate)
-			const endLogDate = new Date(endDate)
+			const startLogDate = new Date()
+			const endLogDate = new Date()
+
+			startLogDate.setDate(startLogDate.getDate() - 7)
 
 			let arrEmp = [];
 

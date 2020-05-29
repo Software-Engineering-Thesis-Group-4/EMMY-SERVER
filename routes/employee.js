@@ -354,14 +354,14 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/:id/change-employee-profile', verifyAdmin, registerEmployeeRules, validate, async (req, res) => {
+	router.post('/change-employee-profile/:id', verifyAdmin, registerEmployeeRules, validate, async (req, res) => {
 
 		try {
 
 			// user credentials from req body
 			const { userId, loggedInUsername } = req.body;
 
-			const employee_objectId = req.params.id;
+			const { employee_objectId } = req.params.id;
 			let {
 				employee_id,
 				firstname,
@@ -375,7 +375,7 @@ module.exports = (io) => {
 			} = req.body;
 
 
-
+			
 			const updatedEmp = await db.updateById('employee', employee_objectId, {
 				employeeId: employee_id,
 				firstName: firstname,
@@ -392,7 +392,7 @@ module.exports = (io) => {
 			if (updatedEmp.value) {
 
 				logger.employeeRelatedLog(userId, loggedInUsername, 5, undefined, 'Error in updating employee profile');
-				return res.send(updatedEmp.statusCode).send(updatedEmp.message);
+				return res.status(updatedEmp.statusCode).send(updatedEmp.message);
 
 			}
 

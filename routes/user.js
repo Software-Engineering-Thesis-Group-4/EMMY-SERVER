@@ -145,19 +145,19 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/email-notif', verifyAdmin, async (req, res) => { //TODO if admin only or for all users
+	router.post('/email-notif', async (req, res) => { //TODO if admin only or for all users
 
 		try {
 
 			// user credentials from req body
 			const { userId, loggedInUsername} = req.body;
-			const { emailBod, empEmail } = req.body;
+			const { emailBod, empEmail, empSubject } = req.body;
 
 			const netStatus = await isOnline();
 
 			if (netStatus) {
 
-				const isErr = await mailer.sendEmailNotif(empEmail, loggedInUsername, emailBod);
+				const isErr = await mailer.sendEmailNotif(empEmail, loggedInUsername, emailBod,empSubject);
 
 				if(isErr.value){
 					logger.employeeRelatedLog(userId,loggedInUsername,6,empEmail,isErr.message);
@@ -498,7 +498,7 @@ module.exports = (io) => {
 	DELETE /api/users/:id
 
 	Description:
-	Api for changing account settings of user
+	Api for deleting user
 
 	Author:
 	Michael Ong
@@ -509,7 +509,7 @@ module.exports = (io) => {
 			// user credentials from request body
 			const { loggedInUsername, userId } = req.query;
 
-			const { id } = req.params
+			const { id } = req.params;
 
 			const user = await db.findOne('user', { _id: id});
 			const deletedUser = await db.deleteOne('user', { _id: id});
