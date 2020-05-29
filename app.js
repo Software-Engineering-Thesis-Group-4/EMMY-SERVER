@@ -47,6 +47,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.static(path.join(__dirname, "uploaded-images")));
+app.use(express.static(path.join(__dirname, "downloadables")));
 app.use(express.static(path.join(__dirname, "client"))); // the directory for Vue
 app.use(cors());
 app.use(helmet());

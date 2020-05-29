@@ -522,7 +522,7 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.patch('/change-user-profile', verifyUser, updateUserInfoRules, validate, async (req, res) => {
+	router.post('/change-user-profile', verifyUser, updateUserInfoRules, validate, async (req, res) => {
 
 		try{
 			// user credentials from request body
