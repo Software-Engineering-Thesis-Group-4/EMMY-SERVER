@@ -12,7 +12,7 @@ async function start(entries) {
 		await createDBConnection(cfg.DB_NAME, cfg.DB_PORT);
 
 		// Perform Actions
-		await insertRandomEmployees(entries);
+		// await insertRandomEmployees(entries);
 		await insertEmployeeLogs();
 
 		// Close DB Connection

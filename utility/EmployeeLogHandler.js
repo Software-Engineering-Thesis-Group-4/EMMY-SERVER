@@ -35,6 +35,13 @@ exports.handleEmployeeLog = async (io, fingerprintId) => {
 			};
 		}
 
+		if (employee.employmentStatus === 0) {
+			return {
+				status: 200,
+				message: `Part-time employee!`
+			};
+		}
+
 		// LATEST LOG NOT INITIALIZED (Recently registered employee) -------------------------------------------------
 		if (!employee.latestLog) {
 
