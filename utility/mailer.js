@@ -37,7 +37,7 @@ exports.resetPassMail =  async (sendToEmail, username, key) => {
 	}
 }
 
-exports.sendEmailNotif = async (sendToEmail, sender,mailBody) => {
+exports.sendEmailNotif = async (sendToEmail, sender,mailBody,subject) => {
 
 	try{
 
@@ -46,8 +46,8 @@ exports.sendEmailNotif = async (sendToEmail, sender,mailBody) => {
 		await gmail.sendMail({
 			from    : 'Emmy',
 			to      : sendToEmail, // list of receivers
-			subject : 'HR notification Email', // Subject line
-			text    : message, // plain text body 
+			subject : subject, // Subject line
+			html    : message, // plain text body 
 		})
 
 

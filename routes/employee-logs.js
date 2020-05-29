@@ -116,14 +116,15 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.put('/:id', verifyAdmin, async (req, res) => {
+	router.post('/edit-logs/:id', verifyAdmin, async (req, res) => {
 
 		try {
-
+			
 			//user credentials
 			const { loggedInUsername, userId } = req.body;
 
 			const logId = req.params.id;
+
 			const { emotionIn, emotionOut } = req.body;
 
 			const empLog = await db.updateById('employeelog', logId, { emotionIn, emotionOut });
@@ -267,7 +268,7 @@ module.exports = (io) => {
 
 
 	/*----------------------------------------------------------------------------------------------------------------------
-	POST /api/employeelogs/export-pdf
+	GET /api/employeelogs/export-pdf
 
 	Description:
 	Api for making pdf file from exported employee logs
@@ -275,16 +276,20 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.post('/export-pdf', verifyAdmin, async (req,res) => {
+	router.get('/export-pdf', async (req,res) => {
 
 		try{
 
-			const { userId, loggedInUsername, startDate, endDate } = req.body;
+			const pathToDownload = path.join(__dirname,'../downloadables/employee-logs.pdf');
+
+			const { userId, loggedInUsername } = req.body;
 		
 			const empLogs = await db.findAll('employeelog');
 
-			const startLogDate = new Date(startDate)
-			const endLogDate = new Date(endDate)
+			const startLogDate = new Date()
+			const endLogDate = new Date()
+
+			startLogDate.setDate(startLogDate.getDate() - 7)
 
 			let arrEmp = [];
 
@@ -308,13 +313,20 @@ module.exports = (io) => {
 				return res.status(500).send('Error making pdf file');
 			}
 
+			const pdfMaker = () => {
+				setTimeout(() => {
+					logger.employeeRelatedLog(userId,loggedInUsername,2);
+					return res.download(pathToDownload);
+				},5000)
+			}
 			
-			return res.status(200).send('Done making Pdf file')
+			pdfMaker();
+			
 		} catch (err) {
 			console.log(err)
 			const { userId, loggedInUsername } = req.body;
 			logger.employeeRelatedLog(userId,loggedInUsername,2,null,err.message);
-			res.status(500).send('Error making pdf')
+			return res.status(500).send('Error making pdf')
 		} 
 	})
 
@@ -329,28 +341,28 @@ module.exports = (io) => {
 	Author:
 	Michael Ong
 	----------------------------------------------------------------------------------------------------------------------*/
-	router.get('/export-pdf-download', verifyAdmin_GET, (req,res) => {
+	// router.get('/export-pdf-download', verifyAdmin_GET, (req,res) => {
 
-		try{
+	// 	try{
 
-			const { userId, loggedInUsername } = req.params;
+	// 		const { userId, loggedInUsername } = req.params;
 
-			const pathToDownload = path.join(__dirname,'../downloadables/employee-logs.pdf');
+	// 		const pathToDownload = path.join(__dirname,'../downloadables/employee-logs.pdf');
 
-			if (!fs.existsSync(pathToDownload)){
-				logger.employeeRelatedLog(userId,loggedInUsername,2,null,'No downloaded pdf file');
-				return res.status(404).send('No downloaded pdf file');
-			}
+	// 		if (!fs.existsSync(pathToDownload)){
+	// 			logger.employeeRelatedLog(userId,loggedInUsername,2,null,'No downloaded pdf file');
+	// 			return res.status(404).send('No downloaded pdf file');
+	// 		}
 
-			logger.employeeRelatedLog(userId,loggedInUsername,2);
-			return res.download(pathToDownload);
-		} catch (err) {
-			console.log(err)
-			const { userId, loggedInUsername } = req.params;
-			logger.employeeRelatedLog(userId,loggedInUsername,2,null,err.message);
-			return res.status(500).send('Error downloading pdf')
-		}
-	})
+	// 		logger.employeeRelatedLog(userId,loggedInUsername,2);
+	// 		return res.download(pathToDownload);
+	// 	} catch (err) {
+	// 		console.log(err)
+	// 		const { userId, loggedInUsername } = req.params;
+	// 		logger.employeeRelatedLog(userId,loggedInUsername,2,null,err.message);
+	// 		return res.status(500).send('Error downloading pdf')
+	// 	}
+	// })
 
 	return router;
 }
