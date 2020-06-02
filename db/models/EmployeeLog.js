@@ -2,11 +2,12 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const EmployeeLogSchema = Schema({
-   employee: {
+   employeeRef: {
       type: Schema.Types.ObjectId,
       ref: 'Employee',
+      autopopulate: true,
+      required: true
    },
-   employeeId: String,
    in: {
       type: Date,
       default: Date.now
@@ -26,8 +27,15 @@ const EmployeeLogSchema = Schema({
    dateCreated: {
       type: Date,
       default: Date.now
-   },
+	},
+	deleted: {
+		type: Boolean,
+		default: false
+	}
 });
+
+
+EmployeeLogSchema.plugin(require('mongoose-autopopulate'));
 
 const EmployeeLog = mongoose.model('EmployeeLog', EmployeeLogSchema);
 

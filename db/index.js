@@ -1,22 +1,34 @@
 const mongoose = require('mongoose');
+require('colors');
 
-const createDBConnection = async (db_name, port) => {
-   try {
-      mongoose.set('useCreateIndex', true);
-      mongoose.set('useFindAndModify', false);
-      
-      // get db connection
-      const connection = await mongoose.connect(`mongodb://localhost:${port}/${db_name}`, { useNewUrlParser: true, useUnifiedTopology: true });
-      // prevent deprecation warnings (from MongoDB native driver)
+exports.createDBConnection = async (db_name, port) => {
+	try {
+		// scheduled server task
+		// require('../utility/cronScheduler');
+		const connection = await mongoose.connect(`mongodb://localhost:${port}/${db_name}`, {
+			useNewUrlParser: true,
+			useUnifiedTopology: true,
+			useCreateIndex: true,
+			useFindAndModify: false
+		});
 
-      console.log(`Successfully connected to MongoDB database! [${db_name}]\n------------------------------------------`);
+		console.clear();
+		return connection;
 
-      return connection;
-
-   } catch (error) {
-      console.error(error);
-      throw new Error(error);
-   }
+	} catch (error) {
+		console.clear();
+		console.log('Failed to initialize connection from MongoDB'.bgRed);
+		throw new Error(error);
+	}
 }
 
-module.exports = { createDBConnection }
+exports.closeDBConnection = async () => {
+	try {
+		console.log('closing connection...');
+		await mongoose.connection.close();
+		console.log('database connection closed.');
+		console.log("-------------------------------------------------------------------");
+	} catch (error) {
+		throw new Error(error);
+	}
+}

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta http-equiv="X-UA-Compatible" content="ie=edge">
+   <link rel="shortcut icon" href="/favicon.png">
+   <title>CHANGE EXTREME EMOTIONS OPTIONS</title>
+</head>
+<body>
+   <h1>EXTREME EMOTIONS OPTIONS</h1>
+   <form action="/api/auditlogs/edit/extreme-emotions-options" method="POST">
+      <label for="maxEmotionPoints">Max emotions points: </label><br>
+      <input type="number" name="maxEmotionPoints" value="0">
+      <br><br>
+      <label for="days">Duration in days: </label><br>
+      <input type="number" name="days" value="1" min="1">
+      <br><br>
+      <label for="months">Duration in months: </label><br>
+      <input type="number" name="months" value="0">
+      <br><br>
+
+
+      <input type="submit" style="background-color:greenyellow; border: none; padding: 11px;" value="Submit">
+ 
+   </form>
+</body>
+</html>

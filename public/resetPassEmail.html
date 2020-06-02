@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta http-equiv="X-UA-Compatible" content="ie=edge">
+   <link rel="shortcut icon" href="/favicon.png">
+   <title>Reset Password</title>
+</head>
+<body>
+   <h1>Please Enter key</h1>
+   <form action="/api/users/reset-password-key" method="POST">
+      <label for="email">Key: </label><br>
+      <input type="text" name="key" id="key" placeholder="">
+      <br><br>
+      <label for="email">token: </label><br>
+      <input type="text" name="encTok" id="encTok" placeholder="">
+      <br><br>
+
+
+      <input type="submit" style="background-color:greenyellow; border: none; padding: 11px;" value="Submit">
+
+   </form>
+</body>

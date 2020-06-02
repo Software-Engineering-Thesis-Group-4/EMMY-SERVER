@@ -1,88 +1,218 @@
-const express = require('express')
-const router = express.Router();
-const jwt = require('jsonwebtoken');
+const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 
-// import User
-const { User } = require('../db/models/User');
+// import utilities
+const { createAccessToken, createRefreshToken, removeRefreshToken, verify } = require('../utility/jwt');
+const { loginRules, logoutRules, verifyTokenRules, validate } = require('../utility/validator');
+const { validationResult } = require('express-validator');
+const logger = require('../utility/logger');
+const db = require('../utility/mongooseQue');
+const { verifyUser } = require('../utility/authUtil');
 
+// error messages
+const ERR_INVALID_CREDENTIALS = "Invalid email or password.";
+const ERR_SERVER_ERROR = "Internal Server Error.";
+const ERR_UNAUTHORIZED = "Unauthorized Access.";
+const ERR_UNAUTHENTICATED = "Unauthenticated.";
 
-module.exports = (io) => {
+// start of route after middlewares
+module.exports = () => {
 
+	/*----------------------------------------------------------------------------------------------------------------------
+	Route:
+	POST /auth/login
 
-	/*-----------------------------------------------------------
-	-> POST /auth/
-	
-	Description: 
-	Authenticate an "Emmy user" / admin
-	-----------------------------------------------------------*/
-	router.post('/', (req, res) => {
-		username = req.body.username;
-		password = req.body.password;
+	Description:
+	This route is used for authenticating users and generating access tokens
 
-		User.findOne({ username }, (err, user) => {
-			if (err) return res.status(500).send({ message: 'Error on the server.' });
-			if (!user) return res.status(404).send({ message: `User does not exist.` });
+	Author:
+	Michael Ong
+	----------------------------------------------------------------------------------------------------------------------*/
 
-			// compare password
-			let validPassword = bcrypt.compareSync(password, user.password);
+	router.post('/login', loginRules, /*validate,*/ async (req, res) => {
+		try {
 
-			if (!validPassword) {
-				//
-				res.status = 401;
-				return res.send({
-					auth: false,
-					token: null,
-					message: "Invalid username or password."
-				});
+			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				const extractedErrors = []
+				errors.array().map(err => extractedErrors.push({ [err.param]: err.msg }));
+				console.log({ validationErrors: extractedErrors, });
+				res.status(401).send(ERR_INVALID_CREDENTIALS);
 			}
 
-			// sign token
-			let token = jwt.sign({ id: user._id }, process.env.JWT_KEY, {
-				expiresIn: 86400 // expires in 24 hours
-			});
+			// check if email exists in the database
+			const user = await db.findOne('user', { email: req.body.email });
+			if (user.value) {
+				console.error('Invalid Email. User not found.'.red);
+				return res.status(401).send(ERR_INVALID_CREDENTIALS); // USER NOT FOUND
+			}
 
-			let { username, firstname, lastname } = user;
+			// validate password
+			let passwordIsValid = await bcrypt.compare(req.body.password, user.output.password);
 
-			res.status(200).send({ token, username, firstname, lastname });
-		});
-	});
+			// if submitted password invalid, return an error
+			if (passwordIsValid) {
 
-	/*-----------------------------------------------------------
-	-> POST /auth/enroll
-	
-	Description: 
-	Add/enroll a new "Emmy user"
-	-----------------------------------------------------------*/
-	router.post('/enroll', async (req, res) => {
-		try {
-			// get username and hash password using bcrypt
-			let { email, firstname, lastname } = req.body;
+				createRefreshToken(user.output.email);
 
-			// hash password using bcrypt
-			let $_hashedPassword = bcrypt.hashSync(req.body.password, 8);
+				// create access token
+				const access_token = createAccessToken({});
 
-			// create a new user of type [User]
-			let newUser = new User({
-				email: email,
-				firstname: firstname,
-				lastname: lastname,
-				username: `${firstname}${lastname}`,
-				password: $_hashedPassword
-			});
+				//---------------- log -------------------//
+				logger.userRelatedLog(user.output._id, user.output.username, 2);
 
-			// save user to db
-			let registeredUser = await newUser.save();
 
-			console.log(registeredUser);
-			res.status(200).send(`Successfully registered a new user ( ${email} )`);
+				console.log(access_token);
+				// return user credentials and access token
+				console.log('User Authenticated. Login Success'.green);
+				return res.status(200).send({
+					token: access_token,
+					email: user.output.email,
+					username: user.output.username,
+					firstname: user.output.firstname,
+					lastname: user.output.lastname,
+					isAdmin: user.output.isAdmin,
+					photo: user.output.photo,
+					userId: user.output._id
+				});
+
+			} else {
+				console.error('Invalid Password.'.red);
+				return res.status(401).send(ERR_INVALID_CREDENTIALS);
+			}
 
 		} catch (error) {
-			console.log(error);
-			res.status(500).send("There was a problem registering the user.");
+
+			const user = await db.findOne('user', { email: req.body.email });
+			//---------------- log -------------------//
+			logger.userRelatedLog(user.output._id, user.output.username, 2, null, error.message);
+
+			console.log(error.message);
+			return res.status(500).send(ERR_SERVER_ERROR);
+		}
+	});
+
+
+
+	/*----------------------------------------------------------------------------------------------------------------------
+	Route:
+	GET /auth/verify
+
+	Description:
+	This route is used for verifying if the access token is still valid, if the access token is expired it will then be
+	refreshed if the refresh token is still valid. else the user would have to login again.
+
+	Author:
+	Michael Ong
+	----------------------------------------------------------------------------------------------------------------------*/
+
+	router.post('/verify', verifyTokenRules, validate,
+		async (req, res) => {
+			try {
+
+				// validate of errors exists in data sanitization +++++++++++++++++++++++++++++
+				const errors = validationResult(req);
+				if (!errors.isEmpty()) {
+					return res.status(401).send(ERR_UNAUTHORIZED);
+				}
+
+				// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+				let { email, access_token } = req.body;
+				let user = await db.findOne('user', { email });
+
+				if (user.value) {
+					console.error('User not found'.red)
+					return res.status(401).send(ERR_UNAUTHENTICATED)
+				}
+
+				const verifiedToken = await verify(access_token, 'authtoken');
+
+				if (verifiedToken.value) {
+
+					if (verifiedToken.errName == 'TokenExpiredError') {
+
+						const refTok = await db.findOne('refreshtoken', { email });
+
+						if (refTok.value) {
+							console.error('Refresh Token Not Found.'.red);
+							return res.status(404).send(ERR_UNAUTHORIZED);
+						}
+
+						const verifiedRefToken = await verify(refTok.output.token, 'refreshtoken');
+
+						if (verifiedRefToken.value) {
+							removeRefreshToken(email);
+							console.error('Refresh Token Expired'.red)
+							return res.status(401).send(ERR_UNAUTHORIZED);
+						}
+
+						console.log('Refresh Token Valid.'.green);
+						let token = createAccessToken(email);
+
+						console.log('Access Token Renewed'.green)
+						return res.status(200).send({ token });
+
+					}
+					console.log(verifiedToken.message.red);
+					return res.status(401).send(ERR_UNAUTHORIZED);
+				}
+
+				console.log('Valid Access Token. Verification Success.'.green)
+				return res.sendStatus(200);
+
+			} catch (error) {
+				console.log(error.message);
+				return res.status(500).send(ERR_SERVER_ERROR);
+			}
+		}
+	);
+
+
+
+
+	/*----------------------------------------------------------------------------------------------------------------------
+	Route:
+	GET /auth/logout
+
+	Description:
+	This route is used for unauthenticating users and deleting their refresh tokens
+
+	Author:
+	Michael Ong
+	----------------------------------------------------------------------------------------------------------------------*/
+	router.post('/logout', logoutRules, validate, verifyUser, (req, res) => {
+		try {
+
+			//  I need this details loggedInUsername, userId
+			const { loggedInUsername, userId } = req.body;
+
+			const errors = validationResult(req);
+
+			if (!errors.isEmpty()) {
+				res.status(401).send(ERR_UNAUTHENTICATED);
+			}
+
+
+			removeRefreshToken(req.body.email);
+
+			//---------------- log -------------------//
+			logger.userRelatedLog(userId, loggedInUsername, 3);
+
+
+			return res.sendStatus(200);
+
+		} catch (error) {
+
+			const { loggedInUsername, userId } = req.body;
+			//---------------- log -------------------//
+			logger.userRelatedLog(userId, loggedInUsername, 3, null, error.message);
+
+			console.log(error.message);
+			return res.status(500).send(ERR_SERVER_ERROR);
 		}
 	});
 
 
 	return router;
-}
+};

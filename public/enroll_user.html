@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta http-equiv="X-UA-Compatible" content="ie=edge">
+   <link rel="shortcut icon" href="/favicon.png">
+   <title>Register User</title>
+</head>
+<body>
+   <h1>REGISTER ADMIN (TEST)</h1>
+   <form action="/api/users/enroll" method="POST">
+
+      <label for="firstname">Firstname: </label><br>
+      <input type="text" name="firstname" id="firstname" placeholder="Enter firstname..." required="required">
+      <br><br>
+
+      <label for="lastname">Lastname: </label><br>
+      <input type="text" name="lastname" id="lastname" placeholder="Enter lastname..." required="required">
+		<br><br>
+		
+		<label for="email">Email: </label><br>
+      <input type="email" name="email" id="email" placeholder="email" required="required">
+		<br><br>
+		
+		<label for="username">Username: </label><br>
+      <input type="text" name="username" id="username" placeholder="username" required="required">
+      <br><br>
+
+      <label for="password">Password: </label><br>
+      <input type="password" name="password" id="password" placeholder="password" required="required" autocomplete="false">
+		<br><br>
+		
+      <label for="confirmPassword">Confirm Password: </label><br>
+      <input type="password" name="confirmPassword" id="confirmPassword" placeholder="Confirm Password" required="required" autocomplete="false">
+      <br><br>
+
+		<input type="radio" name="isAdmin" value="false" checked><label for="isAdmin">Standard User</label>
+		<input type="radio" name="isAdmin" value="true"><label for="isAdmin">Administrator</label>
+      <br><br>
+
+      <input type="submit" style="background-color:greenyellow; border: none; padding: 11px;" value="Enroll">
+      <input type="reset" style="background-color: #fff; border: 1px solid #cecece; padding: 10px;" value="Reset">
+   </form>
+</body>
+</html>

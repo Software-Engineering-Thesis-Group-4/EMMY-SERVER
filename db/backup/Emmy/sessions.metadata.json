@@ -1,0 +1,1 @@
+{"options":{},"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_","ns":"Emmy.sessions"},{"v":{"$numberInt":"2"},"key":{"expires":{"$numberInt":"1"}},"name":"expires_1","ns":"Emmy.sessions","expireAfterSeconds":{"$numberInt":"0"}}],"uuid":"bf3275e417a04c81a3e5504c9b55ee02"}
