@@ -298,24 +298,7 @@ module.exports = (io) => {
 
 	});
 
-	/*----------------------------------------------------------------------------------------------------------------------
-	 export report must be used in logs ---- used in employees for testing purposes
-	 ----------------------------------------------------------------------------------------------------------------------*/
-	// TODO: exportDB-to-PDF???
-	router.get('/export-pdf', async (req, res) => {
-
-		try {
-
-			exportDb.toPdf()
-			res.send('hi')
-		} catch (err) {
-			console.log(err)
-			res.send('error')
-		}
-
-
-	});
-
+	
    /*----------------------------------------------------------------------------------------------------------------------
 	Route:
 	DELETE /api/employees/:id
