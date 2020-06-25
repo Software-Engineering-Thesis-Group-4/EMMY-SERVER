@@ -1,5 +1,4 @@
 const router = require('express').Router();
-const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 
 // models
@@ -8,28 +7,8 @@ const { User } = require('../../db/models/User')
 // utilities
 const { RegisterRules } = require('../../utility/validators/users');
 const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility');
-const { VerifySession, VerifyAdminRights } = require('../../utility/middlewares');
+const { VerifySession, VerifyAdminRights, ValidateFields, VerifyCredentials } = require('../../utility/middlewares');
 
-// middlewares
-function ValidateFields(req, res, next) {
-	const errors = validationResult(req);
-	if (!errors.isEmpty()) {
-		res.statusCode = 422;
-		return res.send({
-			errors: errors.mapped()
-		})
-	}
-
-	const { user, access_token } = req.query;
-	if (!user || !access_token) {
-		res.statusCode = 401;
-		return res.send({
-			errors: "Unauthorized Access. Incomplete Credentials."
-		})
-	}
-
-	next();
-}
 
 /* ------------------------------------------------------------------------------------------
 Route:
@@ -64,6 +43,7 @@ router.post('/register',
 	[
 		...RegisterRules,
 		ValidateFields,
+		VerifyCredentials,
 		VerifySession,
 		VerifyAdminRights
 	],
@@ -138,10 +118,10 @@ router.post('/register',
 					});
 
 				default:
-					console.log("[Register Error] Internal Server Error.".red)
+					console.log(`[${error.name}] ${error.message}`);
 					res.statusCode = 500;
 					return res.send({
-						errors: 'Internal Server Error. Failed to register user.',
+						errors: error
 					});
 			}
 

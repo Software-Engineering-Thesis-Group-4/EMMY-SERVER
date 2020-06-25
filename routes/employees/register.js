@@ -1,5 +1,4 @@
 const router = require('express').Router();
-const { validationResult } = require('express-validator');
 
 // models
 const { Employee } = require('../../db/models/Employee');
@@ -7,28 +6,9 @@ const { Employee } = require('../../db/models/Employee');
 // utilities
 const { RegisterOneRules } = require('../../utility/validators/employees');
 const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility');
-const { VerifySession, VerifyAdminRights } = require('../../utility/middlewares');
+const { VerifySession, VerifyAdminRights, ValidateFields, VerifyCredentials } = require('../../utility/middlewares');
 
 
-const ValidateFields = (req, res, next) => {
-	const errors = validationResult(req);
-	if (!errors.isEmpty()) {
-		res.statusCode = 400;
-		return res.send({
-			errors: errors.mapped()
-		})
-	}
-
-	const { access_token, user } = req.query;
-	if (!access_token || !user) {
-		res.statusCode = 401;
-		return res.send({
-			errors: "Unauthorized Access. Incomplete Credentials."
-		})
-	}
-
-	next();
-}
 
 /* --------------------------------------------------------------------------------------------------
 Route:
@@ -65,6 +45,7 @@ router.post('/register',
 	[
 		...RegisterOneRules,
 		ValidateFields,
+		VerifyCredentials,
 		VerifySession,
 		VerifyAdminRights
 	],

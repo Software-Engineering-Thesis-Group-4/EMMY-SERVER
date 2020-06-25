@@ -1,4 +1,9 @@
-const { body } = require('express-validator');
+const { body, query } = require('express-validator');
+
+const GetAllRules = [
+	query('user').trim().escape(),
+	query('access_token').trim().escape()
+]
 
 const RegisterRules = [
 	body('email').trim().escape().exists().notEmpty().isEmail(),
@@ -17,5 +22,6 @@ const RegisterRules = [
 ]
 
 module.exports = {
-	RegisterRules
+	GetAllRules,
+	RegisterRules,
 }

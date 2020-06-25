@@ -1,5 +1,4 @@
 const router = require('express').Router();
-const { validationResult } = require('express-validator');
 
 // models
 const { Employee } = require('../../db/models/Employee');
@@ -7,23 +6,14 @@ const { Employee } = require('../../db/models/Employee');
 // utility
 const { DeleteRules } = require('../../utility/validators/employees');
 const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility');
-const { VerifySession, VerifyAdminRights } = require('../../utility/middlewares');
+const { VerifySession, VerifyAdminRights, ValidateFields, VerifyCredentials } = require('../../utility/middlewares');
 
 // middlewares
-function ValidateFields(req, res, next) {
-	const errors = validationResult(req);
-	if (!errors.isEmpty()) {
-		res.statusCode = 400;
-		return res.send({
-			errors: errors.mapped()
-		})
-	}
-
-	const { user, access_token } = req.query;
+function CustomValidator(req, res, next) {
 	const { id } = req.params;
 
-	if (!user || !access_token || !id) {
-		res.statusCode = 401;
+	if (!id) {
+		res.statusCode = 400;
 		return res.send({
 			errors: "Unauthorized Access. Incomplete Credentials."
 		})
@@ -59,6 +49,8 @@ router.delete('/:id',
 	[
 		...DeleteRules,
 		ValidateFields,
+		VerifyCredentials,
+		CustomValidator,
 		VerifySession,
 		VerifyAdminRights
 	],

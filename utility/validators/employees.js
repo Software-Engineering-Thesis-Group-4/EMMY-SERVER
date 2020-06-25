@@ -20,6 +20,13 @@ const RegisterOneRules = [
 	body('fingerprint_id').trim().escape().exists().notEmpty().isNumeric({ no_symbols: true }),
 ]
 
+const RegisterMultipleRules = [
+	query('user').trim().escape(),
+	query('access_token').trim().escape(),
+
+	
+]
+
 const DeleteRules = [
 	query('user').trim().escape(),
 	query('access_token').trim().escape(),
@@ -51,6 +58,7 @@ const UpdateRules = [
 module.exports = {
 	GetAllRules,
 	RegisterOneRules,
+	RegisterMultipleRules,
 	UpdateRules,
 	DeleteRules,
 	TerminateRules,

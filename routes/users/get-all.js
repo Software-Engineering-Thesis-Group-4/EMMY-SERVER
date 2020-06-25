@@ -1,66 +1,67 @@
 const router = require('express').Router();
 
 // models
-const { EmployeeLog } = require('../../db/models/EmployeeLog');
+const { User } = require('../../db/models/User');
 
 // utilities
-const { GetAllRules } = require('../../utility/validators/employee-logs');
+const { GetAllRules } = require('../../utility/validators/users');
+const { VerifySession, VerifyAdminRights, ValidateFields, VerifyCredentials } = require('../../utility/middlewares');
 const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility');
-const { VerifySession, ValidateFields, VerifyCredentials } = require('../../utility/middlewares');
 
 
-/* --------------------------------------------------------------------------------------------------
+/* ------------------------------------------------------------------------------------------
 Route:
-/api/employeelogs/
+/api/users/
 
 Query Parameters:
-- email
+- user (email of current user)
 - access_token
 
 Description:
-- This api is used for fetching employee logs of all employee
+- this API is used for fetch all users
 
 Middlewares:
 # ValidateSession
-	-	Ensure that the user requesting for the API has an existing valid session
+-	Ensures that the user requesting for the API has an existing valid session
+
+# ValidateAdminRights
+- Ensures that the user requesting for the API has administrator previliges
 
 Author/s:
 - Nathaniel Saludes
---------------------------------------------------------------------------------------------------- */
+------------------------------------------------------------------------------------------ */
 router.get('/',
 	[
 		...GetAllRules,
 		ValidateFields,
 		VerifyCredentials,
-		VerifySession
+		VerifySession,
+		VerifyAdminRights
 	],
 	async (req, res) => {
 		try {
 			const new_token = verifyAccessToken(req.query.access_token);
 
-			const logs = await EmployeeLog.find({
-				$where: function () {
-					return !this.deleted
-				}
-			});
+			const users = await User.find({}, { password: 0 });
 
 			res.statusCode = 200;
 			return res.send({
 				new_token,
-				message: "Successfully fetched all employee logs.",
-				employee_logs: logs
+				message: "Successufully fetched all users.",
+				users
 			});
 
 		} catch (error) {
-
 			switch (error.name) {
 				case "IncompleteCredentials":
+					console.log("Access Token Missing.".red)
 					res.statusCode = 401;
 					return res.send({
 						errors: "Unauthorized Access. Access Token Required."
 					})
 
 				case "InvalidAccessToken":
+					console.log("Invalid Access Token.".red)
 					res.statusCode = 401;
 					return res.send({
 						errors: "Unauthorized Access. Invalid Access Token."
@@ -73,7 +74,6 @@ router.get('/',
 						errors: error
 					});
 			}
-
 		}
 	}
 );
