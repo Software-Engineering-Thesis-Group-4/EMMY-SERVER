@@ -21,18 +21,23 @@ const tokenPicker = (token) => {
 // import model
 const { RefreshToken } = require("../db/models/RefreshToken");
 
+
+
 /**
  * @param payload - any object with key-value pair to be stored in the "access token"
  * @returns an access token with an expiration equal to config variable "TOKEN_DURATION" (default = 1h | 1 hour)
  * @description used for creating "access tokens" for the user when requesting a resource access.
  */
 exports.createAccessToken = (payload) => {
-	const access_token = jwt.sign({ ...payload }, process.env.JWT_KEY, {
+	const access_token = jwt.sign(payload || {}, process.env.JWT_KEY, {
 		expiresIn: process.env.TOKEN_DURATION
 	});
 
 	return access_token;
 }
+
+
+
 
 
 /**
@@ -48,6 +53,9 @@ exports.createResetPassToken = (payload) => {
 
 	return resetToken;
 }
+
+
+
 
 /**
  * @param email - is used for referencing refresh tokens of logged in users
@@ -88,17 +96,25 @@ exports.createRefreshToken = async (email) => {
 /**
  * @param email - is used for referencing refresh tokens of logged in users
  * @description used for deleting "refresh tokens" when users logout. (unauthenticating)
+ * @returns email
  */
 exports.removeRefreshToken = async (email) => {
 	try {
-		let deletedRT = await RefreshToken.findOneAndDelete({ email });
+		// [1] find delete an existing session of the matching email
+		const refresh_token = await RefreshToken.findOneAndDelete({ email });
 
-		if (deletedRT) {
-			console.log('Succesfully removed/deleted refresh token'.yellow);
+		// [2] if refresh token is not found, return null
+		if (!refresh_token) {
+			console.log("Session not found. Refresh token does not exist.".red);
+			return null;
 		}
+		
+		// [3] else, return the user's email if the refresh token is successfully removed
+		console.log('Succesfully removed refresh token'.yellow);
+		return refresh_token.email;
 
 	} catch (error) {
-		console.log('Failed to removed/delete refresh token'.red);
+		console.log('[ERROR] Failed to remove refresh token'.red);
 		throw new Error(error.message)
 	}
 }

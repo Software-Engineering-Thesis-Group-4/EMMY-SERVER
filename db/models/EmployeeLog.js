@@ -1,18 +1,18 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const EmployeeLogSchema = Schema({
+const EmployeeLogSchema = new Schema({
    employeeRef: {
       type: Schema.Types.ObjectId,
       ref: 'Employee',
       autopopulate: true,
       required: true
    },
-   in: {
+   timeIn: {
       type: Date,
       default: Date.now
    },
-   out: {
+   timeOut: {
       type: Date,
       default: null
    },
