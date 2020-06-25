@@ -12,7 +12,7 @@ const { createAccessToken } = require('../../utility/tokens/AccessTokenUtility')
 const { VerifyNonDuplicateSession } = require('../../utility/middlewares');
 
 // middlewares
-const ValidateFields = (req, res, next) => {
+const CustomValidator = (req, res, next) => {
 	const errors = validationResult(req);
 
 	// validate user input, and send a response if errors 
@@ -46,7 +46,7 @@ Author/s:
 router.post('/login',
 	[
 		...LoginRules,
-		ValidateFields,
+		CustomValidator,
 		VerifyNonDuplicateSession
 	],
 	async (req, res) => {

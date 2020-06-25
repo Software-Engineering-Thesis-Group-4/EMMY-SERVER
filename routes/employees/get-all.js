@@ -1,5 +1,4 @@
 const router = require('express').Router();
-const { validationResult } = require('express-validator');
 
 // models
 const { Employee } = require('../../db/models/Employee');
@@ -7,28 +6,7 @@ const { Employee } = require('../../db/models/Employee');
 // utility
 const { GetAllRules } = require('../../utility/validators/employees');
 const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility');
-const { VerifySession } = require('../../utility/middlewares');
-
-// middleware
-const ValidateFields = (req, res, next) => {
-	const errors = validationResult(req);
-	if (!errors.isEmpty()) {
-		res.statusCode = 400;
-		return res.send({
-			errors: errors.mapped()
-		})
-	}
-
-	const { user, access_token } = req.query;
-	if (!user || !access_token) {
-		res.statusCode = 401;
-		return res.send({
-			errors: "Unauthorized Access. Incomplete Credentials."
-		})
-	}
-
-	next();
-}
+const { VerifySession, VerifyCredentials, ValidateFields } = require('../../utility/middlewares');
 
 
 /* --------------------------------------------------------------------------------------------------
@@ -53,6 +31,7 @@ router.get('/',
 	[
 		...GetAllRules,
 		ValidateFields,
+		VerifyCredentials,
 		VerifySession
 	],
 	async (req, res) => {

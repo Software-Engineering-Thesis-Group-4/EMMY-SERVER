@@ -1,3 +1,4 @@
 module.exports = [
-	require('./register'),
+	require('./get-all'),
+	require('./register')
 ]

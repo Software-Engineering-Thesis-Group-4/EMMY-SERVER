@@ -4,7 +4,7 @@ const router = require('express').Router();
 const { AttendanceHandler } = require('../../utility/handlers/AttendanceLog/AttendanceHandler');
 
 // middlewares
-const ValidateFields = (req, res, next) => {
+const CustomValidator = (req, res, next) => {
 	const { fingerprint_id } = req.params;
 	if (!fingerprint_id) {
 		res.statusCode = 422;
@@ -32,7 +32,7 @@ Author/s:
 --------------------------------------------------------------------------------------------------- */
 router.get('/scanner/:fingerprint_id',
 	[
-		ValidateFields
+		CustomValidator
 	],
 	async (req, res) => {
 		try {

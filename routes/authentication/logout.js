@@ -10,7 +10,7 @@ const { VerifySession } = require('../../utility/middlewares');
 const ValidateFields = (req, res, next) => {
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
-		return res.sendStatus(422);
+		return res.sendStatus(400);
 	}
 
 	next();
