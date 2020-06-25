@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const EmployeeDataNotifSchema = Schema({ // Employee CRUD Notif
+const EmployeeDataNotifSchema = new Schema({ // Employee CRUD Notif
 	dateCreated: Date,
 	author: {
 		//admin user reference

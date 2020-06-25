@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const EmotionNotificationSchema = Schema({
+const EmotionNotificationSchema = new Schema({
 	dateCreated: {
 		type: Date,
 		default: Date.now

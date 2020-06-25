@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 // AUDITLOG SCHEMA -----------------------
-const AuditLogSchema = Schema({
+const AuditLogSchema = new Schema({
    date           : { type : Date, default : Date.now },
    action         : { type : String, required : true },
    description    : { type : String, required : true },

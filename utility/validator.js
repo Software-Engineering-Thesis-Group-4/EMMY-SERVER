@@ -1,4 +1,4 @@
-const { body, validationResult } = require('express-validator')
+const { body, query, validationResult } = require('express-validator')
 
 //Prevent Reflected XSS attack: request-based attack
 exports.loginRules = [
@@ -15,6 +15,9 @@ exports.loginRules = [
 
 // Register new Employee
 exports.registerEmployeeRules = [
+	query('user').trim().escape(),
+	query('access_token').trim().escape(),
+
 	body('employee_id').trim().escape()
 		.notEmpty().withMessage('Employee ID cannot be empty')
 		.isNumeric({ no_symbols: true }).withMessage('Invalid Employee ID format'),
@@ -79,12 +82,20 @@ exports.registerUserRules = [
 
 	body('confirmPassword')
 		.notEmpty().withMessage('Confirm password cannot be empty')
-		.isAlphanumeric().withMessage('Confirm password must only contain numbers, letters or both'),
+		.isAlphanumeric().withMessage('Confirm password must only contain numbers, letters or both')
+		.custom((value, { req }) => {
+			if (value !== req.body.password) {
+				throw new Error('Password confirmation does not match password');
+			}
+
+			return true;
+		}),
 
 	body('isAdmin').trim()
 		.notEmpty().withMessage('Account role cannot be empty.')
 		.isBoolean().withMessage('Account role must be boolean.'),
 ]
+
 
 // Prevent BOTH Reflected XSS and Stored/Persistent XSS attack
 exports.resetPassRules = [
@@ -102,7 +113,7 @@ exports.resetKeyRules = [
 ]
 
 exports.logoutRules = [
-	body('email')
+	query('user')
 		.trim().notEmpty().withMessage("Email is empty")
 		.isEmail().withMessage('Invalid Credential Format'),
 ]
@@ -119,69 +130,54 @@ exports.verifyTokenRules = [
 
 exports.scannerRules = [
 	body('enrollNumber').trim()
-	.notEmpty().withMessage('Fingerprint Number cannot be empty')
-	.isNumeric().withMessage('Invalid Fingerprint Number')
+		.notEmpty().withMessage('Fingerprint Number cannot be empty')
+		.isNumeric().withMessage('Invalid Fingerprint Number')
 ]
 
 exports.updateUserInfoRules = [
 	body('firstname').trim()
-	.notEmpty().withMessage('Firstname cannot be empty')
-	.isAlpha().withMessage('Invalid Fingerprint Number'),
+		.notEmpty().withMessage('Firstname cannot be empty')
+		.isAlpha().withMessage('Invalid Fingerprint Number'),
 
 	body('lastname').trim()
-	.notEmpty().withMessage('Lastname cannot be empty')
-	.isAlpha().withMessage('Invalid Fingerprint Number'),
+		.notEmpty().withMessage('Lastname cannot be empty')
+		.isAlpha().withMessage('Invalid Fingerprint Number'),
 
 	body('username').trim()
-	.notEmpty().withMessage('Username cannot be empty')
-	.isAlpha().withMessage('Invalid Fingerprint Number'),
+		.notEmpty().withMessage('Username cannot be empty')
+		.isAlpha().withMessage('Invalid Fingerprint Number'),
 
 	body('email').trim()
-	.notEmpty().withMessage('Email cannot be empty')
-	.isEmail().withMessage('Invalid Email Format'),
+		.notEmpty().withMessage('Email cannot be empty')
+		.isEmail().withMessage('Invalid Email Format'),
 ]
 
 exports.updatePasswordRules = [
 	body('password').trim()
-	.notEmpty().withMessage('Password cannot be empty')
-	.isAlphanumeric().withMessage('Invalid Password Format'),
+		.notEmpty().withMessage('Password cannot be empty')
+		.isAlphanumeric().withMessage('Invalid Password Format'),
 
 	body('confirmPassword').trim()
-	.notEmpty().withMessage('Confirm Password cannot be empty')
-	.isAlphanumeric().withMessage('Invalid Confirm Password Format'),
+		.notEmpty().withMessage('Confirm Password cannot be empty')
+		.isAlphanumeric().withMessage('Invalid Confirm Password Format'),
 ]
 
 exports.resetPassFinalRules = [
 	body('user').trim()
-	.notEmpty().withMessage('User cannot be empty'),
+		.notEmpty().withMessage('User cannot be empty'),
 
 	body('password').trim()
-	.isAlphanumeric().withMessage('Invalid Password Format'),
+		.isAlphanumeric().withMessage('Invalid Password Format'),
 
 	body('confirmPassword').trim()
-	.notEmpty().withMessage('Confirm Password cannot be empty')
-	.isAlphanumeric().withMessage('Invalid Confirm Password Format'),
+		.notEmpty().withMessage('Confirm Password cannot be empty')
+		.isAlphanumeric().withMessage('Invalid Confirm Password Format'),
 ]
-
-
-// exports.validate = (req, res, next) => {
-// 	let { errors } = validationResult(req);
-
-// 	if (errors.length > 0) {
-// 		console.log(errors);
-// 	}
-// 	if (errors)
-
-// 	return next();
-// }
 
 exports.validate = (req, res, next) => {
 	const errors = validationResult(req)
-
 	if (!errors.isEmpty()) {
-
 		return res.status(422).json(errors.mapped());
 	}
-
 	return next();
 }

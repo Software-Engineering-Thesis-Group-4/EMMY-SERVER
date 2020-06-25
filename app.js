@@ -1,58 +1,36 @@
-// const https 	  = require('https');
-// const fs 		  = require('fs');
-const http       = require('http');
-const path       = require('path');
-const logger     = require('morgan');
-const socketIO   = require('socket.io');
-const cors       = require('cors');
-const express    = require('express');
-const ip         = require('ip');
-const helmet     = require('helmet');
+const http = require('http');
+const path = require('path');
+const logger = require('morgan');
+const socketIO = require('socket.io');
+const cors = require('cors');
+const express = require('express');
+const ip = require('ip');
+const helmet = require('helmet');
 const fileUpload = require('express-fileupload');
-const colors     = require('colors');
 const { apiLimiter } = require('./utility/apiLimiter');
+require('colors');
 
 const { createDBConnection } = require('./db');
-colors.enable();
 
 // LOAD ENVIRONMENT CONFIGURATIONS ----------------------------------------------------------------------------
 const cfg = require('./configs/config.js');
-
-const app = express();
-
-// or listen to both HTTP and HTTPS by creating another server with HTTP
-
-// let server = undefined;
-// const keyPath = "certificates/keyCA.pem";
-// const certPath = "certificates/rootCA.pem";
-// const options = {
-// 	key: fs.readFileSync(keyPath),
-// 	cert: fs.readFileSync(certPath)
-// };
-// if (process.env.NODE_ENV == 'production '){
-// 	server = https.createServer(options, app);
-// }else {
-// 	server = http.createServer(app);
-// }
-const server = http.createServer(app);
-
-const io = socketIO(server);
 const PORT = cfg.PORT || 3000;
 
 // APPLICATION CONFIGURATIONS ---------------------------------------------------------------------------------
+const app = express();
+const server = http.createServer(app)
+const io = socketIO(server);
+
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-app.use(logger('dev'));
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.static(path.join(__dirname, "uploaded-images")));
+app.use(express.static(path.join(__dirname, "downloadables")));
 app.use(express.static(path.join(__dirname, "client"))); // the directory for Vue
-app.use(cors());
-app.use(helmet());
-app.use(fileUpload(/* (process.env.NODE_ENV === 'development ' ?
-	{ debug: true } : { debug: false }) */
-));
+app.use(fileUpload());
 
 app.use(helmet({
 	xssFilter: {
@@ -63,17 +41,6 @@ app.use(helmet({
 	referrerPolicy: {
 		policy: 'same-origin'
 	},
-
-	// TODO: Temporarily disabled Content Security Policy Rules
-	// contentSecurityPolicy: {
-	// 	directives: {
-	// 		defaultSrc: ["'self'"],
-	// 		styleSrc: ["'self'", "'unsafe-inline'", "cdn.jsdelivr.net", "fonts.googleapis.com"],
-	// 		scriptSrc: ["'self'", "cdn.jsdelivr.net"],
-	// 	}
-	// },
-
-	// for reducing surface area of potential attacks
 	featurePolicy: {
 		features: {
 			fullscreen: ["'*'"],
@@ -84,41 +51,49 @@ app.use(helmet({
 			microphone: ["'none'"]
 		}
 	},
-
-	// click jacking protection
 	frameguard: {
 		action: 'sameorigin'
 	}
 }));
 
+app.use(logger('dev'));
+
+// make socketio object accessible via request object
+app.use((req, res, next) => {
+	req.socketIo = io;
+	next();
+});
+
 
 // IMPORT & CONFIGURE ROUTES ----------------------------------------------------------------------------------
-const employeeLogsRoute = require('./routes/employee-logs')(io);
-const employeeRoute = require('./routes/employee')(io);
-const utilityRoute = require('./routes/utility')(io);
-const authRoute = require('./routes/auth')(io);
-const userRoute = require('./routes/user')(io);
-const auditLogsRoute = require('./routes/audit-logs')(io);
-const adminRoute = require('./routes/admin')(io);
+const employeeLogsRoute = require('./routes/employee_logs');
+const employeeRoute = require('./routes/employees');
+const utilityRoute = require('./routes/utility');
+const authRoute = require('./routes/authentication');
+const userRoute = require('./routes/users');
+const auditLogsRoute = require('./routes/audit-logs');
+const adminRoute = require('./routes/admin');
 
-app.use('/auth', authRoute);									// localhost:3000/auth/
-app.use('/api/employees', employeeRoute); 				// localhost:3000/api/employees/
-app.use('/api/employeelogs', employeeLogsRoute); 		// localhost:3000/api/employeelogs/
-app.use('/api/users', userRoute);							// localhost:3000/api/users/
-app.use('/api/auditlogs', auditLogsRoute);				// localhost:3000/api/auditlogs/
-app.use('/api/admin', adminRoute);				// localhost:3000/api/admin/
 
-// localhost:3000/dev
-// (utility routes is restricted when node environment is set to "production ")
+app.use('/api/auth', ...authRoute);
+app.use('/api/employees', ...employeeRoute);
+app.use('/api/employeelogs', ...employeeLogsRoute);
+app.use('/api/users', ...userRoute);
+app.use('/api/auditlogs', auditLogsRoute);
+app.use('/api/admin', adminRoute);
+
+
+// NOTE: The utility routes is restricted when app is set to production mode
 if (process.env.NODE_ENV === 'development ') {
 	app.use('/dev', utilityRoute);
-} else {
+}
+else {
 	app.get('/dev', (req, res) => {
-		res.status(403).send('403 Forbidden Access. [Production Mode]');
+		res.status(403).send('403 Forbidden Access');
 	})
 }
 
-// RATE LIMITER PER ROUTES
+// APPLY RATE LIMITER PER ROUTES ------------------------------------------------------------------------------
 app.use('/auth/login', apiLimiter);
 app.use('/auth/logout', apiLimiter);
 app.use('/api/users/enroll', apiLimiter);
@@ -131,17 +106,7 @@ app.get(/.*/, (req, res) => {
 	res.sendFile(__dirname + "/client/index.html");
 });
 
-
-// ERROR HANDLER ----------------------------------------------------------------------------------------------
-// app.use((err, req, res) => {
-// 	// set locals, only providing error in development
-// 	res.locals.message = err.message;
-// 	res.locals.error = req.app.get("env") === "development" ? err : {};
-
-// 	res.status(err.status || 500);
-// 	res.render("error");
-// });
-
+require('./utility/SocketHandler')(io);
 
 // BOOSTRAPPER ------------------------------------------------------------------------------------------------
 async function start() {
