@@ -30,7 +30,7 @@ function CustomValidator(req, res, next) {
 
 /* ------------------------------------------------------------------------------------------
 Route:
-/api/users/password/reset
+/api/users/password_reset
 
 Query Parameters:
 - email

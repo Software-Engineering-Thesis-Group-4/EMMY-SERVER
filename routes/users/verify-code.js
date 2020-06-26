@@ -78,7 +78,7 @@ router.post('/password_reset/verify',
 		} catch (error) {
 
 			switch (error.name) {
-				case "InvalidResetToken":
+				case "InvalidResetTokenError":
 					res.statusCode = 401;
 					return res.send({
 						errors: "Invalid Reset Token."

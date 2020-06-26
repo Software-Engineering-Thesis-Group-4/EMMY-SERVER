@@ -2,6 +2,8 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const { User } = require('../../../db/models/User');
 const { encrypt } = require('../Encryption');
+const ejs = require('ejs');
+const path = require('path');
 
 /* ------------------------------------------------------------------------
 Throws:
@@ -29,13 +31,13 @@ async function generateSecurityCode(email) {
 	security_code = encrypt(security_code);
 	reset_token = encrypt(reset_token);
 
-	// send email
-	const email_message =
-		`Hello <strong>${user.firstname}</strong>, You are currently trying to reset your password in Emmy.
-		The security code is: <h1>${security_code}</h1>.
-		If this is not you please ignore this email or contact an administrator.`
+	// render email template
+	const html = await ejs.renderFile(path.resolve(__dirname, './email_template.ejs'), {
+		user,
+		security_code
+	})
 
-	const transport = nodemailer.createTransport({
+	const transporter = nodemailer.createTransport({
 		service: 'Gmail',
 		auth: {
 			user: process.env.EMAIL_USERNAME,
@@ -46,11 +48,11 @@ async function generateSecurityCode(email) {
 		}
 	});
 
-	await transport.sendMail({
+	await transporter.sendMail({
 		from: 'Emmy',
 		to: user.email,
 		subject: 'Password Reset',
-		html: email_message
+		html: html
 	});
 
 	return reset_token;
