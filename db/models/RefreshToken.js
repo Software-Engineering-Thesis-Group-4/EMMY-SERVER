@@ -14,7 +14,6 @@ const RefreshTokenSchema = new Schema({
 	},
 	socket_id: {
 		type: String,
-		unique: true,
 		default: null
 	}
 });
