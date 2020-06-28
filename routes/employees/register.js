@@ -65,6 +65,21 @@ router.post('/register',
 				fingerprint_id
 			} = req.body;
 
+			const existing = await Employee.findOne({
+				$or: [
+					{ employeeId: employee_id },
+					{ email: email },
+					{ fingerprintId: fingerprint_id },
+				]
+			});
+			if (existing) {
+				res.statusCode = 422;
+				return res.send({
+					errors: "Employee with matching unique fields already exists.",
+					employee: existing
+				})
+			}
+
 			const employee = new Employee({
 				employeeId: employee_id,
 				firstname: firstname,
