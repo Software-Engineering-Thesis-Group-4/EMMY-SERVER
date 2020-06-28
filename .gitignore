@@ -120,4 +120,5 @@ dist
 # vscode
 .vscode/
 
-.uploads/
+uploads/
+uploads/upload.csv
