@@ -6,7 +6,6 @@ const cors = require('cors');
 const express = require('express');
 const ip = require('ip');
 const helmet = require('helmet');
-const fileUpload = require('express-fileupload');
 const { apiLimiter } = require('./utility/apiLimiter');
 require('colors');
 
@@ -30,7 +29,6 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(express.static(path.join(__dirname, "uploaded-images")));
 app.use(express.static(path.join(__dirname, "downloadables")));
 app.use(express.static(path.join(__dirname, "client"))); // the directory for Vue
-app.use(fileUpload());
 
 app.use(helmet({
 	xssFilter: {
