@@ -1,5 +1,6 @@
 // utility
 const { verifyRefreshToken } = require("../tokens/RefreshTokenUtility");
+const { User } = require("../../db/models/User");
 
 
 /* -------------------------------------------------------------------------------------------------------------------
@@ -12,6 +13,14 @@ Required Fields:
 const VerifySession = async (req, res, next) => {
 	try {
 		const email = req.query.user;
+
+		const user = await User.findOne({ email });
+		if(!user) {
+			res.statusCode = 401;
+			return res.send({
+				errors: "Unauthorized Access. Unknown User."
+			})
+		}
 
 		// [1] If email is not provided, send an error response for "Unauthorized Access"
 		if (!email) {
