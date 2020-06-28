@@ -1,5 +1,5 @@
 
-const validateDuplicates = async (rows) => {
+const validateDuplicates = (rows) => {
 
 	const requiredUniqueFields = ['EMPLOYEE_ID', 'FINGERPRINT_ID', 'EMAIL'];
 	const duplicates = {};
@@ -8,7 +8,12 @@ const validateDuplicates = async (rows) => {
 		duplicates[fieldName] = [...filterDuplicates(rows, fieldName)];
 	});
 
-	return duplicates;
+	if (duplicates.EMPLOYEE_ID.length || duplicates.FINGERPRINT_ID.length || duplicates.EMAIL.length) {
+		const error = new Error('Invalid Format. Duplicate values found for unique fields.')
+		error.name = "DuplicateValidationError";
+		error.duplicate_fields = duplicates;
+		throw error;
+	}
 }
 
 const filterDuplicates = (array, fieldName) => {

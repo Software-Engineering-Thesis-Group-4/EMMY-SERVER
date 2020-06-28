@@ -1,7 +1,6 @@
 const { Employee } = require("../../../db/models/Employee");
 
 async function insertEmployees(rows) {
-	const duplicates = new Set();
 	const saveEmployees = [];
 
 	for (let index = 0; index < rows.length; index++) {
@@ -16,19 +15,6 @@ async function insertEmployees(rows) {
 			JOB_TITLE,
 			FINGERPRINT_ID,
 		} = rows[index];
-
-		const user = await Employee.findOne({
-			$or: [
-				{ employeeId: EMPLOYEE_ID },
-				{ fingerprintId: FINGERPRINT_ID },
-				{ email: EMAIL },
-			]
-		});
-
-		if (user) {
-			duplicates.add(rows[index]);
-			continue;
-		}
 
 		let newUser = new Employee({
 			employeeId: EMPLOYEE_ID,
@@ -45,17 +31,8 @@ async function insertEmployees(rows) {
 		saveEmployees.push(newUser.save());
 	}
 
-	if (duplicates.size) {
-		const error = new Error();
-		error.message = "Employees already exists."
-		error.name = "DatabaseDuplicateError";
-		error.duplicates = [...duplicates];
-		throw error;
-	} else {
-		const documents = await Promise.all(saveEmployees);
-		return documents;
-	}
-
+	const documents = await Promise.all(saveEmployees);
+	return documents;
 }
 
 module.exports = insertEmployees;
