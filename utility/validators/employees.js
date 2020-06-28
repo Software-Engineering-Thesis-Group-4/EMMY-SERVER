@@ -53,6 +53,11 @@ const UpdateRules = [
 	body('fingerprint_id').trim().escape().notEmpty().isNumeric({ no_symbols: true }),
 ]
 
+const GetLogsOfEmployeeRules = [
+	query('user').trim().escape(),
+	query('access_token').trim().escape(),
+]
+
 module.exports = {
 	GetAllRules,
 	RegisterOneRules,
@@ -60,4 +65,5 @@ module.exports = {
 	UpdateRules,
 	DeleteRules,
 	TerminateRules,
+	GetLogsOfEmployeeRules
 }
