@@ -23,8 +23,6 @@ const RegisterOneRules = [
 const RegisterMultipleRules = [
 	query('user').trim().escape(),
 	query('access_token').trim().escape(),
-
-	
 ]
 
 const DeleteRules = [

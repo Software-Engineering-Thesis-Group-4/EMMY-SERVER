@@ -43,6 +43,7 @@ async function createRefreshToken(email) {
 		return false;
 
 	} catch (error) {
+		console.log(`[${error.name}] ${error.message}`);
 		throw new Error("Unable to create a new refresh token.");
 	}
 }

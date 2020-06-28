@@ -75,7 +75,7 @@ router.post('/login',
 			}
 
 			// [3] if credential validation is success, generate and store new refresh token in db to register new user session.
-			createRefreshToken(email);
+			await createRefreshToken(email);
 
 			// [4] generate new access token for accessing protected resources
 			const access_token = createAccessToken();

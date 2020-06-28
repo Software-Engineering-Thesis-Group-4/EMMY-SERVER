@@ -1,5 +1,5 @@
-
 const router = require('express').Router();
+const multer = require('multer');
 
 // models
 
@@ -7,9 +7,11 @@ const router = require('express').Router();
 const { RegisterMultipleRules } = require('../../utility/validators/employees');
 const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility');
 const { ValidateFields, VerifyCredentials, VerifyAdminRights, VerifySession } = require('../../utility/middlewares/');
+const processFileImport = require('../../utility/handlers/ImportEmployees/CSVImportHandler');
 
+// middlewares
 function CustomValidator(req, res, next) {
-	if (!req.files && !req.files.csv) {
+	if (!req.file) {
 		res.statusCode = 404;
 		return res.send({
 			errors: "File is empty."
@@ -19,13 +21,19 @@ function CustomValidator(req, res, next) {
 	next();
 }
 
+const storage = multer.diskStorage({
+	destination: './uploads/',
+	filename: (req, file, cb) => {
+		cb(null, 'upload.csv');
+	}
+})
 
 /* --------------------------------------------------------------------------------------------------
 Route:
 /api/employees/import
 
 Query Parameters:
-- email
+- user
 - access_token
 
 Description:
@@ -36,13 +44,14 @@ Middlewares:
 	-	Ensure that the user requesting for the API has an existing valid session
 
 # VerifyAdminRights
-	- Ensure that the user requesting for the API has administrator previliges
+	-	Ensure that the user requesting for the API has administrator previliges
 
 Author/s:
 - Nathaniel Saludes
 --------------------------------------------------------------------------------------------------- */
 router.post('/import',
 	[
+		multer({ storage: storage }).single('csv'),
 		...RegisterMultipleRules,
 		ValidateFields,
 		VerifyCredentials,
@@ -53,14 +62,17 @@ router.post('/import',
 	async (req, res) => {
 		try {
 			const new_token = verifyAccessToken(req.query.access_token);
-			const file = req.files.csv;
+			const employees = await processFileImport(req.file);
 
-			res.statusCode = 200;
-			return res.send({
-				new_token,
-				message: "",
-			});
-			
+			if (employees && employees.length > 0) {
+				res.statusCode = 200;
+				return res.send({
+					new_token,
+					message: `Successfully uploaded (${employees.length}) employees.`,
+				});
+			}
+
+
 		} catch (error) {
 			switch (error.name) {
 				case "IncompleteCredentials":
@@ -75,6 +87,30 @@ router.post('/import',
 					res.statusCode = 401;
 					return res.send({
 						errors: "Unauthorized Access. Invalid Access Token."
+					});
+
+				case "DuplicateValidationError":
+					res.statusCode = 422;
+					return res.send({
+						errors: error
+					});
+
+				case "InvalidFileType":
+					res.statusCode = 422;
+					return res.send({
+						errors: error.message
+					});
+
+				case "EmptyFileError":
+					res.statusCode = 422;
+					return res.send({
+						errors: error.message
+					});
+
+				case "DatabaseDuplicateError":
+					res.statusCode = 422;
+					return res.send({
+						errors: error
 					});
 
 				default:
