@@ -3,5 +3,6 @@ module.exports = [
 	require('./register'),
 	require('./reset-password'),
 	require('./verify-code'),
-	require('./update-password')
+	require('./update-password'),
+	require('./update-photo'),
 ]
