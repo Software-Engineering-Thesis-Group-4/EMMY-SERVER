@@ -4,5 +4,5 @@ module.exports = [
 	require('./reset-password'),
 	require('./verify-code'),
 	require('./update-password'),
-	require('./update-photo'),
+	require('./upload-photo'),
 ]
