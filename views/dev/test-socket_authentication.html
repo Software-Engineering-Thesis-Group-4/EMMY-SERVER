@@ -20,18 +20,15 @@
 </head>
 
 <body>
-	<h1>LOGIN TEST</h1>
+	<h1>SENTIMENT TEST</h1>
 	<code style="font-weight: bold;">NOTE:</code>
 	<code style="text-align: center;">
       This page is only used for testing purposes.
 	</code><br>
 
 	<form id="login_form">
-		<span>Email: </span>
-		<input type="email" name="email" id="email"><br>
-
 		<span>Password: </span>
-		<input type="password" name="password" id="password"><br>
+		<input type="password" name="access" id="password"><br>
 
 		<input type="submit" value="login">
 	</form>
@@ -44,31 +41,38 @@
 			autoConnect: false
 		});
 
-		socket.on('get_employees', () => {
-			alert('Some fetched employee data');
+		socket.on('SCANNER', (data) => {
+			const { id, employee, login_mode } = data;
+			console.log(`${employee} just logged ${login_mode ? "in" : "out"}`);
+		});
+
+		socket.on('SCANNER_MultipleEmployeeLogError', () => {
+			console.log('Cannot have multiple attendance log in a day.');
+		});
+
+		socket.on('SCANNER_EmployeeNotFoundError', () => {
+			console.log('Employee not yet registered in the system.');
+		});
+
+		socket.on('disconnect', () => {
+			console.log('disconnected.');
+		});
+
+		socket.on('connect', () => {
+			console.log('connected!.');
 		});
 
 		// target elements
 		const login_form = document.querySelector('#login_form');
-		const email = document.querySelector('#email');
 		const password = document.querySelector('#password');
 
 		login_form.addEventListener('submit', async (e) => {
 			try {
 				e.preventDefault();
-				const response = await axios.post('/api/auth/login', {
-					email: email.value,
-					password: password.value
-				});
-
-				console.log(response.data);
-				
-				// if response is recieved, connect to socketio server
 				socket.connect();
-				socket.emit('authenticate', { email: email.value }, (response) => {
+				socket.emit('authenticate_sentiment_selection', { p: password.value }, (response) => {
 					console.log(response);
 				});
-
 			} catch (error) {
 				console.log(error);
 			}

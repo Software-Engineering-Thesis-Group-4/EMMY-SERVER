@@ -19,6 +19,13 @@ function SocketIoMain(io) {
 		socket.on('authenticate_sentiment_selection', async (data, callback) => {
 			// [1] check if the access key that was submitted is correct (should match env var "SENTIMENT_ACCESS_KEY")
 			// [2] if key is correct, join room designated for sentiment selection
+			if (data && data.p === process.env.SENTIMENT_ACCESS_KEY) {
+				callback('authenticated');
+				socket.join('daily_sentiment');
+			}
+
+			callback('Incorrect Password.');
+
 		});
 
 		// disconnection -------------------------------------------------------
