@@ -31,7 +31,6 @@ switch (process.env.NODE_ENV) {
 	case 'development ': {
 		// if development mode, it will use the sample config file in the project "configs/EMMY_DEV.env"
 		let filePath = path.resolve(__dirname, './EMMY_DEV.env');
-		console.log(`\nFilePath: ${filePath}`);
 
 		if (fileChecker(filePath)) {
 			dotenv.config({ path: filePath });
