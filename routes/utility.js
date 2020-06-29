@@ -3,7 +3,7 @@ const path = require('path');
 const router = express.Router();
 
 function getPath(file) {
-	return path.join(__dirname, `../views/${file}`)
+	return path.join(__dirname, `../views/dev/${file}`)
 }
 
 router.get('/', (req, res) => {
@@ -11,7 +11,7 @@ router.get('/', (req, res) => {
 });
 
 router.get('/login', (req, res) => {
-	res.sendFile(getPath('test-login.html'));
+	res.sendFile(getPath('test-test-socket_authentication.html'));
 });
 
 router.get('/account-settings', (req, res) => {

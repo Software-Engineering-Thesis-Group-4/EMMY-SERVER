@@ -46,7 +46,7 @@ Middlewares:
 Author/s:
 - Nathaniel Saludes
 --------------------------------------------------------------------------------------------------- */
-router.delete('/:id',
+router.patch('/:id/delete',
 	[
 		...DeleteRules,
 		ValidateFields,
@@ -69,12 +69,13 @@ router.delete('/:id',
 				});
 			}
 
-			await employee_log.remove();
+			employee_log.deleted = true;
+			await employee_log.save();
 
 			res.statusCode = 200;
 			return res.send({
 				new_token,
-				message: "Successfully deleted an employee log.",
+				message: "Successfully marked an employee log deleted.",
 				employee_log
 			});
 

@@ -1,8 +1,7 @@
 const rateLimit  = require('express-rate-limit');
 const MongoStore = require('rate-limit-mongo');
 
-
-exports.apiLimiter = rateLimit({
+const rateLimiter = rateLimit({
 	store: new MongoStore({
 		uri: `mongodb://localhost:${process.env.DB_PORT}/${process.env.DB_NAME}`,
 		collectionName: "expressRateLimitRecord"
@@ -12,3 +11,5 @@ exports.apiLimiter = rateLimit({
    delayMs: 0,
    message: "Too many attempts from this IP, please try again after 15mins"
 });
+
+module.exports = rateLimiter;

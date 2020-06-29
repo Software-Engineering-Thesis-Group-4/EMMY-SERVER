@@ -3,6 +3,7 @@ const csv = require('neat-csv');
 
 const ValidateDuplicates = require('./ValidateDuplicates');
 const insertEmployees = require('./InsertEmployees');
+const ValidateDatabaseDuplicates = require('./ValidateDatabaseDuplicates');
 
 async function importEmployees(file) {
 	// check if file type is CSV
@@ -29,14 +30,8 @@ async function importEmployees(file) {
 	}
 
 	// validate for duplicate values for required unique fields
-	const duplicates = await ValidateDuplicates(rows);
-
-	if(duplicates.EMPLOYEE_ID.length || duplicates.FINGERPRINT_ID.length || duplicates.EMAIL.length) {
-		const error = new Error('Invalid Format. Duplicate values found for unique fields.')
-		error.name = "DuplicateValidationError";
-		error.duplicate_fields = duplicates;
-		throw error;
-	}	
+	ValidateDuplicates(rows);
+	await ValidateDatabaseDuplicates(rows);
 	
 	// if validations are success, insert data to database
 	return await insertEmployees(rows);

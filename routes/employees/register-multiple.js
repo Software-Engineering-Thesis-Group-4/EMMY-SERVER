@@ -1,8 +1,6 @@
 const router = require('express').Router();
 const multer = require('multer');
 
-// models
-
 // utilities
 const { RegisterMultipleRules } = require('../../utility/validators/employees');
 const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility');

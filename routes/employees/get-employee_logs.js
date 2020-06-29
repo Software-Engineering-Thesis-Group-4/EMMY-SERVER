@@ -1,94 +1,79 @@
 const router = require('express').Router();
 
 // models
+const { Employee } = require('../../db/models/Employee');
 const { EmployeeLog } = require('../../db/models/EmployeeLog');
 
 // utilities
-const { DeleteRules } = require('../../utility/validators/employee-logs');
+const { VerifySession, VerifyCredentials, VerifyAdminRights } = require('../../utility/middlewares');
 const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility');
-const { ValidateFields, VerifyCredentials, VerifySession, VerifyAdminRights } = require('../../utility/middlewares');
-
-// middlewares
-function CustomValidator(req, res, next) {
-	const { id } = req.params;
-
-	if (!id) {
-		res.statusCode = 400;
-		return res.send({
-			errors: "Unauthorized Access. Incomplete Credentials."
-		})
-	}
-
-	next();
-}
+const { GetLogsOfEmployeeRules } = require('../../utility/validators/employees')
 
 
 /* --------------------------------------------------------------------------------------------------
 Route:
-/api/employeelogs/:id
+/api/employees/:id/logs
 
 Query Parameters:
 - user
 - access_token
 
 Description:
-- 	This api is used for physically deleting an employee log from the database (WARNING: This operation is
-	is potentially destructive)
+- This api is used for fetching employee data
 
 Middlewares:
 # ValidateSession
-	- Ensure that the user has an existing session and is still valid
-
-# ValidateAdminRights
-	- Ensure that the user performing the action has administrator previliges
-	
+	-	Ensure that the user requesting for the API has an existing valid session
 
 Author/s:
 - Nathaniel Saludes
 --------------------------------------------------------------------------------------------------- */
-router.delete('/:id',
+router.get('/:_id/logs',
 	[
-		...DeleteRules,
-		ValidateFields,
+		...GetLogsOfEmployeeRules,
 		VerifyCredentials,
-		CustomValidator,
 		VerifySession,
 		VerifyAdminRights
-
 	],
 	async (req, res) => {
 		try {
+			// verify token
 			const new_token = verifyAccessToken(req.query.access_token);
+			const employee_id = req.params._id;
 
-			const employee_log = await EmployeeLog.findById(req.params.id);
-			if (!employee_log) {
+			// find employee and check if existing
+			const employee = await Employee.findById(employee_id);
+			if (!employee) {
 				res.statusCode = 404;
 				return res.send({
-					new_token: new_token,
-					errors: "Log does not exist."
+					errors: "Employee does not exist."
 				});
 			}
 
-			await employee_log.remove();
+			// fetch logs of employee
+			const employee_logs = await EmployeeLog.find({
+				$and: [
+					{ employeeRef: employee._id },
+					{ deleted: false }
+				]
+			});
 
 			res.statusCode = 200;
-			return res.send({
+			res.send({
 				new_token,
-				message: "Successfully deleted an employee log.",
-				employee_log
+				message: `Successufully fetched logs of employee (${employee.firstname} ${employee.lastname}).`,
+				employee_logs
 			});
 
 		} catch (error) {
 			switch (error.name) {
 				case "IncompleteCredentials":
-					console.log("[Delete Error] Access Token Missing.".red)
 					res.statusCode = 401;
 					return res.send({
 						errors: "Unauthorized Access. Access Token Required."
 					})
 
 				case "InvalidAccessToken":
-					console.log("[Delete Error] Invalid Access Token.".red)
 					res.statusCode = 401;
 					return res.send({
 						errors: "Unauthorized Access. Invalid Access Token."
