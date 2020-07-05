@@ -17,7 +17,7 @@ async function AttendanceHandler(fingerprint_id) {
 	}
 
 	// get employee using the provided fingerprint id/number
-	const employee = await Employee.findOne({ fingerprintId: fingerprint_id });
+	const employee = await Employee.findOne({ fingerprintId: fingerprint_id })
 
 	// check if employee exists
 	if (!employee) {
@@ -28,38 +28,44 @@ async function AttendanceHandler(fingerprint_id) {
 
 	// check if latest log reference does not exist
 	if (!employee.latestLog) {
-		await LogAttendance(employee);
+		const employee_log = await LogAttendance(employee);
 
 		return {
 			success: true,
+			login_mode: true,
 			message: "New time-in created.",
-			employee
+			employee,
+			employee_log
 		}
 	}
 
 	// if the latest log reference is initialized
-	const mostRecentLog = await EmployeeLog.findById(employee.latestLog.reference);
+	const mostRecentLog = await EmployeeLog.findById(employee.latestLog).populate('employeeRef');
 
 	// if most recent log does not exist (deleted) create a new one
 	if (!mostRecentLog) {
-		await LogAttendance(employee);
+		const employee_log = await LogAttendance(employee);
 
 		return {
 			success: true,
+			login_mode: true,
 			message: `Employee log reference not found (${employee.email}). Time-in created.`,
-			employee
+			employee,
+			employee_log
 		}
 	}
 
 	// if time-out is not initialized, check if overdue
 	if (!mostRecentLog.timeOut) {
 		if (verifyOverdue(mostRecentLog.timeIn)) {
-			await LogAttendance(employee);
+			const employee_log = await LogAttendance(employee);
 
 			return {
 				success: true,
+				login_mode: true,
 				message: `Time-out overdue. New time-in created.`,
-				employee
+				employee,
+				employee_log
 			}
 		}
 
@@ -68,19 +74,23 @@ async function AttendanceHandler(fingerprint_id) {
 
 		return {
 			success: true,
+			login_mode: false,
 			message: `Successfully logged employee time-out.`,
-			employee
+			employee,
+			employee_log: mostRecentLog
 		}
 	}
 
 	// if time-out is already recorded, check if day today is already past the day of employee log
 	if (moment().isAfter(mostRecentLog.dateCreated, 'day')) {
-		await LogAttendance(employee);
+		const employee_log = await LogAttendance(employee);
 
 		return {
 			success: true,
+			login_mode: true,
 			message: `Successufully logged employee time-in`,
-			employee
+			employee,
+			employee_log,
 		}
 	}
 
@@ -98,17 +108,17 @@ async function LogAttendance(employee) {
 
 	await employee_log.save();
 
-	employee.latestLog = {
-		reference: employee_log._id,
-		date: employee_log.in
-	}
-
+	employee.latestLog = employee_log._id;
 	await employee.save();
 
 	// if employee is a full-time/regular employee
-	if (employee.employmentStatus === 1) {
-		// TODO: Emit a socket event
+	if (employee.employmentStatus === 0) {
+		const error = new Error('Part-time employee.');
+		error.name = "PartTimeEmployee";
+		throw error;
 	}
+
+	return employee_log;
 }
 
 module.exports = {

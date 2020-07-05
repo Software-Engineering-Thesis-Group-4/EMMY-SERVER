@@ -11,7 +11,7 @@ router.get('/', (req, res) => {
 });
 
 router.get('/login', (req, res) => {
-	res.sendFile(getPath('test-test-socket_authentication.html'));
+	res.sendFile(getPath('test-sentiment_authentication.html'));
 });
 
 router.get('/account-settings', (req, res) => {

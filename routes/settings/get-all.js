@@ -1,7 +1,15 @@
 const { VerifyAdminRights, VerifySession, VerifyCredentials } = require('../../utility/middlewares');
-const getAutomatedEmailTemplate = require('../../utility/handlers/ApplicationSettings/AutomatedEmail/GetTemplate');
+const initializeSettings = require('../../utility/database/InitializeDefaultSettings');
+const { Settings } = require('../../db/models/Settings');
+const { query } = require('express-validator');
+const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility');
 
 const router = require('express').Router();
+
+const GetAllSettings = [
+	query('user').trim().escape(),
+	query('access_token').trim().escape(),
+]
 
 /* --------------------------------------------------------------------------------
 Route:
@@ -26,17 +34,29 @@ Author/s:
 -------------------------------------------------------------------------------- */
 router.get('/',
 	[
+		...GetAllSettings,
 		VerifyCredentials,
 		VerifySession,
 		VerifyAdminRights
 	],
 	async (req, res) => {
 		try {
-			const emailTemplate = await getAutomatedEmailTemplate();
+			const new_token = verifyAccessToken(req.query.access_token);
+			await initializeSettings();
+
+			const settings = await Settings.find({
+				$or: [
+					{ key: "Automated Email" },
+					{ key: "Backup" },
+					{ key: "Departments" },
+				]
+			}, { _id: 0, category: 0 });
 
 			res.statusCode = 200;
 			return res.send({
-				template: emailTemplate
+				new_token,
+				message: "Successfully retrieved settings status.",
+				settings
 			});
 
 		} catch (error) {

@@ -1,15 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-// LATEST LOG SCHEMA ---------------------
-const LatestLogSchema = new Schema({
-	reference: {
-		type: Schema.Types.ObjectId,
-		ref: 'EmployeeLog',
-	},
-	date: Date,
-});
-
 // EMPLOYEE SCHEMA -----------------------
 const EmployeeSchema = new Schema({
 	employeeId: {
@@ -56,7 +47,8 @@ const EmployeeSchema = new Schema({
 		required: true
 	},
 	latestLog: {
-		type: LatestLogSchema,
+		type: Schema.Types.ObjectId,
+		ref: 'EmployeeLog',
 		default: null,
 	},
 	negativeEmotionCounter: {

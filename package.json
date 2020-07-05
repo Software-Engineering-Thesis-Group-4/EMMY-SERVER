@@ -7,10 +7,9 @@
 		"dev": "set NODE_ENV=development && nodemon app.js"
 	},
 	"dependencies": {
-		"aes-js": "^3.1.2",
 		"bcryptjs": "^2.4.3",
-		"chunk": "0.0.2",
 		"cors": "^2.8.5",
+		"cron": "^1.8.2",
 		"csv-writer": "^1.6.0",
 		"dotenv": "^8.2.0",
 		"ejs": "~2.6.1",
@@ -19,9 +18,8 @@
 		"express-validator": "^6.4.0",
 		"helmet": "^3.21.3",
 		"ip": "^1.1.5",
-		"is-online": "^8.3.0",
 		"jsonwebtoken": "^8.5.1",
-		"moment": "^2.24.0",
+		"moment": "^2.27.0",
 		"mongoose": "^5.7.12",
 		"mongoose-autopopulate": "^0.12.2",
 		"morgan": "~1.9.1",
@@ -31,7 +29,6 @@
 		"nodemailer": "^6.4.5",
 		"pdfmake": "^0.1.65",
 		"rate-limit-mongo": "^2.1.0",
-		"replace-string": "^3.0.0",
 		"socket.io": "^2.3.0",
 		"zip-a-folder": "0.0.12"
 	},

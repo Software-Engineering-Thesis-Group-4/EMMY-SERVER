@@ -39,12 +39,26 @@ router.get('/scanner/:fingerprint_id',
 			const fingerprint_id = req.params.fingerprint_id;
 			const attendance = await AttendanceHandler(parseInt(fingerprint_id));
 
+			if (attendance) {
+				const { employee, employee_log, login_mode } = attendance;
+
+				const io = emmy_socketIo;
+
+				io.in('daily_sentiment').emit('SCANNER', {
+					id: employee_log._id,
+					employee: `${employee.firstname} ${employee.lastname}`,
+					login_mode
+				});
+			}
+
 			res.statusCode = 200;
 			return res.send(attendance);
 
 		} catch (error) {
+			const io = emmy_socketIo;
 			switch (error.name) {
 				case "EmployeeNotFound":
+					io.in('daily_sentiment').emit('SCANNER_EmployeeNotFoundError');
 					res.statusCode = 404;
 					return res.send({
 						errors: "Employee does not exist."
@@ -57,9 +71,16 @@ router.get('/scanner/:fingerprint_id',
 					});
 
 				case "MultipleEmployeeLogError":
+					io.in('daily_sentiment').emit('SCANNER_MultipleEmployeeLogError');
 					res.statusCode = 422;
 					return res.send({
 						errors: "Cannot have multiple logs in a day."
+					});
+
+				case "PartTimeEmployee":
+					res.statusCode = 200;
+					return res.send({
+						message: "Part-time employee."
 					});
 
 				default:

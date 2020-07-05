@@ -22,17 +22,17 @@ const app = express();
 const server = http.createServer(app)
 const io = socketIO(server);
 SocketIoMain(io);
+
 global.emmy_socketIo = io; // make socket io object accessible globally
+global.__basedir = __dirname;
 
 // MIDDLEWARE CONFIGURATIONS ----------------------------------------------------------------------------------
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-app.use(cors());
+app.use(cors({}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
-app.use(express.static(path.join(__dirname, "uploaded-images")));
-app.use(express.static(path.join(__dirname, "downloadables")));
 app.use(express.static(path.join(__dirname, "client"))); // the directory for Vue
 app.use(helmet({
 	xssFilter: {
@@ -77,14 +77,6 @@ app.use('/api/settings', ...settingsRoute);
 // apply rate limit to api routes
 app.use('/api/', rateLimiter);
 
-// REFACTOR: -----------------------------------------------------------------------------------
-const auditLogsRoute = require('./routes/audit-logs');
-const adminRoute = require('./routes/admin');
-app.use('/api/auditlogs', auditLogsRoute);
-app.use('/api/admin', adminRoute);
-// REFACTOR: -----------------------------------------------------------------------------------
-
-
 // Restrict access to dev routes on production mode
 if (process.env.NODE_ENV === 'development ') {
 	app.use('/dev', utilityRoute);
@@ -108,12 +100,7 @@ async function start() {
 		console.log("Starting Application...".black.bgGreen + "\nInitializing connection to database...");
 
 		// initialize database connection
-		let { connection } = await createDBConnection(cfg.DB_NAME, cfg.DB_PORT);
-
-		console.log(
-			" SERVER RUNNING ".black.bgGreen + "\n" +
-			"\nDatabase: " + connection.name.brightCyan
-		);
+		const { connection } = await createDBConnection(cfg.DB_NAME, cfg.DB_PORT);
 
 		const environment = (process.env.NODE_ENV === 'development ') ? 'DEVELOPMENT'.black.bgYellow : 'PRODUCTION'.black.bgCyan;
 		const host_url = 'http://localhost:'.cyan + PORT.brightCyan;
@@ -121,6 +108,8 @@ async function start() {
 
 		server.listen(PORT, () => {
 			console.log(
+				" SERVER RUNNING ".black.bgGreen + "\n" +
+				"Database: " + connection.name.brightCyan + "\n" +
 				"--------------------------------------------------\n" +
 				"- Mode: " + environment + "\n" +
 				"- local: " + host_url + "\n" +
