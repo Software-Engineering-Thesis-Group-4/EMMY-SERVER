@@ -1,117 +1,68 @@
 const router = require('express').Router();
-const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
 // models
 const { User } = require('../../db/models/User');
 
 // utilities
-const { body, validationResult } = require('express-validator');
+const { ValidateFields, VerifyCredentials, VerifySession, VerifyAdminRights } = require('../../utility/middlewares');
+const { UpdatePasswordRules } = require('../../utility/validators/users');
+const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility');
 
-// middlewares
-const UpdatePasswordRules = [
-	body('password').exists().notEmpty().isString().isLength({ min: 6 }),
-	body('confirm_password').exists().notEmpty().isString().custom(
-		(value, { req }) => {
-			if (value !== req.body.password)
-				throw new Error('Password confirmation failed.');
-			return true;
-		}
-	),
-	body('access_token').trim(),
-]
-
-function CustomValidator(req, res, next) {
-	const errors = validationResult(req);
-	if (!errors.isEmpty()) {
-		res.statusCode = 422;
-		return res.send({
-			errors: errors.mapped()
-		});
-	}
-
-	const { access_token } = req.body;
-	if (!access_token) {
-		res.statusCode = 400;
-		return res.send({
-			errors: "Unauthorized Access. Incomplete Credentials."
-		});
-	}
-
-	next();
-}
-
-/* ------------------------------------------------------------------------------------------
-Route:
-/api/users/password_reset
-
-Query Parameters:
-- email
-
-Description:
-- 	This api is used for requesting a password reset for a specific account which provides
-	a security code to securely update a user's password.
-
-Middlewares:
-
-Author/s:
-- Nathaniel Saludes
------------------------------------------------------------------------------------------- */
-router.post('/password_reset',
+router.patch('/password',
 	[
 		...UpdatePasswordRules,
-		CustomValidator
+		ValidateFields,
+		VerifyCredentials,
+		VerifySession,
+		VerifyAdminRights
 	],
 	async (req, res) => {
 		try {
-			const {
-				access_token,
-				password
-			} = req.body;
+			const new_token = verifyAccessToken(req.query.access_token);
 
-			const token = jwt.verify(access_token, process.env.JWT_KEY);
-			if (!token.email) {
-				res.statusCode = 400;
-				return res.send({
-					errors: "Unauthorized Access. Invalid Token."
-				});
-			}
-
-			const user = await User.findOne({ email: token.email });
+			const user = await User.findOne({ email: req.query.user });
 			if (!user) {
 				res.statusCode = 400;
 				return res.send({
-					errors: "Unauthorized Access. Invalid Token."
-				});
-			}
-
-			const hashed_password = bcrypt.hashSync(password);
-
-			user.password = hashed_password;
-			await user.save();
-
-
-			res.statusCode = 200;
-			return res.send({
-				message: 'Successfully changed password.',
-				user: user.email
-			});
-
-		} catch (error) {
-			if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
-				res.statusCode = 400;
-				return res.send({
-					errors: "Unauthorized Access. Invalid Token."
+					errors: "User not found."
 				})
 			}
 
-			console.log(`[${error.name}] ${error.message}`.red);
-			res.statusCode = 500;
+			const hashed_password = bcrypt.hashSync(req.body.password);
+			await user.updateOne({ password: hashed_password });
+
+			res.statusCode = 200;
 			return res.send({
-				errors: error
-			})
+				new_token,
+				message: "Successufully updated password."
+			});
+
+		} catch (error) {
+			switch (error.name) {
+				case "IncompleteCredentials":
+					console.log("[Upload Error] Access Token Missing.".red)
+					res.statusCode = 401;
+					return res.send({
+						errors: "Unauthorized Access. Access Token Required."
+					})
+
+				case "InvalidAccessToken":
+					console.log("[Upload Error] Invalid Access Token.".red)
+					res.statusCode = 401;
+					return res.send({
+						errors: "Unauthorized Access. Invalid Access Token."
+					});
+
+				default:
+					console.log(`[${error.name}] ${error.message}`);
+					res.statusCode = 500;
+					return res.send({
+						errors: error
+					});
+			}
 		}
 	}
-)
+);
 
 module.exports = router;

@@ -37,13 +37,11 @@
 	<script>
 
 		// set up web sockets
-		const socket = io('http://[::1]:3000/', {
-			autoConnect: false
-		});
+		const socket = io('http://[::1]:3000/');
 
 		socket.on('SCANNER', (data) => {
 			const { id, employee, login_mode } = data;
-			console.log(`${employee} just logged ${login_mode ? "in" : "out"}`);
+			alert(`${employee} just logged ${login_mode ? "in" : "out"}`);
 		});
 
 		socket.on('SCANNER_MultipleEmployeeLogError', () => {
@@ -58,10 +56,6 @@
 			console.log('disconnected.');
 		});
 
-		socket.on('connect', () => {
-			console.log('connected!.');
-		});
-
 		// target elements
 		const login_form = document.querySelector('#login_form');
 		const password = document.querySelector('#password');
@@ -69,7 +63,6 @@
 		login_form.addEventListener('submit', async (e) => {
 			try {
 				e.preventDefault();
-				socket.connect();
 				socket.emit('authenticate_sentiment_selection', { p: password.value }, (response) => {
 					console.log(response);
 				});

@@ -1,4 +1,5 @@
 module.exports = [
 	require('./login'),
-	require('./logout')
+	require('./logout'),
+	require('./verify-session')
 ]

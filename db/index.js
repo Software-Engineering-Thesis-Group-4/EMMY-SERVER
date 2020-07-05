@@ -1,7 +1,12 @@
 const mongoose = require('mongoose');
-const { User } = require('../db/models/User');
-const bcrypt = require('bcryptjs');
+const fs = require('fs');
+const path = require('path');
 require('colors');
+
+// utilities
+const initializeAdmin = require('../utility/database/InitializeAdmin');
+const initializeSettings = require('../utility/database/InitializeDefaultSettings');
+const { runCronJobs } = require('../utility/handlers/CronJobs/ScheduledTaskHandler');
 
 exports.createDBConnection = async (db_name, port) => {
 	try {
@@ -13,21 +18,17 @@ exports.createDBConnection = async (db_name, port) => {
 			useFindAndModify: false
 		});
 
-		// check if there are any existing administrators
-		const existingUsers = await User.findOne({ isAdmin: true });
-		const hashed_password = bcrypt.hashSync("administrator");
-		if (!existingUsers) {
-			const root_admin = new User({
-				firstname: "ROOT",
-				lastname: "ADMIN",
-				username: "ROOT_ADMIN",
-				email: "root_admin@emmy.com",
-				password: hashed_password,
-				isAdmin: true,
-			});
-
-			await root_admin.save();
+		if (!fs.existsSync(path.join(__dirname, './zip/'))) {
+			fs.mkdirSync(path.join(__dirname, './zip/'));
 		}
+
+		if (!fs.existsSync(path.join(__dirname, './backups/'))) {
+			fs.mkdirSync(path.join(__dirname, './backups/'));
+		}
+
+		await initializeAdmin();
+		await initializeSettings();
+		runCronJobs();
 
 		console.clear();
 		return connection;

@@ -5,5 +5,6 @@ module.exports = [
 	require('./terminate'),
 	require('./delete'),
 	require('./update'),
-	require('./get-employee_logs')
+	require('./get-employee_logs'),
+	require('./upload-photo'),
 ]

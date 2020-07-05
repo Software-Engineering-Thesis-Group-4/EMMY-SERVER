@@ -1,23 +1,25 @@
 const router = require('express').Router();
 const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
 
 // models
 const { User } = require('../../db/models/User');
 
 // utilities
-const { query } = require('express-validator');
 const { ValidateFields, VerifyCredentials, VerifySession } = require('../../utility/middlewares');
 const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility');
+const { UploadPhotoRules } = require('../../utility/validators/users');
 
 // middlewares
-const storage = multer.diskStorage({
-	destination: './public/images/',
+const storageConfig = multer.diskStorage({
+	destination: './public/images/users',
 	filename: (req, file, cb) => {
 		const user_id = req.user._id;
 
 		// validate file type
 		if (!file.mimetype.includes('image/')) {
-			const error = new Error("Invalid File Format.");
+			const error = new Error("Upload Failed. Invalid File Format.");
 			error.name = "InvalidFileType";
 			return cb(error);
 		}
@@ -27,27 +29,45 @@ const storage = multer.diskStorage({
 	}
 });
 
-const UploadPhotoRules = [
-	query('user').trim().escape(),
-	query('access_token').trim().escape(),
-]
-
-const CustomValidator = async (req, res, next) => {
-	const email = req.query.user;
-
-	// validate if user exists
-	const user = await User.findOne({ email });
-	if (!user) {
+const uploadErrorHandler = (error, req, res, next) => {
+	if (error.name === "InvalidFileType") {
 		res.statusCode = 400;
 		return res.send({
-			errors: "Upload Failed. User not found."
+			errors: error.message
+		})
+	}
+
+	res.statusCode = 500;
+	return res.send({
+		errors: error.message
+	})
+}
+
+const CustomValidator = async (req, res, next) => {
+	try {
+		const email = req.query.user;
+
+		// validate if user exists
+		const user = await User.findOne({ email });
+		if (!user) {
+			res.statusCode = 400;
+			return res.send({
+				errors: "Upload Failed. User not found."
+			});
+		}
+
+		// attach user to request object
+		req.user = user;
+
+		next();
+	} catch (error) {
+		console.log(error);
+		res.statusCode = 500;
+		return res.send({
+			errors: error
 		});
 	}
 
-	// attach user to request object
-	req.user = user;
-
-	next();
 }
 
 
@@ -58,6 +78,7 @@ Route:
 
 Query Parameters:
 - user
+- access_token
 
 Description:
 - This api is used uploading user photo
@@ -78,7 +99,7 @@ router.post('/photo',
 		ValidateFields,
 		VerifyCredentials,
 		CustomValidator,
-		multer({ storage: storage }).single('photo'),
+		multer({ storage: storageConfig }).single('photo'),
 		VerifySession
 	],
 	async (req, res) => {
@@ -94,17 +115,30 @@ router.post('/photo',
 				});
 			}
 
-			// validate file type
 			const photo = req.file;
-			if (!photo.mimetype.includes('image/')) {
-				res.statusCode = 404;
-				return res.send({
-					errors: "Upload Failed. Invalid format."
-				});
-			}
 
 			user.photo = photo.filename;
 			await user.save();
+
+			// get all images
+			const files = fs.readdirSync(path.join(__dirname, '../../public/images/users/'));
+
+			if (files && files.length > 0) {
+
+				// get all images corresponding to the id of user
+				let photos = files.filter(file => file.split(".").shift() === user.id);
+
+				// if there are more than 1 image found that corresponds to the user...
+				if (photos && photos.length > 1) {
+
+					// delete the other images that doesn't currently match the saved path in the database
+					let delete_photos = photos.filter(photo => photo !== user.photo);
+
+					delete_photos.forEach(photo => {
+						fs.unlinkSync(path.join(__dirname, `../../public/images/users/${photo}`));
+					});
+				}
+			}
 
 			res.statusCode = 200;
 			return res.send({
@@ -137,7 +171,8 @@ router.post('/photo',
 					});
 			}
 		}
-	}
+	},
+	uploadErrorHandler
 );
 
 module.exports = router;

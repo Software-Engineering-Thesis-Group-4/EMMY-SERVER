@@ -42,7 +42,7 @@ router.get('/',
 				$where: function () {
 					return !this.deleted
 				}
-			});
+			}).populate('employeeRef');
 
 			res.statusCode = 200;
 			return res.send({

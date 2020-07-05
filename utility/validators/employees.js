@@ -58,6 +58,11 @@ const GetLogsOfEmployeeRules = [
 	query('access_token').trim().escape(),
 ]
 
+const UploadPhotoRules = [
+	query('user').trim().escape(),
+	query('access_token').trim().escape(),
+]
+
 module.exports = {
 	GetAllRules,
 	RegisterOneRules,
@@ -65,5 +70,6 @@ module.exports = {
 	UpdateRules,
 	DeleteRules,
 	TerminateRules,
-	GetLogsOfEmployeeRules
+	GetLogsOfEmployeeRules,
+	UploadPhotoRules
 }
