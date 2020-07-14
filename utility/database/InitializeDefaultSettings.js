@@ -23,19 +23,7 @@ async function initAutomatedEmail() {
 				enabled: true,
 				template: {
 					subject: "HR Notification Email",
-					messageBody: `
-						<p>
-							We noticed that you are not feeling alright this past few days. Please know that your HR team cares for you and
-							we'd like to hear you out.
-							<br><br>
-							Having said, may we invite you on your convenient availability over the next couple of weeks for a casual and
-							friendly chat? Please reply to this email to set an appointment.
-						</p>
-						<p>
-							Thanks!<br>
-							See you soon!
-						</p>
-					`.trim()
+					messageBody: "<p>We noticed that you are not feeling alright this past few days. Please know that your HR team cares for you and we'd like to hear you out.</p><p><br></p><p>Having said, may we invite you on your convenient availability over the next couple of weeks for a casual and friendly chat? Please reply to this email to set an appointment.</p><p><br></p><p>Thanks! See you soon!</p>".trim()
 				}
 			}
 		});

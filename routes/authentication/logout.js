@@ -1,10 +1,13 @@
 const router = require('express').Router();
+const moment = require('moment');
 
 // utilities
 const { LogoutRules } = require('../../utility/validators/authentication');
 const { validationResult } = require('express-validator');
 const { removeRefreshToken } = require('../../utility/tokens/RefreshTokenUtility');
 const { VerifySession } = require('../../utility/middlewares');
+const { Socket } = require('../../db/models/Sockets');
+const createAuditLog = require('../../utility/handlers/AuditLogs/CreateAuditLog');
 
 // middleware
 const ValidateFields = (req, res, next) => {
@@ -54,7 +57,19 @@ router.get('/logout',
 				});
 			}
 
-			/* TODO:	Create audit log for the successful logout of the specific user																		*/
+			const sockets = await Socket.find({ email });
+			const removeAll = [];
+			sockets.forEach(item => {
+				removeAll.push(item.remove());
+			});
+
+			await Promise.all(removeAll);
+
+			await createAuditLog(
+				req.query.user,
+				'LOGOUT', `${req.query.user} logged out at ${moment().format('LTS')}.`,
+				false
+			);
 
 			res.statusCode = 200;
 			return res.send({

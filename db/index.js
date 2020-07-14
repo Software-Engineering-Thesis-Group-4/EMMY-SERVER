@@ -10,7 +10,8 @@ const { runCronJobs } = require('../utility/handlers/CronJobs/ScheduledTaskHandl
 
 exports.createDBConnection = async (db_name, port) => {
 	try {
-		// scheduled server task
+
+		// connect to the database
 		const connection = await mongoose.connect(`mongodb://localhost:${port}/${db_name}`, {
 			useNewUrlParser: true,
 			useUnifiedTopology: true,
@@ -18,6 +19,11 @@ exports.createDBConnection = async (db_name, port) => {
 			useFindAndModify: false
 		});
 
+		/* ----------------------------------------------------------------------------------------------
+		the following directories are very crucial in the functioning of the application.
+		Whenever the application is launched, it must ensure that the zip and backup directories
+		are initialized.
+		*/
 		if (!fs.existsSync(path.join(__dirname, './zip/'))) {
 			fs.mkdirSync(path.join(__dirname, './zip/'));
 		}
@@ -26,27 +32,33 @@ exports.createDBConnection = async (db_name, port) => {
 			fs.mkdirSync(path.join(__dirname, './backups/'));
 		}
 
+		/* ----------------------------------------------------------------------------------------------
+		It is important to ensure that the application must have at least one administrator which is 
+		the root admin in order to be able to register other users.
+		*/
 		await initializeAdmin();
 		await initializeSettings();
+
+		/* ----------------------------------------------------------------------------------------------
+		Run the scheduled tasks (i.e Scheduled Automated Email, Scheduled Database Backup, and the 
+		Automatic Negative Sentiment Refresh)
+		*/
 		runCronJobs();
 
 		console.clear();
 		return connection;
 
-	} catch (error) {
+	}
+	catch (error) {
 		console.clear();
 		console.log('Failed to initialize connection from MongoDB'.bgRed);
-		throw new Error(error);
+		throw error;
 	}
 }
 
 exports.closeDBConnection = async () => {
-	try {
-		console.log('closing connection...');
-		await mongoose.connection.close();
-		console.log('database connection closed.');
-		console.log("-------------------------------------------------------------------");
-	} catch (error) {
-		throw new Error(error);
-	}
+	console.log('closing connection...');
+	await mongoose.connection.close();
+	console.log('database connection closed.');
+	console.log("-------------------------------------------------------------------")
 }

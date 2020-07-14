@@ -7,6 +7,7 @@ const { Employee } = require('../../db/models/Employee');
 const { UpdateRules } = require('../../utility/validators/employees');
 const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility');
 const { VerifySession, VerifyAdminRights, ValidateFields, VerifyCredentials } = require('../../utility/middlewares');
+const createCrudNotification = require('../../utility/handlers/Notifications/UserSpecificNotifications');
 
 // middlewares
 function CustomValidator(req, res, next) {
@@ -26,7 +27,7 @@ Route:
 /api/employees/:id
 
 Query Parameters:
-- email
+- user
 - access_token
 
 Body:
@@ -88,6 +89,26 @@ router.put('/:id',
 				});
 			}
 
+			// const duplicate = await Employee.findOne({
+			// 	$or: [
+			// 		{ fingerprintId: fingerprint_id },
+			// 		{ email: email },
+			// 		{ employeeId: employee_id },
+			// 	]
+			// });
+
+			// if (duplicate) {
+			// 	res.statusCode = 400;
+			// 	return res.send({
+			// 		errors: "Employee Update Failed. Duplicate unique fields.",
+			// 		duplicate_fields: {
+			// 			fingerprint_id: duplicate.fingerprintId,
+			// 			email: duplicate.email,
+			// 			employee_id: duplicate.employeeId
+			// 		}
+			// 	});
+			// }
+
 			employee.employeeId = employee_id;
 			employee.firstname = firstname;
 			employee.lastname = lastname;
@@ -98,7 +119,11 @@ router.put('/:id',
 			employee.jobTitle = job_title;
 			employee.fingerprintId = fingerprint_id;
 
+
+
 			const updatedEmployee = await employee.save();
+
+			await createCrudNotification('update', req.query.user, employee._id);
 
 			res.statusCode = 200;
 			return res.send({

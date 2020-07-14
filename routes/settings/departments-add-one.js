@@ -3,6 +3,7 @@ const { VerifyAdminRights, VerifyCredentials, VerifySession, ValidateFields } = 
 const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility');
 const { query, body } = require('express-validator');
 const { addOneDepartment } = require('../../utility/handlers/Departments');
+const createAuditLog = require('../../utility/handlers/AuditLogs/CreateAuditLog');
 
 const AddDepartmentRules = [
 	query('user').trim().escape(),
@@ -26,6 +27,13 @@ router.patch('/departments',
 			const new_token = verifyAccessToken(req.query.access_token);
 
 			let new_department = await addOneDepartment(req.body.department);
+
+			await createAuditLog(
+				req.query.user,
+				'CREATE',
+				`${req.query.user} added a new department.`,
+				false
+			);
 
 			res.statusCode = 200;
 			return res.send({

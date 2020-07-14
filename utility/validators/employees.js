@@ -40,7 +40,6 @@ const TerminateRules = [
 const UpdateRules = [
 	query('user').trim().escape(),
 	query('access_token').trim().escape(),
-	param('id').trim().escape(),
 
 	body('employee_id').trim().escape().exists().notEmpty().isString(),
 	body('firstname').trim().escape().notEmpty().isString(),
@@ -63,6 +62,15 @@ const UploadPhotoRules = [
 	query('access_token').trim().escape(),
 ]
 
+const SendEmailRules = [
+	query('user').trim().escape(),
+	query('access_token').trim().escape(),
+
+	body('emails').exists().notEmpty(),
+	body('subject').trim().escape().exists().notEmpty().isString(),
+	body('message_html').trim().exists().notEmpty().isString(),
+]
+
 module.exports = {
 	GetAllRules,
 	RegisterOneRules,
@@ -71,5 +79,6 @@ module.exports = {
 	DeleteRules,
 	TerminateRules,
 	GetLogsOfEmployeeRules,
-	UploadPhotoRules
+	UploadPhotoRules,
+	SendEmailRules
 }

@@ -6,6 +6,7 @@ const { RegisterMultipleRules } = require('../../utility/validators/employees');
 const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility');
 const { ValidateFields, VerifyCredentials, VerifyAdminRights, VerifySession } = require('../../utility/middlewares/');
 const processFileImport = require('../../utility/handlers/ImportEmployees/CSVImportHandler');
+const createAuditLog = require('../../utility/handlers/AuditLogs/CreateAuditLog');
 
 // middlewares
 function CustomValidator(req, res, next) {
@@ -61,6 +62,13 @@ router.post('/import',
 		try {
 			const new_token = verifyAccessToken(req.query.access_token);
 			const employees = await processFileImport(req.file);
+
+			await createAuditLog(
+				req.query.user,
+				'CREATE',
+				`${req.query.user} imported employees from a CSV file.`,
+				false
+			);
 
 			if (employees && employees.length > 0) {
 				res.statusCode = 200;

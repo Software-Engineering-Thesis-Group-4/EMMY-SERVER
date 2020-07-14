@@ -12,8 +12,8 @@ const LogoutRules = [
 ];
 
 const VerifySessionRules = [
-	query('email').trim().exists().notEmpty().isEmail(),
-	query('access_token').trim().exists().notEmpty(),
+	query('email').trim().escape(),
+	query('access_token').trim().escape()
 ];
 
 module.exports = {

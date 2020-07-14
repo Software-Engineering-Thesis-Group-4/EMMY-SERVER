@@ -4,6 +4,7 @@ const { VerifyAdminRights, VerifyCredentials, VerifySession } = require('../../u
 const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility');
 const zipBackup = require('../../utility/handlers/DatabaseBackup/ZipBackup');
 const { query } = require('express-validator');
+const createAuditLog = require('../../utility/handlers/AuditLogs/CreateAuditLog');
 
 const DownloadBackupRules = [
 	query('user').trim().escape(),
@@ -21,6 +22,13 @@ router.get('/backup/download',
 		try {
 			verifyAccessToken(req.query.access_token);
 			const filename = await zipBackup();
+
+			await createAuditLog(
+				req.query.user,
+				'CREATE',
+				`${req.query.user} generated and downloaded a database backup.`,
+				false
+			);
 
 			res.statusCode = 200;
 			return res.download(path.join(__dirname, `../../db/zip/${filename}`));

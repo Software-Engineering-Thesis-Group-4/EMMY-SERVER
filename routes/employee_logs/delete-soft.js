@@ -7,6 +7,7 @@ const { EmployeeLog } = require('../../db/models/EmployeeLog');
 const { DeleteRules } = require('../../utility/validators/employee-logs');
 const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility');
 const { ValidateFields, VerifyCredentials, VerifySession, VerifyAdminRights } = require('../../utility/middlewares');
+const createAuditLog = require('../../utility/handlers/AuditLogs/CreateAuditLog');
 
 // middlewares
 function CustomValidator(req, res, next) {
@@ -71,6 +72,13 @@ router.patch('/:id/delete',
 
 			employee_log.deleted = true;
 			await employee_log.save();
+
+			await createAuditLog(
+				req.query.user,
+				'DELETE',
+				`${req.query.user} marked an employee log as deleted.`,
+				false
+			);
 
 			res.statusCode = 200;
 			return res.send({

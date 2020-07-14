@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
+const moment = require('moment');
 
 // models
 const { User } = require('../../db/models/User');
@@ -9,7 +10,7 @@ const { User } = require('../../db/models/User');
 const { LoginRules } = require('../../utility/validators/authentication');
 const { createRefreshToken } = require('../../utility/tokens/RefreshTokenUtility');
 const { createAccessToken } = require('../../utility/tokens/AccessTokenUtility');
-const { VerifyNonDuplicateSession } = require('../../utility/middlewares');
+const createAuditLog = require('../../utility/handlers/AuditLogs/CreateAuditLog');
 
 // middlewares
 const CustomValidator = (req, res, next) => {
@@ -46,8 +47,7 @@ Author/s:
 router.post('/login',
 	[
 		...LoginRules,
-		CustomValidator,
-		VerifyNonDuplicateSession
+		CustomValidator
 	],
 	async (req, res) => {
 		try {
@@ -81,6 +81,12 @@ router.post('/login',
 			const access_token = createAccessToken();
 
 			// TODO: Create audit log for the successful registration of a new user	
+			await createAuditLog(
+				user.email,
+				'LOGIN',
+				`${user.firstname} ${user.lastname} logged in at ${moment().format('LTS')}`,
+				false
+			);
 
 			res.statusCode = 200;
 			return res.send({

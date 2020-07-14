@@ -58,7 +58,9 @@ router.get('/scanner/:fingerprint_id',
 			const io = emmy_socketIo;
 			switch (error.name) {
 				case "EmployeeNotFound":
-					io.in('daily_sentiment').emit('SCANNER_EmployeeNotFoundError');
+					io.in('daily_sentiment').emit('SCANNER_ERROR', {
+						message: error.message
+					});
 					res.statusCode = 404;
 					return res.send({
 						errors: "Employee does not exist."
@@ -71,7 +73,9 @@ router.get('/scanner/:fingerprint_id',
 					});
 
 				case "MultipleEmployeeLogError":
-					io.in('daily_sentiment').emit('SCANNER_MultipleEmployeeLogError');
+					io.in('daily_sentiment').emit('SCANNER_ERROR', {
+						message: error.message
+					});
 					res.statusCode = 422;
 					return res.send({
 						errors: "Cannot have multiple logs in a day."

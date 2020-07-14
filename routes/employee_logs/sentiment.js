@@ -1,10 +1,16 @@
 const router = require('express').Router();
 const { query } = require('express-validator');
-const { ValidateFields } = require('../../utility/middlewares')
+
+// models
 const { EmployeeLog } = require('../../db/models/EmployeeLog');
 
+// utilities
+const { ValidateFields } = require('../../utility/middlewares')
+const incrementNegativeEmotionCounter = require('../../utility/handlers/NegativeEmotionLeaderboard/NegativeSentimentHandler');
+const createSentimentNotification = require('../../utility/handlers/Notifications/EmployeeLogNotifications');
+
 const SubmitSentimentRules = [
-	query('login_mode').trim().escape().exists().notEmpty().isBoolean(),
+	query('login_mode').trim().escape().exists().notEmpty(),
 	query('sentiment').trim().escape().exists().notEmpty().isInt({
 		min: 1,
 		max: 5
@@ -43,7 +49,7 @@ router.patch('/sentiment/:id',
 				});
 			}
 
-			const sentimentValue = req.query.sentiment;
+			const sentimentValue = parseInt(req.query.sentiment);
 			if (req.query.login_mode === 'true') {
 				employee_log.emotionIn = sentimentValue;
 			} else {
@@ -53,6 +59,15 @@ router.patch('/sentiment/:id',
 			// create audit log here...
 
 			await employee_log.save();
+
+			if(sentimentValue === 1) {
+				await incrementNegativeEmotionCounter(employee_log.employeeRef);
+			}
+
+			if(sentimentValue === 1 || sentimentValue === 2) {
+				await createSentimentNotification(sentimentValue, employee_log.employeeRef);
+			}
+
 
 			res.statusCode = 200;
 			return res.send({

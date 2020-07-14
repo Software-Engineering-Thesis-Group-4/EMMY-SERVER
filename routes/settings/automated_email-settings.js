@@ -4,6 +4,7 @@ const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility')
 const { query, body } = require('express-validator');
 const updateAutomatedEmailSettings = require('../../utility/handlers/AutomatedEmail/UpdateAutomatedEmailSettings');
 const { printCronStatus } = require('../../utility/handlers/CronJobs/ScheduledTaskHandler');
+const createAuditLog = require('../../utility/handlers/AuditLogs/CreateAuditLog');
 
 const UpdateAutomatedEmailRules = [
 	query('user').trim().escape(),
@@ -29,8 +30,15 @@ router.patch('/automated_email',
 			const { enabled, message_body, subject } = req.body;
 
 			const new_settings = await updateAutomatedEmailSettings(enabled, message_body, subject);
-			
-			printCronStatus();
+
+			await createAuditLog(
+				req.query.user,
+				'UPDATE',
+				`${req.query.user} updated the automated email settings.`,
+				false
+			);
+
+			// printCronStatus();
 
 			res.statusCode = 200;
 			return res.send({

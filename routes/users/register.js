@@ -8,6 +8,7 @@ const { User } = require('../../db/models/User')
 const { RegisterRules } = require('../../utility/validators/users');
 const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility');
 const { VerifySession, VerifyAdminRights, ValidateFields, VerifyCredentials } = require('../../utility/middlewares');
+const createAuditLog = require('../../utility/handlers/AuditLogs/CreateAuditLog');
 
 
 /* ------------------------------------------------------------------------------------------
@@ -91,7 +92,12 @@ router.post('/register',
 
 			// TODO: Emit a socket event called 'new_user_enrolled'						
 
-			// TODO: Record/Log registering of new user in system logs					
+			await createAuditLog(
+				req.query.user,
+				'CREATE',
+				`${req.query.user} registered a new emmy account (${new_user.firstname} ${new_user.lastname}).`,
+				false
+			);
 
 			res.statusCode = 200;
 			return res.send({

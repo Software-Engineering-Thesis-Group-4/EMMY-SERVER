@@ -1,7 +1,5 @@
 const router = require('express').Router();
 const multer = require('multer');
-const fs = require('fs');
-const path = require('path');
 
 // models
 const { Employee } = require('../../db/models/Employee');
@@ -10,6 +8,7 @@ const { Employee } = require('../../db/models/Employee');
 const { ValidateFields, VerifyCredentials, VerifySession, VerifyAdminRights } = require('../../utility/middlewares');
 const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility');
 const { UploadPhotoRules } = require('../../utility/validators/employees');
+const { UploadEmployeePhoto } = require('../../utility/handlers/UploadPhoto/UploadEmployeePhoto');
 
 // middlewares
 const storageConfig = multer.diskStorage({
@@ -108,45 +107,16 @@ router.post('/:_id/photo',
 	async (req, res) => {
 		try {
 			const new_token = verifyAccessToken(req.query.access_token);
-			const employee = req.employee;
+			req.employee;
+			req.file;
 
-			if (!req.file) {
-				res.statusCode = 404;
-				return res.send({
-					errors: "Upload Failed. No image provided."
-				});
-			}
-
-			const photo = req.file;
-
-			employee.photo = photo.filename;
-			await employee.save();
-
-			// get all images
-			const files = fs.readdirSync(path.join(__dirname, '../../public/images/employees/'));
-
-			if (files && files.length > 0) {
-
-				// get all images corresponding to the id of employee
-				let photos = files.filter(file => file.split(".").shift() === req.params._id);
-
-				// if there are more than 1 image found that corresponds to the employee...
-				if (photos && photos.length > 1) {
-
-					// delete the other images that doesn't currently match the saved path in the database
-					let delete_photos = photos.filter(photo => photo !== employee.photo);
-
-					delete_photos.forEach(photo => {
-						fs.unlinkSync(path.join(__dirname, `../../public/images/employees/${photo}`));
-					});
-				}
-			}
+			const photo = await UploadEmployeePhoto(req.employee, req.file);
 
 			res.statusCode = 200;
 			return res.send({
 				new_token,
 				message: "Successfully updated employee photo.",
-				photo: photo.filename
+				photo
 			});
 
 		} catch (error) {
