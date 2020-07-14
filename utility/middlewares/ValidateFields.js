@@ -5,7 +5,7 @@ function ValidateFields(req, res, next) {
 	if (!errors.isEmpty()) {
 		res.statusCode = 400;
 		return res.send({
-			errors: errors.mapped()
+			field_errors: errors.mapped()
 		});
 	}
 

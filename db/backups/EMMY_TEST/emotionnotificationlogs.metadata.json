@@ -1,0 +1,1 @@
+{"options":{},"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_","ns":"EMMY_TEST.emotionnotificationlogs"}],"uuid":"d07f8bafa066420c9121f772e09d998a"}

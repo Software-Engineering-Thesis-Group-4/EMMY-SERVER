@@ -7,8 +7,8 @@ const { Employee } = require('../../db/models/Employee');
 const { RegisterOneRules } = require('../../utility/validators/employees');
 const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility');
 const { VerifySession, VerifyAdminRights, ValidateFields, VerifyCredentials } = require('../../utility/middlewares');
-
-
+const createCrudNotification = require('../../utility/handlers/Notifications/UserSpecificNotifications');
+const createAuditLog = require('../../utility/handlers/AuditLogs/CreateAuditLog');
 
 /* --------------------------------------------------------------------------------------------------
 Route:
@@ -94,11 +94,14 @@ router.post('/register',
 
 			await employee.save();
 
-			// TODO: Record/Log registering of new employee in system logs		
+			await createAuditLog(
+				req.query.user,
+				'CREATE',
+				`${req.query.user} enrolled a new employee in the system.`,
+				false
+			);
 
-			// TODO: Create notification for newly created employee				
-
-			// TODO: Emit socket event for the newly registered employee		
+			await createCrudNotification('create', req.query.user, employee._id);
 
 			res.statusCode = 200;
 			return res.send({

@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 const csv = require('neat-csv');
 
 const ValidateDuplicates = require('./ValidateDuplicates');
@@ -7,7 +8,7 @@ const ValidateDatabaseDuplicates = require('./ValidateDatabaseDuplicates');
 
 async function importEmployees(file) {
 	// check if file type is CSV
-	if (file.mimetype !== "text/csv") {
+	if (path.extname(file.originalname) !== ".csv") {
 		const error = new Error('Invalid Format. Invalid file type.');
 		error.name = "InvalidFileType";
 		throw error;
@@ -23,7 +24,7 @@ async function importEmployees(file) {
 	});
 
 	// check if there are no rows (no data)
-	if(rows && rows.length <= 0) {
+	if (rows && rows.length <= 0) {
 		const error = new Error('Invalid Format. File is empty.')
 		error.name = "EmptyFileError";
 		throw error;
@@ -32,7 +33,7 @@ async function importEmployees(file) {
 	// validate for duplicate values for required unique fields
 	ValidateDuplicates(rows);
 	await ValidateDatabaseDuplicates(rows);
-	
+
 	// if validations are success, insert data to database
 	return await insertEmployees(rows);
 }

@@ -8,6 +8,7 @@ const { User } = require('../../db/models/User');
 const { ValidateFields, VerifyCredentials, VerifySession, VerifyAdminRights } = require('../../utility/middlewares');
 const { UpdatePasswordRules } = require('../../utility/validators/users');
 const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility');
+const createAuditLog = require('../../utility/handlers/AuditLogs/CreateAuditLog');
 
 router.patch('/password',
 	[
@@ -31,6 +32,13 @@ router.patch('/password',
 
 			const hashed_password = bcrypt.hashSync(req.body.password);
 			await user.updateOne({ password: hashed_password });
+
+			await createAuditLog(
+				user.email,
+				'UPDATE',
+				`${user.firstname} ${user.lastname} updated their account password.`,
+				false
+			);
 
 			res.statusCode = 200;
 			return res.send({

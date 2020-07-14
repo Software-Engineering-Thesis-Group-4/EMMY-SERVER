@@ -7,6 +7,7 @@ const { User } = require('../../db/models/User');
 
 // utilities
 const { body, validationResult } = require('express-validator');
+const createAuditLog = require('../../utility/handlers/AuditLogs/CreateAuditLog');
 
 // middlewares
 const UpdatePasswordRules = [
@@ -90,6 +91,12 @@ router.post('/password_reset',
 			user.password = hashed_password;
 			await user.save();
 
+			await createAuditLog(
+				user.email,
+				'UPDATE',
+				`${user.firstname} ${user.lastname} performed a password reset.`,
+				false
+			);
 
 			res.statusCode = 200;
 			return res.send({

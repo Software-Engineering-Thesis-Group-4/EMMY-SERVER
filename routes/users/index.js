@@ -6,4 +6,7 @@ module.exports = [
 	require('./reset-password'),
 	require('./update-password'),
 	require('./upload-photo'),
+	require('./notifications-emotions'),
+	require('./notifications-crud'),
+	require('./auditlog'),
 ]

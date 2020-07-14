@@ -13,7 +13,7 @@ const RefreshTokenSchema = new Schema({
 		unique: true
 	},
 	socket_id: {
-		type: String,
+		type: Array,
 		default: null
 	}
 });

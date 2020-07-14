@@ -7,6 +7,7 @@ const { Employee } = require('../../db/models/Employee');
 const { TerminateRules } = require('../../utility/validators/employees');
 const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility');
 const { VerifySession, VerifyAdminRights, ValidateFields, VerifyCredentials } = require('../../utility/middlewares');
+const createCrudNotification = require('../../utility/handlers/Notifications/UserSpecificNotifications');
 
 // middlewares
 function CustomValidator(req, res, next) {
@@ -85,6 +86,8 @@ router.patch('/terminate/:id',
 			// [4] else, set delete field to true and update document
 			employee.deleted = true;
 			await employee.save();
+
+			await createCrudNotification('terminated', req.query.user, employee._id);
 
 
 			// [5] return success response

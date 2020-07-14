@@ -10,6 +10,7 @@ const { User } = require('../../db/models/User');
 const { ValidateFields, VerifyCredentials, VerifySession } = require('../../utility/middlewares');
 const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility');
 const { UploadPhotoRules } = require('../../utility/validators/users');
+const createAuditLog = require('../../utility/handlers/AuditLogs/CreateAuditLog');
 
 // middlewares
 const storageConfig = multer.diskStorage({
@@ -139,6 +140,13 @@ router.post('/photo',
 					});
 				}
 			}
+
+			await createAuditLog(
+				user.email,
+				'UPDATE',
+				`${user.firstname} ${user.lastname} uploaded a new photo.`,
+				false
+			);
 
 			res.statusCode = 200;
 			return res.send({

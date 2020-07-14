@@ -7,4 +7,5 @@ module.exports = [
 	require('./update'),
 	require('./get-employee_logs'),
 	require('./upload-photo'),
+	require('./send-email'),
 ]

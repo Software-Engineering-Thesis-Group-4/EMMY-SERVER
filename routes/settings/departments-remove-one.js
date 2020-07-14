@@ -3,12 +3,13 @@ const { VerifyAdminRights, VerifyCredentials, VerifySession, ValidateFields } = 
 const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility');
 const { query, body } = require('express-validator');
 const { removeOneDepartment } = require('../../utility/handlers/Departments');
+const createAuditLog = require('../../utility/handlers/AuditLogs/CreateAuditLog');
 
 const AddDepartmentRules = [
 	query('user').trim().escape(),
 	query('access_token').trim().escape(),
 
-	body('department').trim().escape().exists().notEmpty().isString()
+	query('department').trim().escape().exists().notEmpty().isString()
 ]
 
 
@@ -25,7 +26,14 @@ router.delete('/departments',
 		try {
 			const new_token = verifyAccessToken(req.query.access_token);
 
-			let new_department = await removeOneDepartment(req.body.department);
+			let new_department = await removeOneDepartment(req.query.department);
+
+			await createAuditLog(
+				req.query.user,
+				'DELETE',
+				`${req.query.user} removed a department.`,
+				false
+			);
 
 			res.statusCode = 200;
 			return res.send({

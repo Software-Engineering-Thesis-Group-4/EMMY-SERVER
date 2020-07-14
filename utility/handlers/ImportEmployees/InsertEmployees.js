@@ -23,7 +23,7 @@ async function insertEmployees(rows) {
 			email: EMAIL,
 			isMale: (GENDER === "M" ? true : false),
 			employmentStatus: (EMPLOYMENT_STATUS === "Full-time" ? 0 : 1),
-			department: DEPARTMENT,
+			department: DEPARTMENT.toUpperCase(),
 			jobTitle: JOB_TITLE,
 			fingerprintId: FINGERPRINT_ID,
 		});

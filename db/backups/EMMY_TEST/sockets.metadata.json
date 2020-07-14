@@ -1,0 +1,1 @@
+{"options":{},"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_","ns":"EMMY_TEST.sockets"}],"uuid":"0b2d3d6bc75141e8a3b3a231fb23a2d0"}

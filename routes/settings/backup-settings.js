@@ -4,6 +4,7 @@ const { verifyAccessToken } = require('../../utility/tokens/AccessTokenUtility')
 const { query, body } = require('express-validator');
 const updateBackupSchedule = require('../../utility/handlers/DatabaseBackup/UpdateSchedule');
 const { printCronStatus } = require('../../utility/handlers/CronJobs/ScheduledTaskHandler');
+const createAuditLog = require('../../utility/handlers/AuditLogs/CreateAuditLog');
 
 
 const UpdateBackupRules = [
@@ -32,6 +33,13 @@ router.patch('/backup',
 			minute = parseInt(minute);
 
 			const new_schedule = await updateBackupSchedule(hour, minute);
+
+			await createAuditLog(
+				req.query.user,
+				'UPDATE',
+				`${req.query.user} updated the database backup schedule.`,
+				false
+			);
 
 			printCronStatus();
 
